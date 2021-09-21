@@ -50,6 +50,18 @@ def apply_replacement_group(text, rg):
 replacement_groups = []
 
 replacement_groups.append(get_replacement_group(
+            ['''use_templates = False'''],
+            ['''use_templates = True'''],))
+
+replacement_groups.append(get_replacement_group(
+            ['''"jobname = 'af_with_template' \\n",'''],
+            ['''        "jobname = 'af_auto_templates' \\n",'''],))
+
+replacement_groups.append(get_replacement_group(
+            ['''"<a href=\\"https://colab.research.google.com/github/phenix-project/Colabs/blob/main/alphafold2/AlphaFold2_with_Manual_Template.ipynb\\" target=\\"_parent\\"><img src=\\"https://colab.research.google.com/assets/colab-badge.svg\\" alt=\\"Open In Colab\\"/></a>"'''],
+            ['''         "<a href=\\"https://colab.research.google.com/github/phenix-project/Colabs/blob/main/alphafold2/AlphaFold2.ipynb\\" target=\\"_parent\\"><img src=\\"https://colab.research.google.com/assets/colab-badge.svg\\" alt=\\"Open In Colab\\"/></a>"''']))
+
+replacement_groups.append(get_replacement_group(
              ['''"#AlphaFold2 with a Template (Phenix version)\\n",'''],
              ['''        "#AlphaFold2 (Phenix version)\\n",''']))
 
@@ -61,10 +73,9 @@ replacement_groups.append(get_replacement_group(
             ['''"<a href=\"https://colab.research.google.com/github/phenix-project/Colabs/blob/main/alphafold2/AlphaFold2_with_Manual_Template.ipynb\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"'''],
             ['''        "<a href=\"https://colab.research.google.com/github/phenix-project/Colabs/blob/main/alphafold2/AlphaFold2.ipynb\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"''']))
 
-
-replacement_groups.append(get_replacement_group(
-             [ '"use_templates = True #@param {type:\\"boolean\\"}\\n",'],
-             ['        "use_templates = False \\n",']))
+#  replacement_groups.append(get_replacement_group(
+#             [ '"use_templates = True #@param {type:\\"boolean\\"}\\n",'],
+#             ['        "use_templates = False \\n",']))
 
 replacement_groups.append(get_replacement_group(
              ['''"<b> HOW TO GET YOUR ALPHAFOLD MODEL USING A TEMPLATE</b>\\n",'''],
