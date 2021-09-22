@@ -113,7 +113,7 @@ replacement_groups.append(get_replacement_group(
  '''        "    template_features = mk_mock_template(query_sequence * homooligomer)\\n",'''],
  ['''        "  if template_paths is None:\\n",''',
  '''        "    template_features = mk_mock_template(query_sequence * homooligomer)\\n",''',
-  '''        "    use_templates = False\\n''']))
+  '''        "    use_templates = False\\n"''']))
 
 for rg in replacement_groups:
   print(rg)
