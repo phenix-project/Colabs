@@ -104,6 +104,10 @@ replacement_groups.append(get_replacement_group(
             ['''        "#@title Finding templates...\\n",''',
         '''"supply_manual_templates = False\\n",'''],))
 
+replacement_groups.append(get_replacement_group(
+        ['''"if not use_templates:\\n",'''],
+        ['''        "if (not use_templates) or (not template_hits):\\n",''']))
+
 for rg in replacement_groups:
   print(rg)
   text = apply_replacement_group(text, rg)
