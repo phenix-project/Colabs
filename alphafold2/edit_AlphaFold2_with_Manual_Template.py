@@ -98,6 +98,12 @@ replacement_groups.append(get_replacement_group(
             ['''"... Wait a few more minutes for your result\\n",'''],
             ['''        "... Wait a few minutes for your result\\n",''',]))
 
+replacement_groups.append(get_replacement_group(
+            ['''        "#@title *Upload your .cif format template model here when button appears*\\n",''',
+        '''"supply_manual_templates = True\\n",'''],
+            ['''        "#@title Finding templates...\\n",''',
+        '''"supply_manual_templates = False\\n",'''],))
+
 for rg in replacement_groups:
   print(rg)
   text = apply_replacement_group(text, rg)
