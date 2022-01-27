@@ -8,8 +8,13 @@ from pathlib import Path
 
 class save_globals:
   """ Class to save changes in globals() in a .pkl file and restore them """
-  def __init__(self, file_name = "GLOBALS.pkl"):
+  def __init__(self, file_name = "GLOBALS.pkl", special_globals_to_ignore = None):
 
+    if special_globals_to_ignore is None:
+      special_globals_to_ignore = ['In','Out','sys','os',
+        'exit','quit','get_ipython','Path','re','StringIO','redirect','hashlib',
+        'shutil']
+    self.special_globals_to_ignore = special_globals_to_ignore
     self.globals = globals().copy()
     self.file_name = file_name
 
@@ -18,7 +23,7 @@ class save_globals:
    current_globals = globals().copy()
    new_globals = {}
    for k in list(current_globals.keys()):
-     if not k in self.globals:
+     if (not k.startswith("_")) and (not k in self.special_globals_to_ignore):
        new_globals[k] = current_globals[k]
 
    pickle.dump(new_globals, open(self.file_name, "wb" ) )
