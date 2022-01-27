@@ -7,14 +7,18 @@ from pathlib import Path
 
 
 class save_globals:
-  """ Class to save changes in globals() in a .pkl file and restore them """
-  def __init__(self, file_name = "GLOBALS.pkl", special_globals_to_ignore = None):
+  """ Class to save working variables in globals() in a .pkl file and restore them """
+  def __init__(self, file_name = "GLOBALS.pkl", special_globals_to_ignore = None,
+       names_to_ignore = None):
 
+    if names_to_ignore is None:
+      names_to_ignore = ['<function', '<module', '<class', '_Feature']
     if special_globals_to_ignore is None:
       special_globals_to_ignore = ['In','Out','sys','os',
         'exit','quit','get_ipython','Path','re','StringIO','redirect','hashlib',
-        'shutil']
+        'shutil','ascii_uppercase']
     self.special_globals_to_ignore = special_globals_to_ignore
+    self.names_to_ignore = names_to_ignore
     self.globals = globals().copy()
     self.file_name = file_name
 
@@ -23,12 +27,21 @@ class save_globals:
    current_globals = globals().copy()
    new_globals = {}
    for k in list(current_globals.keys()):
-     if (not k.startswith("_")) and (not k in self.special_globals_to_ignore) and \
-        (not str(type(current_globals[k])).find("module") > -1):
+     if k.startswith("_")):
+       continue
+     if k in self.special_globals_to_ignore:
+      continue
+     ok = True
+     for x in self.names_to_ignore:
+       if str(type(current_globals[k])).find(x) > -1:
+         ok = False
+         break
+     if ok:
+       print("Saved variable %s with value %s" %(k, current_globals[k]))
        new_globals[k] = current_globals[k]
 
    pickle.dump(new_globals, open(self.file_name, "wb" ) )
-   print("Saved changed global variables in %s" %(self.file_name))
+   print("Saved working global variables in %s" %(self.file_name))
 
   def restore(self):
     if not os.path.isfile(self.file_name):
