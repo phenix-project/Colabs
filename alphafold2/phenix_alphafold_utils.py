@@ -23,7 +23,8 @@ class save_globals:
    current_globals = globals().copy()
    new_globals = {}
    for k in list(current_globals.keys()):
-     if (not k.startswith("_")) and (not k in self.special_globals_to_ignore):
+     if (not k.startswith("_")) and (not k in self.special_globals_to_ignore) and \
+        (not str(type(current_globals[k])).find("module") > -1):
        new_globals[k] = current_globals[k]
 
    pickle.dump(new_globals, open(self.file_name, "wb" ) )
