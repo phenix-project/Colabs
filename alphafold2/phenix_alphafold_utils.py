@@ -27,7 +27,7 @@ class save_globals:
    current_globals = globals().copy()
    new_globals = {}
    for k in list(current_globals.keys()):
-     if k.startswith("_")):
+     if k.startswith("_"):
        continue
      if k in self.special_globals_to_ignore:
       continue
