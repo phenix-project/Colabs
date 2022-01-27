@@ -41,8 +41,8 @@ def install_pdb_to_cif():
   if not os.path.isfile('PDB_TO_CIF_READY'):
     print("Downloading pdb_to_cif...")
     shell('wget https://phenix-online.org/phenix_data/terwilliger/colab_data/maxit-v11.100-prod-src.tgz')
-    shell('tar xzf maxit-v11.100-prod-src_essentials.tgz')
-    shell('rm -f maxit-v11.100-prod-src_essentials.tgz')
+    shell('tar xzf maxit-v11.100-prod-src.tgz')
+    shell('rm -f maxit-v11.100-prod-src.tgz')
     shell('touch PDB_TO_CIF_READY')
     print("Ready with pdb_to_cif")
 
