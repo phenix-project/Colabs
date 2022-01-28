@@ -26,8 +26,8 @@ def install_condacolab():
 def install_bioconda():
   # set up bioconda and mount drive to patch in pdb_to_cif
   if not os.path.isfile("HH_READY"):
-  shell("conda install -y -q -c conda-forge -c bioconda kalign3=3.2.2 hhsuite=3.3.0 python=3.7 2>&1 1>/dev/null")
-  shell("touch HH_READY")
+    shell("conda install -y -q -c conda-forge -c bioconda kalign3=3.2.2 hhsuite=3.3.0 python=3.7 2>&1 1>/dev/null")
+    shell("touch HH_READY")
 
 def test():
   print("testing")
