@@ -6,53 +6,51 @@ from pathlib import Path
 # Utilities for running and setting up Phenix in Colab
 
 
-class save_globals:
-  """ Class to save working variables in globals() in a .pkl file and restore them """
-  def __init__(self, file_name = "GLOBALS.pkl", special_globals_to_ignore = None,
+class save_locals:
+  """ Class to save working variables in locals() in a .pkl file and restore them """
+  def __init__(self, file_name = "LOCALS.pkl", special_locals_to_ignore = None,
        names_to_ignore = None):
 
     if names_to_ignore is None:
-      names_to_ignore = ['<function', '<module', '<class', '_Feature']
-    if special_globals_to_ignore is None:
-      special_globals_to_ignore = ['In','Out','sys','os',
+      names_to_ignore = ['<function', '<module', '_Feature']
+    if special_locals_to_ignore is None:
+      special_locals_to_ignore = ['In','Out','sys','os',
         'exit','quit','get_ipython','Path','re','StringIO','redirect','hashlib',
         'shutil','ascii_uppercase']
-    self.special_globals_to_ignore = special_globals_to_ignore
+    self.special_locals_to_ignore = special_locals_to_ignore
     self.names_to_ignore = names_to_ignore
-    self.globals = globals().copy()
     self.file_name = file_name
 
-  def save(self):
-   import pickle
-   current_globals = globals().copy()
-   new_globals = {}
-   for k in list(current_globals.keys()):
-     if k.startswith("_"):
-       continue
-     if k in self.special_globals_to_ignore:
-      continue
-     ok = True
-     for x in self.names_to_ignore:
-       if str(type(current_globals[k])).find(x) > -1:
-         ok = False
-         break
-     if ok:
-       print("Saved variable %s with value %s" %(k, current_globals[k]))
-       new_globals[k] = current_globals[k]
+  def save(self, local_variables):
+    import pickle
+    new_locals = {}
+    for k in list(local_variables.keys()):
+      if k.startswith("_"):
+        continue
+      if k in self.special_locals_to_ignore:
+        continue
+      ok = True
+      for x in self.names_to_ignore:
+        if str(type(local_variables[k])).find(x) > -1:
+          ok = False
+          break
+      if ok:
+        print("Saved variable %s with value %s" %(k, local_variables[k]))
+        new_locals[k] = local_variables[k]
 
-   pickle.dump(new_globals, open(self.file_name, "wb" ) )
-   print("Saved working global variables in %s" %(self.file_name))
+    pickle.dump(new_locals, open(self.file_name, "wb" ) )
+    print("Saved working local variables in %s" %(self.file_name))
 
-  def restore(self):
+  def restore(self, local_variables):
     if not os.path.isfile(self.file_name):
        print("No saved parameters to restore...")
        return
 
     import pickle
-    new_globals = pickle.load(open( self.file_name, "rb" ) )
-    for k in new_globals.keys():
-      globals()[k] = new_globals[k]
-      print("Set variable %s as %s" %(k, new_globals[k]))
+    new_locals = pickle.load(open( self.file_name, "rb" ) )
+    for k in new_locals.keys():
+      local_variables[k] = new_locals[k]
+      print("Set variable %s as %s" %(k, new_locals[k]))
 
 def get_input_directory(input_directory):
   if not input_directory:
