@@ -11,12 +11,12 @@ class save_locals:
   def __init__(self, file_name = "LOCALS.pkl", special_locals_to_ignore = None,
        names_to_ignore = None):
 
-    if names_to_ignore is None:
-      names_to_ignore = ['<function', '<module', '_Feature']
+    if names_to_ignore is None: # does not seem to work
+      names_to_ignore = ['function', 'module', 'Feature']
     if special_locals_to_ignore is None:
       special_locals_to_ignore = ['In','Out','sys','os',
         'exit','quit','get_ipython','Path','re','StringIO','redirect','hashlib',
-        'shutil','ascii_uppercase']
+        'shutil','ascii_uppercase','files']
     self.special_locals_to_ignore = special_locals_to_ignore
     self.names_to_ignore = names_to_ignore
     self.file_name = file_name
