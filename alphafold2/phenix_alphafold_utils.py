@@ -31,7 +31,7 @@ class save_locals:
         continue
       ok = True
       for x in self.names_to_ignore:
-        if str(type(local_variables[k])).find(x) > -1:
+        if str(local_variables[k]).find(x) > -1:
           ok = False
           break
       if ok:
