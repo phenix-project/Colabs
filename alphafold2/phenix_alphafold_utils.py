@@ -33,7 +33,7 @@ class save_locals:
     self.names_to_ignore = names_to_ignore
     self.file_name = file_name
 
-  def save(self, local_variables):
+  def save(self, local_variables, verbose = False):
     import pickle
     new_locals = {}
     for k in list(local_variables.keys()):
@@ -47,13 +47,14 @@ class save_locals:
           ok = False
           break
       if ok:
-        print("Saved variable %s with value %s" %(k, local_variables[k]))
+        if verbose:
+          print("Saved variable %s with value %s" %(k, local_variables[k]))
         new_locals[k] = local_variables[k]
 
     pickle.dump(new_locals, open(self.file_name, "wb" ) )
     print("Saved working local variables in %s" %(self.file_name))
 
-  def restore(self, local_variables):
+  def restore(self, local_variables, verbose = False):
     if not os.path.isfile(self.file_name):
        print("No saved parameters to restore...")
        return
@@ -62,7 +63,8 @@ class save_locals:
     new_locals = pickle.load(open( self.file_name, "rb" ) )
     for k in new_locals.keys():
       local_variables[k] = new_locals[k]
-      print("Set variable %s as %s" %(k, new_locals[k]))
+      if verbose:
+        print("Set variable %s as %s" %(k, new_locals[k]))
 
 def get_input_output_dirs(input_directory,
      create_output_dir = None,
