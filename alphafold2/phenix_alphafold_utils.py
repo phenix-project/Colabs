@@ -64,17 +64,34 @@ class save_locals:
       local_variables[k] = new_locals[k]
       print("Set variable %s as %s" %(k, new_locals[k]))
 
-def get_input_directory(input_directory):
-  if not input_directory:
-    return None
+def get_input_output_dirs(input_directory,
+     create_output_dir = None,
+     output_dir = "ColabOutputs"):
+  """
+     Identify input directory as either a directory named with the value
+     of input_directory in default directory, or as a directory with this
+     name in user's Google drive.
 
-  elif os.path.isdir(input_directory):
+     If create_output_dir is set, create an output_dir as well in Google
+     drive
+  """
+
+
+  have_input_directory = False
+  need_google_drive = False
+
+  if os.path.isdir(input_directory):
     input_directory = Path(input_directory)
     print("Input files will be taken from %s" %(
         input_directory))
-  else:  # get it
-    print("Input files will be taken from Google drive folder %s" %(
-        input_directory))
+    have_input_directory = True
+  else:
+    need_google_drive = True
+
+  if create_output_dir:
+    need_google_drive = True
+
+  if need_google_drive:
     gdrive_dir = '/content/gdrive/MyDrive'
     if not os.path.isdir('/content/gdrive'):
       from google.colab import drive
@@ -83,12 +100,25 @@ def get_input_directory(input_directory):
         raise Exception("Sorry, cannot find the Google drive directory %s" %(
            gdrive_dir))
 
+  if not have_input_directory:  # get it
+    print("Input files will be taken from Google drive folder %s" %(
+        input_directory))
     input_directory = os.path.join(gdrive_dir, input_directory)
     if not os.path.isdir(input_directory):
       raise Exception("Sorry, cannot find the Google drive directory %s" %(
            input_directory))
-  return Path(input_directory)
+    input_directory = Path(input_directory)
 
+  if create_output_dir:
+    full_output_dir = os.path.join(gdrive_dir, output_dir)
+    if not os.path.isdir(full_output_dir):
+      os.mkdir(full_output_dir)
+    print("Output files will be copied to %s in Google drive" %(output_dir))
+    full_output_dir = Path(full_output_dir)
+  else:
+    full_output_dir = None
+
+  return input_directory, full_output_dir
 
 
 def add_hash(x,y):
@@ -320,7 +350,7 @@ def get_helper_files():
       raise AssertionError('Unable to set up the helper file %s' %(file_name))
 
 def set_up_files(input_directory = None,
-   create_output_dir = None,
+    create_output_dir = None,
     content_dir = "/content/",
     upload_manual_templates = None,
     upload_maps = None,
@@ -335,10 +365,6 @@ def set_up_files(input_directory = None,
 
   from google.colab import files
 
-  from phenix_alphafold_utils import get_input_directory,  \
-   clear_directories, clean_query, clean_jobname, save_sequence,\
-   upload_templates, get_templates_from_drive, select_matching_template_files, \
-   get_jobnames_sequences_from_file
 
   # Set working directory
   os.chdir(content_dir)
@@ -347,12 +373,9 @@ def set_up_files(input_directory = None,
   parent_dir = Path(os.path.join(content_dir,"manual_templates"))
   cif_dir = Path(parent_dir,"mmcif")
 
-  # get input directory
-  input_directory = get_input_directory(input_directory)
-
-
-  if upload_manual_templates:
-    print("Templates will be uploaded")
+  # get input and output directories
+  input_directory, output_directory = get_input_output_dirs(input_directory,
+    create_output_dir = create_output_dir)
 
   # Initialize
   query_sequences = []
@@ -439,3 +462,7 @@ def set_up_files(input_directory = None,
     print("Please supply a query sequence and run again")
     raise AssertionError("Need a query sequence")
 
+
+  return input_directory, output_directory, \
+    query_sequences, jobnames, resolutions, \
+    cif_filename_dict, map_filename_dict
