@@ -1,6 +1,18 @@
 from __future__ import division
 from __future__ import print_function
 
+# IMPORTS, STANDARD PARAMETERS AND METHODS
+
+import os, sys
+import re
+import hashlib
+
+from contextlib import redirect_stderr, redirect_stdout
+from io import StringIO
+import shutil
+
+# Local methods
+
 from pathlib import Path
 
 # Utilities for running and setting up Phenix in Colab
@@ -16,7 +28,7 @@ class save_locals:
     if special_locals_to_ignore is None:
       special_locals_to_ignore = ['In','Out','sys','os',
         'exit','quit','get_ipython','Path','re','StringIO','redirect','hashlib',
-        'shutil','ascii_uppercase','files']
+        'shutil','ascii_uppercase','files','redirect_stderr','redirect_stdout']
     self.special_locals_to_ignore = special_locals_to_ignore
     self.names_to_ignore = names_to_ignore
     self.file_name = file_name
@@ -79,21 +91,6 @@ def get_input_directory(input_directory):
 
 
 
-# IMPORTS, STANDARD PARAMETERS AND METHODS
-
-import os, sys
-import os.path
-import re
-import hashlib
-
-from contextlib import redirect_stderr, redirect_stdout
-from io import StringIO
-from google.colab import files
-import shutil
-from string import ascii_uppercase
-
-# Local methods
-
 def add_hash(x,y):
   return x+"_"+hashlib.sha1(y.encode()).hexdigest()[:5]
 
@@ -128,7 +125,7 @@ def upload_templates(cif_dir, upload_maps = False,
      upload_manual_templates = None):
   manual_templates_uploaded = []
   maps_uploaded = []
-
+  from google.colab import files
   with redirect_stdout(StringIO()) as out:
     uploaded = files.upload()
     for filename,contents in uploaded.items():
@@ -309,3 +306,144 @@ def get_jobnames_sequences_from_file(
 
   return jobnames, resolutions, \
      query_sequences, cif_filename_dict, map_filename_dict
+
+
+def get_helper_files():
+
+  # Upload utilities python files to get started
+  import os
+  result = os.system("wget -qnc https://raw.githubusercontent.com/phenix-project/Colabs/main/alphafold2/phenix_alphafold_utils.py")
+  result = os.system("wget -qnc https://raw.githubusercontent.com/phenix-project/Colabs/main/alphafold2/phenix_colab_utils.py")
+  for file_name in ['phenix_alphafold_utils.py', 'phenix_colab_utils.py']:
+    if not os.path.isfile(file_name):
+      print('Unable to set up the helper file %s' %(file_name))
+      raise AssertionError('Unable to set up the helper file %s' %(file_name))
+
+def set_up_files(input_directory = None,
+   create_output_dir = None,
+    content_dir = "/content/",
+    upload_manual_templates = None,
+    include_templates_from_pdb = None,
+    skip_all_msa = None,
+    query_sequence = None,
+    jobname = None,
+    resolution = None,
+   ):
+
+  from pathlib import Path
+  import os, sys
+
+  from google.colab import files
+
+  from phenix_alphafold_utils import get_input_directory,  \
+   clear_directories, clean_query, clean_jobname, save_sequence,\
+   upload_templates, get_templates_from_drive, select_matching_template_files, \
+   get_jobnames_sequences_from_file
+
+  # Set working directory
+  os.chdir(content_dir)
+
+  # Clear out directories
+  parent_dir = Path(os.path.join(content_dir,"manual_templates"))
+  cif_dir = Path(parent_dir,"mmcif")
+
+  # get input directory
+  input_directory = get_input_directory(input_directory)
+
+
+  if upload_manual_templates:
+    print("Templates will be uploaded")
+    if upload_file_with_jobname_resolution_sequence_lines:
+      print("All templates for all jobs will be uploaded at once")
+
+  if include_templates_from_pdb:
+    print("Templates from the PDB will be included")
+
+  if skip_all_msa:
+    use_custom_msa = False
+
+  # Initialize
+  query_sequences = []
+  jobnames = []
+  resolutions = []
+  cif_filename_dict = {}
+  map_filename_dict = {}
+  clear_directories([parent_dir,cif_dir])
+
+  if upload_file_with_jobname_resolution_sequence_lines:
+    jobnames, resolutions, query_sequences, cif_filename_dict,\
+        map_filename_dict = \
+      get_jobnames_sequences_from_file(
+          upload_manual_templates = upload_manual_templates,
+          upload_maps = True,
+          cif_dir = cif_dir,
+          input_directory = input_directory)
+  else: # usual
+    jobname = clean_jobname(jobname, query_sequence)
+    query_sequence = clean_query(query_sequence)
+    if query_sequence and not jobname:
+      print("Please enter a job name and rerun")
+      raise AssertionError("Please enter a job name and rerun")
+
+    if jobname and not query_sequence:
+      print("Please enter a query_sequence and rerun")
+      raise AssertionError("Please enter a query_sequence rerun")
+
+    # Add sequence and jobname if new
+    if (jobname and query_sequence) and (
+         not query_sequence in query_sequences) and (
+         not jobname in jobnames):
+        query_sequences.append(query_sequence)
+        jobnames.append(jobname)
+        resolutions.append(resolution)
+        if upload_manual_templates or upload_maps:
+          if input_directory:
+            cif_filename_dict[jobname], map_filename_dict[jobname] = \
+              get_templates_from_drive(cif_dir, upload_maps = upload_maps,
+                 upload_manual_templates = upload_manual_templates,
+                 input_directory = input_directory,
+                 jobname = jobname )
+          else:
+            print("\nPlease upload %s for %s" %(
+              "template and map" if upload_manual_templates and upload_maps
+              else "template" if upload_manual_templates
+              else "map",
+              jobname))
+            sys.stdout.flush()
+            cif_filename_dict[jobname], map_filename_dict[jobname] = \
+              upload_templates(cif_dir, upload_maps = upload_maps,
+                 upload_manual_templates = upload_manual_templates )
+
+
+  # Save sequence
+  for i in range(len(query_sequences)):
+    # save the sequence as a file with name jobname.fasta
+    save_sequence(jobnames[i], query_sequences[i])
+
+  print("\nCurrent jobs, resolutions, sequences, templates, and maps:")
+
+  for qs,jn,res in zip(query_sequences, jobnames, resolutions):
+    template_list = []
+    for t in cif_filename_dict.get(jn,[]):
+      template_list.append(os.path.split(str(t))[-1])
+    map_list = []
+    for t in map_filename_dict.get(jn,[]):
+      map_list.append(os.path.split(str(t))[-1])
+    print(jn, res, qs, template_list, map_list)
+
+    if len(qs) < 20:
+      print("\n\nMinimum sequence length is 20 residues...\n\n",
+            "Please enter a longer sequence and \n",
+            "run again\n\n")
+      sys.stdout.flush()
+      raise AssertionError("Sequence must be 20 residues or more")
+    if not map_list:
+      print("\n\nNeed a map for each sequence...\n\n",
+            "Please run again\n\n")
+      sys.stdout.flush()
+      raise AssertionError("Map file needed for job %s" %(jn))
+
+  if not query_sequences:
+    print("Please supply a query sequence and run again")
+    raise AssertionError("Need a query sequence")
+
