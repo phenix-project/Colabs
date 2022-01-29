@@ -323,11 +323,10 @@ def set_up_files(input_directory = None,
    create_output_dir = None,
     content_dir = "/content/",
     upload_manual_templates = None,
-    include_templates_from_pdb = None,
-    skip_all_msa = None,
     query_sequence = None,
     jobname = None,
     resolution = None,
+    upload_file_with_jobname_resolution_sequence_lines = None,
    ):
 
   from pathlib import Path
@@ -353,14 +352,6 @@ def set_up_files(input_directory = None,
 
   if upload_manual_templates:
     print("Templates will be uploaded")
-    if upload_file_with_jobname_resolution_sequence_lines:
-      print("All templates for all jobs will be uploaded at once")
-
-  if include_templates_from_pdb:
-    print("Templates from the PDB will be included")
-
-  if skip_all_msa:
-    use_custom_msa = False
 
   # Initialize
   query_sequences = []
