@@ -323,6 +323,7 @@ def set_up_files(input_directory = None,
    create_output_dir = None,
     content_dir = "/content/",
     upload_manual_templates = None,
+    upload_maps = None,
     query_sequence = None,
     jobname = None,
     resolution = None,
@@ -366,7 +367,7 @@ def set_up_files(input_directory = None,
         map_filename_dict = \
       get_jobnames_sequences_from_file(
           upload_manual_templates = upload_manual_templates,
-          upload_maps = True,
+          upload_maps = upload_maps,
           cif_dir = cif_dir,
           input_directory = input_directory)
   else: # usual
