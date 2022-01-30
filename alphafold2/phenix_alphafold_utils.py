@@ -204,8 +204,10 @@ def get_templates_from_drive(params):
 
   input_directory = params.get('input_directory',None)
   jobname = params.get('jobname',None)
+  cif_dir = params.get('cif_dir','.')
 
   filename_list = os.listdir(input_directory)
+
   for filename in filename_list:
       sys.stdout.flush()
       contents = open(os.path.join(input_directory, filename),'rb').read()
