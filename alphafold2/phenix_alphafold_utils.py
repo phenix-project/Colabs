@@ -121,7 +121,7 @@ def get_input_output_dirs(params):
     full_output_dir = None
 
   params['input_directory'] = input_directory
-  params['output_dir'] = full_output_dir
+  params['output_directory'] = full_output_dir
   return params
 
 def add_hash(x,y):
