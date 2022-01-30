@@ -389,6 +389,8 @@ def set_up_files(params):
         map_filename_dict = \
       get_jobnames_sequences_from_file(params)
   else: # usual
+    jobname = params.get('jobname',None)
+    query_sequence = params.get('query_sequence',None)
     jobname = clean_jobname(jobname, query_sequence)
     query_sequence = clean_query(query_sequence)
     if query_sequence and not jobname:
