@@ -335,7 +335,6 @@ def get_jobnames_sequences_from_file(params):
   params['map_filename_dict'] = map_filename_dict
   params['cif_filename_dict'] = cif_filename_dict
   params['query_sequences'] = query_sequences
-  params['query_sequences'] = query_sequences
   return params
 
 
@@ -413,7 +412,7 @@ def set_up_files(params):
         jobnames.append(jobname)
         resolutions.append(resolution)
         if upload_manual_templates or upload_maps:
-          if input_directory:
+          if params.get('input_directory', None):
             cif_filename_dict[jobname], map_filename_dict[jobname] = \
               get_templates_from_drive(params)
           else:
@@ -459,7 +458,9 @@ def set_up_files(params):
     print("Please supply a query sequence and run again")
     raise AssertionError("Need a query sequence")
 
-
-  return input_directory, output_directory, \
-    query_sequences, jobnames, resolutions, \
-    cif_filename_dict, map_filename_dict
+  params['jobnames'] = jobnames
+  params['resolutions'] = resolutions
+  params['map_filename_dict'] = map_filename_dict
+  params['cif_filename_dict'] = cif_filename_dict
+  params['query_sequences'] = query_sequences
+  return params
