@@ -122,7 +122,7 @@ def get_input_output_dirs(params):
 
   params['input_directory'] = input_directory
   params['output_dir'] = full_output_dir
-
+  return params
 
 def add_hash(x,y):
   return x+"_"+hashlib.sha1(y.encode()).hexdigest()[:5]
