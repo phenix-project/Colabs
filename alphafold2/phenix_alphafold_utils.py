@@ -361,9 +361,10 @@ def set_up_files(params):
 
   from google.colab import files
 
+  content_dir = params.get('content_dir',".")
 
   # Set working directory
-  os.chdir(params.get('content_dir',"."))
+  os.chdir(content_dir)
 
   # Clear out directories
   parent_dir = Path(os.path.join(content_dir,"manual_templates"))
