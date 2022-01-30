@@ -392,6 +392,8 @@ def set_up_files(params):
     jobname = params.get('jobname',None)
     query_sequence = params.get('query_sequence',None)
     resolution = params.get('resolution',None)
+    upload_manual_templates = params.get('upload_manual_templates',None)
+    upload_maps = params.get('upload_maps',None)
 
     jobname = clean_jobname(jobname, query_sequence)
     query_sequence = clean_query(query_sequence)
@@ -413,10 +415,7 @@ def set_up_files(params):
         if upload_manual_templates or upload_maps:
           if input_directory:
             cif_filename_dict[jobname], map_filename_dict[jobname] = \
-              get_templates_from_drive(cif_dir, upload_maps = upload_maps,
-                 upload_manual_templates = upload_manual_templates,
-                 input_directory = input_directory,
-                 jobname = jobname )
+              get_templates_from_drive(params)
           else:
             print("\nPlease upload %s for %s" %(
               "template and map" if upload_manual_templates and upload_maps
