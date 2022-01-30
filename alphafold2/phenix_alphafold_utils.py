@@ -363,7 +363,7 @@ def set_up_files(params):
 
 
   # Set working directory
-  os.chdir(content_dir)
+  os.chdir(params.get('content_dir',"."))
 
   # Clear out directories
   parent_dir = Path(os.path.join(content_dir,"manual_templates"))
