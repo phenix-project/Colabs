@@ -66,9 +66,7 @@ class save_locals:
       if verbose:
         print("Set variable %s as %s" %(k, new_locals[k]))
 
-def get_input_output_dirs(input_directory,
-     create_output_dir = None,
-     output_dir = "ColabOutputs"):
+def get_input_output_dirs(params):
   """
      Identify input directory as either a directory named with the value
      of input_directory in default directory, or as a directory with this
@@ -77,7 +75,9 @@ def get_input_output_dirs(input_directory,
      If create_output_dir is set, create an output_dir as well in Google
      drive
   """
-
+  input_directory = params.get('input_directory',None)
+  create_output_dir = params.get('create_output_dir',None)
+  output_dir = params.get('output_dir',"ColabOutputs")
 
   have_input_directory = False
   need_google_drive = False
@@ -120,7 +120,8 @@ def get_input_output_dirs(input_directory,
   else:
     full_output_dir = None
 
-  return input_directory, full_output_dir
+  params['input_directory'] = input_directory
+  params['output_dir'] = full_output_dir
 
 
 def add_hash(x,y):
@@ -153,8 +154,7 @@ def save_sequence(jobname, query_sequence):
     text_file.write(">1\n%s" % query_sequence)
   print("Saved sequence in %s: %s" %(filename, query_sequence))
 
-def upload_templates(cif_dir, upload_maps = False,
-     upload_manual_templates = None):
+def upload_templates(params):
   manual_templates_uploaded = []
   maps_uploaded = []
   from google.colab import files
@@ -163,7 +163,7 @@ def upload_templates(cif_dir, upload_maps = False,
     for filename,contents in uploaded.items():
       sys.stdout.flush()
 
-      if upload_maps and \
+      if params.get('upload_maps',None) and \
            (str(filename).lower().endswith(".ccp4") or
            str(filename).lower().endswith(".map") or
            str(filename).lower().endswith(".mrc")):
@@ -173,7 +173,7 @@ def upload_templates(cif_dir, upload_maps = False,
         ff.write(contents)
         maps_uploaded.append(filepath)
 
-      elif upload_manual_templates and \
+      elif params.get('upload_manual_templates',None) and \
            str(filename).endswith(".cif"):
 
         filepath = Path(cif_dir,filename)
@@ -181,7 +181,7 @@ def upload_templates(cif_dir, upload_maps = False,
           fh.write(contents.decode("UTF-8"))
           manual_templates_uploaded.append(filepath)
 
-      elif upload_manual_templates and \
+      elif params.get('upload_manual_templates',None) and \
            str(filename).endswith(".pdb"):
 
         pdb_filepath = Path(cif_dir,filename)
@@ -190,7 +190,7 @@ def upload_templates(cif_dir, upload_maps = False,
         cif_filepath = pdb_to_cif(pdb_filepath)
         manual_templates_uploaded.append(cif_filepath)
 
-  if upload_maps:
+  if params.get('upload_maps'):
     print("Maps uploaded: %s" %(maps_uploaded))
 
   print("Templates uploaded: %s" %(manual_templates_uploaded))
@@ -198,18 +198,18 @@ def upload_templates(cif_dir, upload_maps = False,
     print("\n*** WARNING: no templates uploaded...Please use only .cif files ***\n")
   return manual_templates_uploaded, maps_uploaded
 
-def get_templates_from_drive(cif_dir, upload_maps = False,
-     upload_manual_templates = None,
-     input_directory = None,
-     jobname = None):
+def get_templates_from_drive(params):
   manual_templates_uploaded = []
   maps_uploaded = []
+
+  input_directory = params.get('input_directory',None)
+  jobname = params.get('jobname',None)
 
   filename_list = os.listdir(input_directory)
   for filename in filename_list:
       sys.stdout.flush()
       contents = open(os.path.join(input_directory, filename),'rb').read()
-      if upload_maps and \
+      if params.get('upload_maps',None) and \
            (str(filename).lower().endswith(".ccp4") or
            str(filename).lower().endswith(".map") or
            str(filename).lower().endswith(".mrc")):
@@ -220,7 +220,7 @@ def get_templates_from_drive(cif_dir, upload_maps = False,
         ff.write(contents)
         maps_uploaded.append(filepath)
 
-      elif upload_manual_templates and \
+      elif params.get('upload_manual_templates',None) and \
            str(filename).endswith(".cif"):
 
         filepath = Path(cif_dir,filename)
@@ -229,7 +229,7 @@ def get_templates_from_drive(cif_dir, upload_maps = False,
           fh.write(contents.decode("UTF-8"))
           manual_templates_uploaded.append(filepath)
 
-      elif upload_manual_templates and \
+      elif params.get('upload_manual_templates',None) and \
            str(filename).endswith(".pdb"):
 
         pdb_filepath = Path(cif_dir,filename)
@@ -238,11 +238,11 @@ def get_templates_from_drive(cif_dir, upload_maps = False,
         cif_filepath = pdb_to_cif(pdb_filepath)
         manual_templates_uploaded.append(cif_filepath)
 
-  if upload_maps:
+  if params.get('upload_maps',None):
     print("Maps uploaded: %s" %(maps_uploaded))
 
   print("Templates uploaded: %s" %(manual_templates_uploaded))
-  if (not upload_maps) and (not manual_templates_uploaded):
+  if (not params.get('upload_maps',None)) and (not manual_templates_uploaded):
     print("\n*** WARNING: no templates uploaded...***\n")
   if manual_templates_uploaded:
     manual_templates_uploaded = select_matching_template_files(
@@ -264,28 +264,23 @@ def select_matching_template_files(uploaded_template_files,
       matching_files.append(file_name)
   return matching_files
 
-def get_jobnames_sequences_from_file(
-    upload_manual_templates = None,
-    upload_maps = False,
-    cif_dir = None,
-    input_directory = None):
+def get_jobnames_sequences_from_file(params):
+
   from io import StringIO
   from google.colab import files
-  print("Upload file with one jobname, a space, resolution, space, and one sequence on each line")
+  print("Upload file with one jobname, a space, resolution, space,"+
+     " and one sequence on each line")
   uploaded_job_file = files.upload()
-  if upload_manual_templates or upload_maps:
+  if params.get('upload_manual_templates',None) or params.get(
+    'upload_maps', None):
 
-    if input_directory:
+    if params.get('input_directory',None):
       uploaded_template_files, uploaded_maps = \
-        get_templates_from_drive(cif_dir, upload_maps = upload_maps,
-            upload_manual_templates = upload_manual_templates,
-            input_directory = input_directory )
+        get_templates_from_drive(params)
     else:
       print("\nUpload your templates now, all at once. " +\
            "NOTE: template file names must start with your job names")
-      uploaded_template_files, uploaded_maps = upload_templates(
-        cif_dir, upload_maps = upload_maps,
-        upload_manual_templates= upload_manual_templates)
+      uploaded_template_files, uploaded_maps = upload_templates(params)
     print("Total of %s template files uploaded: %s" %(
           len(uploaded_template_files), uploaded_template_files))
 
@@ -309,7 +304,7 @@ def get_jobnames_sequences_from_file(
         pass # empty line
       else: # usual
         jobname = spl[0]
-        if upload_maps:
+        if params.get('upload_maps',None):
           resolution = float(spl[1])
           query_sequence = "".join(spl[2:])
         else:
@@ -335,9 +330,13 @@ def get_jobnames_sequences_from_file(
                     uploaded_maps,
                      jobname)
 
-
-  return jobnames, resolutions, \
-     query_sequences, cif_filename_dict, map_filename_dict
+  params['jobnames'] = jobnames
+  params['resolutions'] = resolutions
+  params['map_filename_dict'] = map_filename_dict
+  params['cif_filename_dict'] = cif_filename_dict
+  params['query_sequences'] = query_sequences
+  params['query_sequences'] = query_sequences
+  return params
 
 
 def get_helper_files():
@@ -351,16 +350,11 @@ def get_helper_files():
       print('Unable to set up the helper file %s' %(file_name))
       raise AssertionError('Unable to set up the helper file %s' %(file_name))
 
-def set_up_files(input_directory = None,
-    create_output_dir = None,
-    content_dir = "/content/",
-    upload_manual_templates = None,
-    upload_maps = None,
-    query_sequence = None,
-    jobname = None,
-    resolution = None,
-    upload_file_with_jobname_resolution_sequence_lines = None,
-   ):
+def set_up_files(params):
+
+  # Default working directory
+  if not params.get('content_dir',None):
+    params['content_dir'] = "/content/"
 
   from pathlib import Path
   import os, sys
@@ -373,11 +367,12 @@ def set_up_files(input_directory = None,
 
   # Clear out directories
   parent_dir = Path(os.path.join(content_dir,"manual_templates"))
-  cif_dir = Path(parent_dir,"mmcif")
+
+  if not params.get('cif_dir',None):
+    params['cif_dir'] = Path(parent_dir,"mmcif")
 
   # get input and output directories
-  input_directory, output_directory = get_input_output_dirs(input_directory,
-    create_output_dir = create_output_dir)
+  params = get_input_output_dirs(params)
 
   # Initialize
   query_sequences = []
@@ -385,16 +380,13 @@ def set_up_files(input_directory = None,
   resolutions = []
   cif_filename_dict = {}
   map_filename_dict = {}
-  clear_directories([parent_dir,cif_dir])
+  clear_directories([parent_dir,params.get('cif_dir','')])
 
-  if upload_file_with_jobname_resolution_sequence_lines:
+  if params.get(
+     'upload_file_with_jobname_resolution_sequence_lines',None):
     jobnames, resolutions, query_sequences, cif_filename_dict,\
         map_filename_dict = \
-      get_jobnames_sequences_from_file(
-          upload_manual_templates = upload_manual_templates,
-          upload_maps = upload_maps,
-          cif_dir = cif_dir,
-          input_directory = input_directory)
+      get_jobnames_sequences_from_file(params)
   else: # usual
     jobname = clean_jobname(jobname, query_sequence)
     query_sequence = clean_query(query_sequence)
@@ -428,8 +420,7 @@ def set_up_files(input_directory = None,
               jobname))
             sys.stdout.flush()
             cif_filename_dict[jobname], map_filename_dict[jobname] = \
-              upload_templates(cif_dir, upload_maps = upload_maps,
-                 upload_manual_templates = upload_manual_templates )
+              upload_templates(params)
 
 
   # Save sequence
