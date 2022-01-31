@@ -203,6 +203,7 @@ def get_templates_from_drive(params):
   maps_uploaded = []
 
   input_directory = params.get('input_directory',None)
+  print("Input directory:",input_directory)
   if input_directory is None:
     raise AssertionError(
       "No Google drive folder available. Please specify input_directory")
@@ -214,6 +215,9 @@ def get_templates_from_drive(params):
 
   for filename in filename_list:
       sys.stdout.flush()
+      full_file_name = os.path.join(input_directory, filename)
+      if not os.path.isfile(full_file_name):
+        continue
       contents = open(os.path.join(input_directory, filename),'rb').read()
       if params.get('upload_maps',None) and \
            (str(filename).lower().endswith(".ccp4") or
@@ -456,7 +460,7 @@ def set_up_input_files(params):
       raise AssertionError("Sequence must be 20 residues or more")
     if not map_list:
       print("\n\nNeed a map for each sequence...\n\n",
-            "Please run again\n\n")
+            "Please be sure input_directory is set and run again\n\n")
       sys.stdout.flush()
       raise AssertionError("Map file needed for job %s" %(jn))
 
