@@ -15,7 +15,7 @@ import shutil
 
 from pathlib import Path
 
-# Utilities for running and setting up Phenix in Colab
+# Utilities for running alphafold in Colab
 
 
 class save_locals:
@@ -351,7 +351,7 @@ def get_helper_files():
       print('Unable to set up the helper file %s' %(file_name))
       raise AssertionError('Unable to set up the helper file %s' %(file_name))
 
-def set_up_files(params):
+def set_up_input_files(params):
 
   # Default working directory
   if not params.get('content_dir',None):
