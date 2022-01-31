@@ -203,6 +203,10 @@ def get_templates_from_drive(params):
   maps_uploaded = []
 
   input_directory = params.get('input_directory',None)
+  if input_directory is None:
+    raise AssertionError(
+      "No Google drive folder available. Please specify input_directory")
+
   jobname = params.get('jobname',None)
   cif_dir = params.get('cif_dir','.')
 

@@ -17,7 +17,8 @@ def clear_python_caches(module_list = None):
   print("Clearing python caches ...")
   if module_list is None:
     module_list = ['phenix_colab_utils','phenix_alphafold_utils','install_alphafold','cu','install_phenix','install_software',
-     'alphafold','protein', 'Alphafold', 'Protein', 'colabfold','clear_python_caches']
+     'alphafold','protein', 'Alphafold', 'Protein', 'colabfold',
+     'clear_python_caches']
   for x in list(sys.modules.keys(  )) + list(globals()):
     for key in module_list:
        if x.find(key)>-1:
