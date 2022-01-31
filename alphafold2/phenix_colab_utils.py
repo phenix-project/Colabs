@@ -15,12 +15,11 @@ def shell(text):
 def clear_python_caches(modules = None):
   import sys
   print("Clearing python caches ...")
-  if module_list is None:
-    module_list = ['phenix_colab_utils','phenix_alphafold_utils','install_alphafold','cu','install_phenix','install_software',
-     'alphafold','protein', 'Alphafold', 'Protein', 'colabfold',
-     'clear_python_caches']
+  if modules is None:
+    modules = ['phenix_colab_utils','phenix_alphafold_utils','install_alphafold','cu','install_phenix','install_software',
+     'alphafold','protein', 'Alphafold', 'Protein', 'colabfold', ]
   for x in list(sys.modules.keys(  )) + list(globals()):
-    for key in module_list:
+    for key in modules:
        if x.find(key)>-1:
         if x in list(sys.modules.keys()):
           del(sys.modules[x])
