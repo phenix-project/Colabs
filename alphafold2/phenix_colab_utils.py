@@ -39,7 +39,7 @@ def install_software(
   alphafold = True,
     alphafold_version = '0bab1bf84d9d887aba5cfb6d09af1e8c3ecbc408',
   pdb_to_cif = True,
-  fix_paths = True
+  fix_paths = True,
   clear_python_info = True,
     ):
 
