@@ -12,7 +12,7 @@ def shell(text):
   result = os.system(text)
   return result
 
-def clear_python_caches(module_list = None):
+def clear_python_caches(modules = None):
   import sys
   print("Clearing python caches ...")
   if module_list is None:
