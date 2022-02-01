@@ -290,6 +290,7 @@ def get_msa(
       homooligomer,
       use_msa):
   import colabfold as cf
+  from alphafold.data import pipeline
   template_paths = None # initialize
 
   #@title Get MSA and templates
