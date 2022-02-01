@@ -293,7 +293,8 @@ def get_jobnames_sequences_from_file(params):
       uploaded_template_files, uploaded_maps = upload_templates(params)
     print("Total of %s template files uploaded: %s" %(
           len(uploaded_template_files), uploaded_template_files))
-
+    print("Total of %s map files uploaded: %s" %(
+          len(uploaded_map_files), uploaded_map_files))
 
   else:
     uploaded_template_files = []
@@ -335,10 +336,12 @@ def get_jobnames_sequences_from_file(params):
                     uploaded_template_files,
                      jobname)
           if uploaded_maps:
+              print("ZZ selecting",jobname,"from",uploaded_maps)
               map_filename_dict[jobname] = \
                 select_matching_template_files(
                     uploaded_maps,
                      jobname)
+              print("ZZ selecting",jobname,"from",uploaded_maps,":",map_filename_dict[jobname])
 
   params['jobnames'] = jobnames
   params['resolutions'] = resolutions
