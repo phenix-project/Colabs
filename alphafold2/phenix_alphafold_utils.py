@@ -394,9 +394,12 @@ def set_up_input_files(params):
 
   if params.get(
      'upload_file_with_jobname_resolution_sequence_lines',None):
-    jobnames, resolutions, query_sequences, cif_filename_dict,\
-        map_filename_dict = \
-      get_jobnames_sequences_from_file(params)
+    params = get_jobnames_sequences_from_file(params)
+    jobname = params['jobnames']
+    resolutions = params['resolutions']
+    map_filename_dict = params['map_filename_dict']
+    cif_filename_dict = params['cif_filename_dict']
+    query_sequences = params['query_sequences']
   else: # usual
     jobname = params.get('jobname',None)
     query_sequence = params.get('query_sequence',None)
