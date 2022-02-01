@@ -71,7 +71,7 @@ def install_alphafold(version = None):
   # install dependencies
   print( "Installing biopython and colabfold...")
   shell("pip -q install biopython dm-haiku ml-collections py3Dmol")
-  shell("wget -qnc https://raw.githubusercontent.com/sokrypton/ColabFold/33fcb9a75d1d761b827542b6066bc936e546406c/colabfold/colabfold.py")
+  shell("wget -qnc https://raw.githubusercontent.com/sokrypton/ColabFold/96fe2446f454eba38ea34ca45d97dc3f393e24ed/beta/colabfold.py")
   # download model
   if not os.path.isdir("alphafold"):
     os.environ['version'] = version
