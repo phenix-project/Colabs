@@ -393,6 +393,7 @@ def run_job(query_sequence,
         skip_all_msa_after_first_cycle):
 
   from Bio.SeqRecord import SeqRecord
+  from Bio.Seq import Seq
 
   os.chdir("/content/")
 
