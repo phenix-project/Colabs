@@ -32,8 +32,6 @@ def run_one_cycle(cycle, template_hit_list,
   if template_hit_list:
     #process hits into template features
     from dataclasses import replace
-    # ZZDDFFHH
-    # ZZDDFF
     template_hit_list = [[replace(hit,**{"index":i+1}),mmcif] for i,[hit,mmcif] in enumerate(template_hit_list)]
 
     template_features = {}
@@ -434,7 +432,6 @@ def run_job(query_sequence,
   cif_dir = Path(parent_dir,"mmcif")
   fasta_dir = Path(parent_dir,"fasta")
   hhDB_dir = Path(parent_dir,"hhDB")
-  print("ZZ hhDB_dir:",hhDB_dir)
   msa_dir = Path(hhDB_dir,"msa")
   clear_directories([fasta_dir,hhDB_dir,msa_dir])
 

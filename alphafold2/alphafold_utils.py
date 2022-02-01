@@ -14,8 +14,6 @@ from string import ascii_uppercase
 from phenix_colab_utils import shell
 from alphafold.data import templates
 
-# ZZGG
-
 def set_up_alphafold_logging():
   warnings.filterwarnings('ignore')
   logging.set_verbosity("error")
@@ -159,7 +157,6 @@ def hh_process_seq(query_seq,template_seq,hhDB_dir,db_prefix="DB"):
 
   # set up directory for hhsuite DB. Place one template fasta file to be the DB contents
   if hhDB_dir.exists():
-    print("ZZ REMOVING",hhDB_dir)
     shutil.rmtree(hhDB_dir)
 
   msa_dir = Path(hhDB_dir,"msa")
@@ -171,19 +168,15 @@ def hh_process_seq(query_seq,template_seq,hhDB_dir,db_prefix="DB"):
     SeqIO.write([template_seq], fh, "fasta")
   print("MSA DIR",msa_dir)
   # make hhsuite DB
-  if 1: # ZZwith redirect_stdout(StringIO()) as out:
+  with redirect_stdout(StringIO()) as out:
     os.chdir(msa_dir)
-    os.getcwd()
     import subprocess
-    subprocess.call("ffindex_build -s ../DB_msa.ffdata ../DB_msa.ffindex .".split())
-    print("ZZ called",os.listdir(".."))
+    shell("ffindex_build -s ../DB_msa.ffdata ../DB_msa.ffindex .")
     os.chdir(hhDB_dir)
-    os.getcwd()
-    subprocess.call(" ffindex_apply DB_msa.ffdata DB_msa.ffindex  -i DB_a3m.ffindex -d DB_a3m.ffdata  -- hhconsensus -M 50 -maxres 65535 -i stdin -oa3m stdout -v 0".split())
-    os.getcwd()
-    # ZZCC
+    shell(" ffindex_apply DB_msa.ffdata DB_msa.ffindex  -i DB_a3m.ffindex -d DB_a3m.ffdata  -- hhconsensus -M 50 -maxres 65535 -i stdin -oa3m stdout -v 0")
     shell(" rm DB_msa.ffdata DB_msa.ffindex")
     shell(" ffindex_apply DB_a3m.ffdata DB_a3m.ffindex -i DB_hhm.ffindex -d DB_hhm.ffdata -- hhmake -i stdin -o stdout -v 0")
+    # This one needs subprocess.call:
     subprocess.call(['cstranslate','-f','-x','0.3','-c','4','-I','a3m','-i','DB_a3m','-o','DB_cs219'])
     shell(" sort -k3 -n -r DB_cs219.ffindex | cut -f1 > sorting.dat")
     shell(" ffindex_order sorting.dat DB_hhm.ffdata DB_hhm.ffindex DB_hhm_ordered.ffdata DB_hhm_ordered.ffindex")
@@ -192,7 +185,6 @@ def hh_process_seq(query_seq,template_seq,hhDB_dir,db_prefix="DB"):
     shell(" ffindex_order sorting.dat DB_a3m.ffdata DB_a3m.ffindex DB_a3m_ordered.ffdata DB_a3m_ordered.ffindex")
     shell(" mv DB_a3m_ordered.ffindex DB_a3m.ffindex")
     shell(" mv DB_a3m_ordered.ffdata DB_a3m.ffdata")
-    print("ZZ FILES:",os.listdir("."))
     os.chdir("/content/")
     os.getcwd()
 
@@ -200,7 +192,6 @@ def hh_process_seq(query_seq,template_seq,hhDB_dir,db_prefix="DB"):
   db_dir = hhDB_dir.as_posix()+"/"+db_prefix
   if not os.path.isdir(db_dir):
     os.mkdir (db_dir)
-  print("ZZ DB:",hhDB_dir,hhDB_dir.as_posix()+"/"+db_prefix,os.path.isdir(hhDB_dir),os.path.isdir(db_dir))
 
   hhsearch_runner = hhsearch.HHSearch(binary_path="hhsearch",
       databases=[hhDB_dir.as_posix()+"/"+db_prefix])
@@ -215,7 +206,6 @@ def hh_process_seq(query_seq,template_seq,hhDB_dir,db_prefix="DB"):
     from dataclasses import replace
     hit = hhsearch_hits[0]
     hit = replace(hit,**{"name":template_seq.id})
-    # ZZEE
   else:
     hit = None
   return hit
@@ -420,9 +410,9 @@ def get_template_hit_list(cif_files = None, fasta_dir = None,
         """
         SeqIO.write([seq], sys.stdout, "fasta")
         SeqIO.write([query_seq], sys.stdout, "fasta")
-        if 1: # ZZtry:
+        try:
           hit = hh_process_seq(query_seq,seq,hhDB_dir)
-        if 0: #ZZexcept Exception as e:
+        except Exception as e:
           print("Failed to process %s" %(filepath),e)
           hit = None
         if hit is not None:
