@@ -9,9 +9,8 @@ from pathlib import Path
 def shell(text):
   """ Utility to run a string as a shell script
   """
-  ! $text
-  #result = os.system(text)
-  #return result
+  result = os.system(text,shell=True)
+  return result
 
 def clear_python_caches(modules = None):
   import sys
