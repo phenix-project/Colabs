@@ -9,7 +9,7 @@ from pathlib import Path
 def shell(text):
   """ Utility to run a string as a shell script
   """
-  result = os.system(text,shell=True)
+  result = os.system(text)
   return result
 
 def clear_python_caches(modules = None):
