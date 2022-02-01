@@ -395,13 +395,11 @@ def set_up_input_files(params):
   if params.get(
      'upload_file_with_jobname_resolution_sequence_lines',None):
     params = get_jobnames_sequences_from_file(params)
-    jobname = params['jobnames']
+    jobnames = params['jobnames']
     resolutions = params['resolutions']
     map_filename_dict = params['map_filename_dict']
     cif_filename_dict = params['cif_filename_dict']
     query_sequences = params['query_sequences']
-    for x in params.keys(): # ZZ
-      print("PARAMS SET",x,params[x])
   else: # usual
     jobname = params.get('jobname',None)
     query_sequence = params.get('query_sequence',None)
@@ -442,8 +440,6 @@ def set_up_input_files(params):
 
 
   # Save sequence
-  for x in params.keys(): # ZZ
-    print("PARAMS",x,params[x])
   for i in range(len(query_sequences)):
     # save the sequence as a file with name jobname.fasta
     save_sequence(jobnames[i], query_sequences[i])
