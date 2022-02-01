@@ -430,14 +430,14 @@ def run_job(query_sequence,
     mtm_file_name = "None"
 
   pdb_cif_file_list = get_cif_file_list(
-    include_pdb = True,
+    include_templates_from_pdb = True,
     manual_templates_uploaded = None,
     cif_dir = cif_dir,
     other_cif_dir = other_cif_dir)
   print("CIF files from PDB to include:",pdb_cif_file_list)
 
   manual_cif_file_list = get_cif_file_list(
-    include_pdb = False,
+    include_templates_from_pdb = False,
     manual_templates_uploaded = manual_templates_uploaded,
     cif_dir = cif_dir)
   print("Uploaded CIF files to include:",manual_cif_file_list)
@@ -562,7 +562,7 @@ def run_job(query_sequence,
     final_model_file_name_as_cif_in_cif_dir = run_pdb_to_cif(
        final_model_file_name_in_cif_dir)
     manual_cif_file_list = get_cif_file_list(
-      include_pdb = False,
+      include_templates_from_pdb = False,
       manual_templates_uploaded = [final_model_file_name_as_cif_in_cif_dir.name],
       cif_dir = cif_dir)
     previous_final_model_name = final_model_file_name

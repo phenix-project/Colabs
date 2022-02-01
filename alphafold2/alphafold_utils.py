@@ -318,7 +318,7 @@ def get_msa(
   print("Done with MSA and templates")
   return msa, deletion_matrix, template_paths
 
-def get_cif_file_list(include_pdb = None,
+def get_cif_file_list(include_templates_from_pdb = None,
     manual_templates_uploaded = None,
     cif_dir = None,
     other_cif_dir = None):
