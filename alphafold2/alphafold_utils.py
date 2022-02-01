@@ -39,6 +39,7 @@ def mk_mock_template(query_sequence):
   return template_features
 
 def mk_template(a3m_lines, template_paths):
+  from alphafold.data import pipeline
   template_featurizer = templates.TemplateHitFeaturizer(
       mmcif_dir=template_paths,
       max_template_date="2100-01-01",
@@ -142,6 +143,8 @@ def hh_process_seq(query_seq,template_seq,hhDB_dir,db_prefix="DB"):
   Update: I think the hhsearch can be replaced completely, and we can just do a pairwise
   alignment with biopython, or skip alignment if the seqs match. TODO
   """
+  from alphafold.data import pipeline
+
   # set up directory for hhsuite DB. Place one template fasta file to be the DB contents
   if hhDB_dir.exists():
     shutil.rmtree(hhDB_dir)
