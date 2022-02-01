@@ -386,11 +386,7 @@ def run_job(query_sequence,
         maximum_cycles,
         resolution,
         maximum_templates_from_pdb,
-        num_models,
-        homooligomer,
         use_msa,
-        use_env,
-        use_custom_msa,
         use_templates,
         include_templates_from_pdb,
         uploaded_templates_are_map_to_model,
@@ -398,6 +394,14 @@ def run_job(query_sequence,
         skip_all_msa_after_first_cycle):
 
   os.chdir("/content/")
+
+  #standard values of parameters
+  num_models = 1
+  homooligomer = 1
+  use_env = True
+  use_custom_msa = False
+  use_templates = True
+
 
   #Get the MSA
   msa, deletion_matrix, template_paths = get_msa(
