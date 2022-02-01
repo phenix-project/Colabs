@@ -23,6 +23,8 @@ def run_one_cycle(cycle, template_hit_list,
   os.chdir("/content/")
   if template_hit_list:
     #process hits into template features
+    from dataclasses import replace
+    # ZZDD
     template_hit_list = [[replace(hit,**{"index":i+1}),mmcif] for i,[hit,mmcif] in enumerate(template_hit_list)]
 
     template_features = {}
