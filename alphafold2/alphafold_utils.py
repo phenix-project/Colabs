@@ -189,8 +189,8 @@ def hh_process_seq(query_seq,template_seq,hhDB_dir,db_prefix="DB"):
     os.getcwd()
 
   # run hhsearch
-  print("ZZ DB:",hhDB_dir,hhDB_dir.as_posix()+"/"+db_prefix,os.path.isdir(hhDB_dir)
-  a=bb
+  print("ZZ DB:",hhDB_dir,hhDB_dir.as_posix()+"/"+db_prefix,os.path.isdir(hhDB_dir))
+
   hhsearch_runner = hhsearch.HHSearch(binary_path="hhsearch",
       databases=[hhDB_dir.as_posix()+"/"+db_prefix])
   with StringIO() as fh:
