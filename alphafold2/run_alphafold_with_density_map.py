@@ -32,6 +32,7 @@ def run_one_cycle(cycle, template_hit_list,
   if template_hit_list:
     #process hits into template features
     from dataclasses import replace
+    # ZZDDFFHH
     # ZZDDFF
     template_hit_list = [[replace(hit,**{"index":i+1}),mmcif] for i,[hit,mmcif] in enumerate(template_hit_list)]
 
@@ -135,6 +136,7 @@ def run_one_cycle(cycle, template_hit_list,
       deletion_matrices.append([[0]*L+mtx+[0]*R for mtx in deletion_matrix])
 
   # gather features
+  from alphafold.data import pipeline
   feature_dict = {
       **pipeline.make_sequence_features(sequence=query_sequence*homooligomer,
                                         description="none",
