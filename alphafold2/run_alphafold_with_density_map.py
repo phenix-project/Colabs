@@ -16,7 +16,8 @@ def run_one_cycle(cycle, template_hit_list,
         msa, deletion_matrix, template_paths,
         mtm_file_name,
         cif_dir,
-        output_directory):
+        output_directory,
+        homooligomer):
 
 
   os.chdir("/content/")
@@ -506,7 +507,8 @@ def run_job(query_sequence,
         msa, deletion_matrix, template_paths,
         mtm_file_name,
         cif_dir,
-        output_directory)
+        output_directory,
+        homooligomer)
 
     cycle_model_file_name = Path(cycle_model_file_name)
 
