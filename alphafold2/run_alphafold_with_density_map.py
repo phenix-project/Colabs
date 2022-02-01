@@ -394,6 +394,7 @@ def run_job(query_sequence,
 
   from Bio.SeqRecord import SeqRecord
   from Bio.Seq import Seq
+  from Bio import SeqIO
 
   os.chdir("/content/")
 
