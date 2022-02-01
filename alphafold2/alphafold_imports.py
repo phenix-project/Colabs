@@ -21,7 +21,6 @@ from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import dataclass, replace
 
 if os.path.isfile('AF2_READY'):
-  from Bio.Seq import Seq
   from Bio import SeqIO
 
   import numpy as np
