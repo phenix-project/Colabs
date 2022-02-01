@@ -209,8 +209,10 @@ def hh_process_seq(query_seq,template_seq,hhDB_dir,db_prefix="DB"):
   # process hits
   hhsearch_hits = pipeline.parsers.parse_hhr(hhsearch_result)
   if len(hhsearch_hits) >0:
+    from dataclasses import replace
     hit = hhsearch_hits[0]
     hit = replace(hit,**{"name":template_seq.id})
+    # ZZEE
   else:
     hit = None
   return hit
