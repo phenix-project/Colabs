@@ -143,7 +143,9 @@ def hh_process_seq(query_seq,template_seq,hhDB_dir,db_prefix="DB"):
   Update: I think the hhsearch can be replaced completely, and we can just do a pairwise
   alignment with biopython, or skip alignment if the seqs match. TODO
   """
+
   from alphafold.data import pipeline
+  from Bio import SeqIO
 
   # set up directory for hhsuite DB. Place one template fasta file to be the DB contents
   if hhDB_dir.exists():
@@ -357,6 +359,7 @@ def get_template_hit_list(cif_files = None, fasta_dir = None,
   from alphafold.data import mmcif_parsing
   from Bio.SeqRecord import SeqRecord
   from Bio.Seq import Seq
+  from Bio import SeqIO
   template_hit_list = []
   for i,filepath in enumerate(cif_files):
     if not str(filepath).endswith(".cif"): continue
