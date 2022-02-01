@@ -22,7 +22,6 @@ from dataclasses import dataclass, replace
 
 if os.path.isfile('AF2_READY'):
   from Bio.Seq import Seq
-  from Bio.SeqRecord import SeqRecord
   from Bio import SeqIO
 
   import numpy as np
