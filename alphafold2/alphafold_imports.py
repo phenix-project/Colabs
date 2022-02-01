@@ -39,13 +39,3 @@ if os.path.isfile('AF2_READY'):
   import ipywidgets
   from ipywidgets import interact, fixed, GridspecLayout, Output
 
-
-  from alphafold.data.templates import (_get_pdb_id_and_chain,
-                                    _process_single_hit,
-                                    _assess_hhsearch_hit,
-                                    _build_query_to_hit_index_mapping,
-                                    _extract_template_features,
-                                    SingleHitResult,
-                                    TEMPLATE_FEATURES)
-
-

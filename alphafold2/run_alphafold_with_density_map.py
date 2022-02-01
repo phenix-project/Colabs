@@ -6,6 +6,14 @@ import os, sys
 from alphafold_imports import *
 from alphafold_utils import *
 
+from alphafold.data.templates import (_get_pdb_id_and_chain,
+                                    _process_single_hit,
+                                    _build_query_to_hit_index_mapping,
+                                    _extract_template_features,
+                                    SingleHitResult,
+                                    TEMPLATE_FEATURES)
+
+
 def run_one_cycle(cycle, template_hit_list,
         query_sequence,
         jobname,
@@ -24,7 +32,7 @@ def run_one_cycle(cycle, template_hit_list,
   if template_hit_list:
     #process hits into template features
     from dataclasses import replace
-    # ZZDD
+    # ZZDDFF
     template_hit_list = [[replace(hit,**{"index":i+1}),mmcif] for i,[hit,mmcif] in enumerate(template_hit_list)]
 
     template_features = {}
@@ -438,7 +446,7 @@ def run_job(query_sequence,
     mtm_file_name = "None"
 
   pdb_cif_file_list = get_cif_file_list(
-    include_templates_from_pdb = True,
+    include_templates_from_pdb = include_templates_from_pdb,
     manual_templates_uploaded = None,
     cif_dir = cif_dir,
     other_cif_dir = other_cif_dir)
