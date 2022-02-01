@@ -162,11 +162,14 @@ def hh_process_seq(query_seq,template_seq,hhDB_dir,db_prefix="DB"):
     SeqIO.write([template_seq], fh, "fasta")
   print("MSA DIR",msa_dir)
   # make hhsuite DB
-  with redirect_stdout(StringIO()) as out:
+  if 1: # ZZwith redirect_stdout(StringIO()) as out:
     os.chdir(msa_dir)
+    os.getcwd()
     shell(" ffindex_build -s ../DB_msa.ff{data,index} .")
     os.chdir(hhDB_dir)
+    os.getcwd()
     shell(" ffindex_apply DB_msa.ff{data,index}  -i DB_a3m.ffindex -d DB_a3m.ffdata  -- hhconsensus -M 50 -maxres 65535 -i stdin -oa3m stdout -v 0")
+    os.getcwd()
     shell(" rm DB_msa.ff{data,index}")
     shell(" ffindex_apply DB_a3m.ff{data,index} -i DB_hhm.ffindex -d DB_hhm.ffdata -- hhmake -i stdin -o stdout -v 0")
     shell(" cstranslate -f -x 0.3 -c 4 -I a3m -i DB_a3m -o DB_cs219 ")
@@ -178,6 +181,7 @@ def hh_process_seq(query_seq,template_seq,hhDB_dir,db_prefix="DB"):
     shell(" mv DB_a3m_ordered.ffindex DB_a3m.ffindex")
     shell(" mv DB_a3m_ordered.ffdata DB_a3m.ffdata")
     os.chdir("/content/")
+    os.getcwd()
 
   # run hhsearch
   hhsearch_runner = hhsearch.HHSearch(binary_path="hhsearch",
@@ -396,9 +400,9 @@ def get_template_hit_list(cif_files = None, fasta_dir = None,
         """
         SeqIO.write([seq], sys.stdout, "fasta")
         SeqIO.write([query_seq], sys.stdout, "fasta")
-        if 1: # ZZtry:
+        try:
           hit = hh_process_seq(query_seq,seq,hhDB_dir)
-        if 0: # ZZexcept Exception as e:
+        except Exception as e:
           print("Failed to process %s" %(filepath),e)
           hit = None
         if hit is not None:
