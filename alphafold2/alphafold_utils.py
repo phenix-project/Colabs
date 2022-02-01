@@ -172,8 +172,8 @@ def hh_process_seq(query_seq,template_seq,hhDB_dir,db_prefix="DB"):
     os.chdir(msa_dir)
     os.getcwd()
     import subprocess
-    subprocess.call([
-        "ffindex_build", "-s" ,"../DB_msa.ffdata","../DB_msa.ffindex", "."])
+    subprocess.call("ffindex_build -s ../DB_msa.ffdata ../DB_msa.ffindex .".split())
+    print("ZZ called",os.listdir(".."))
     os.chdir(hhDB_dir)
     os.getcwd()
     shell(" ffindex_apply DB_msa.ff{data,index}  -i DB_a3m.ffindex -d DB_a3m.ffdata  -- hhconsensus -M 50 -maxres 65535 -i stdin -oa3m stdout -v 0")
