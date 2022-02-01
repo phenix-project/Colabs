@@ -12,7 +12,6 @@ from io import StringIO
 import shutil
 from string import ascii_uppercase
 from phenix_colab_utils import shell
-import numpy as np
 
 def set_up_alphafold_logging():
   warnings.filterwarnings('ignore')
@@ -22,6 +21,7 @@ def set_up_alphafold_logging():
 
 
 def mk_mock_template(query_sequence):
+  import numpy as np
   # since alphafold's model requires a template input
   # we create a blank example w/ zero input, confidence -1
   ln = len(query_sequence)
@@ -63,6 +63,7 @@ def mk_template(a3m_lines, template_paths):
   return templates_result.features
 
 def set_bfactor(pdb_filename, bfac, idx_res, chains):
+  import numpy as np
   I = open(pdb_filename,"r").readlines()
   O = open(pdb_filename,"w")
   for line in I:
@@ -78,6 +79,7 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
   model_runner_3,
   do_relax=False, random_seed=0):
   """Predicts structure using AlphaFold for the given sequence."""
+  import numpy as np
 
   # Minkyung's code
   # add big enough number to residue index to indicate chain breaks
