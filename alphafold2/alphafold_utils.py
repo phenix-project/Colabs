@@ -396,9 +396,9 @@ def get_template_hit_list(cif_files = None, fasta_dir = None,
         """
         SeqIO.write([seq], sys.stdout, "fasta")
         SeqIO.write([query_seq], sys.stdout, "fasta")
-        try:
+        if 1: # ZZtry:
           hit = hh_process_seq(query_seq,seq,hhDB_dir)
-        except Exception as e:
+        if 0: # ZZexcept Exception as e:
           print("Failed to process %s" %(filepath),e)
           hit = None
         if hit is not None:
