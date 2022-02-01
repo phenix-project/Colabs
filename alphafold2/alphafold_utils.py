@@ -354,6 +354,7 @@ def get_cif_file_list(
 def get_template_hit_list(cif_files = None, fasta_dir = None,
     query_seq = None,
     hhDB_dir = None):
+  from alphafold.data import mmcif_parsing
   template_hit_list = []
   for i,filepath in enumerate(cif_files):
     if not str(filepath).endswith(".cif"): continue

@@ -44,7 +44,6 @@ if os.path.isfile('AF2_READY'):
   from ipywidgets import interact, fixed, GridspecLayout, Output
 
 
-  from alphafold.data import mmcif_parsing
   from alphafold.data.templates import (_get_pdb_id_and_chain,
                                     _process_single_hit,
                                     _assess_hhsearch_hit,
