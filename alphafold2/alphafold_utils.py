@@ -49,6 +49,8 @@ def mk_template(a3m_lines, template_paths):
       release_dates_path=None,
       obsolete_pdbs_path=None)
 
+  from alphafold.data.tools import hhsearch
+
   hhsearch_pdb70_runner = hhsearch.HHSearch(binary_path="hhsearch", databases=[f"{template_paths}/pdb70"])
 
   hhsearch_result = hhsearch_pdb70_runner.query(a3m_lines)
@@ -147,6 +149,7 @@ def hh_process_seq(query_seq,template_seq,hhDB_dir,db_prefix="DB"):
 
   from alphafold.data import pipeline
   from Bio import SeqIO
+  from alphafold.data.tools import hhsearch
 
   # set up directory for hhsuite DB. Place one template fasta file to be the DB contents
   if hhDB_dir.exists():

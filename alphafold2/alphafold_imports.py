@@ -29,7 +29,6 @@ if os.path.isfile('AF2_READY'):
   from alphafold.model import data
   from alphafold.model import config
   from alphafold.model import model
-  from alphafold.data.tools import hhsearch
 
   import warnings
   from absl import logging
