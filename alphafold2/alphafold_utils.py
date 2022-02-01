@@ -180,7 +180,7 @@ def hh_process_seq(query_seq,template_seq,hhDB_dir,db_prefix="DB"):
     os.getcwd()
     shell(" rm DB_msa.ff{data,index}")
     shell(" ffindex_apply DB_a3m.ffdata DB_a3m.ffindex} -i DB_hhm.ffindex -d DB_hhm.ffdata -- hhmake -i stdin -o stdout -v 0")
-    shell(" cstranslate -f -x 0.3 -c 4 -I a3m -i DB_a3m -o DB_cs219 ")
+    subprocess.call(['cstranslate','-f','-x','0.3','-c','4','-I','a3m','-i','DB_a3m','-o','DB_cs219'])
     shell(" sort -k3 -n -r DB_cs219.ffindex | cut -f1 > sorting.dat")
     shell(" ffindex_order sorting.dat DB_hhm.ffdata DB_hhm.ffindex DB_hhm_ordered.ffdata DB_hhm_ordered.ffindex")
     shell(" mv DB_hhm_ordered.ffindex DB_hhm.ffindex")
