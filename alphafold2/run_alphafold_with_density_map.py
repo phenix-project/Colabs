@@ -422,6 +422,7 @@ def run_job(query_sequence,
   cif_dir = Path(parent_dir,"mmcif")
   fasta_dir = Path(parent_dir,"fasta")
   hhDB_dir = Path(parent_dir,"hhDB")
+  print("ZZ hhDB_dir:",hhDB_dir)
   msa_dir = Path(hhDB_dir,"msa")
   clear_directories([fasta_dir,hhDB_dir,msa_dir])
 
