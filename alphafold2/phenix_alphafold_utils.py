@@ -478,3 +478,4 @@ def set_up_input_files(params):
   params['cif_filename_dict'] = cif_filename_dict
   params['query_sequences'] = query_sequences
   return params
+
