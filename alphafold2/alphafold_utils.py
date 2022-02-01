@@ -178,6 +178,7 @@ def hh_process_seq(query_seq,template_seq,hhDB_dir,db_prefix="DB"):
     os.getcwd()
     subprocess.call(" ffindex_apply DB_msa.ffdata DB_msa.ffindex  -i DB_a3m.ffindex -d DB_a3m.ffdata  -- hhconsensus -M 50 -maxres 65535 -i stdin -oa3m stdout -v 0".split())
     os.getcwd()
+    # ZZCC
     shell(" rm DB_msa.ffdata DB_msa.ffindex")
     shell(" ffindex_apply DB_a3m.ffdata DB_a3m.ffindex -i DB_hhm.ffindex -d DB_hhm.ffdata -- hhmake -i stdin -o stdout -v 0")
     subprocess.call(['cstranslate','-f','-x','0.3','-c','4','-I','a3m','-i','DB_a3m','-o','DB_cs219'])
