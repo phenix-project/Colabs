@@ -11,6 +11,7 @@ from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 import shutil
 from string import ascii_uppercase
+from phenix_colab_utils import shell
 
 def set_up_alphafold_logging():
   warnings.filterwarnings('ignore')
