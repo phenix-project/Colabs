@@ -294,7 +294,7 @@ def get_jobnames_sequences_from_file(params):
     print("Total of %s template files uploaded: %s" %(
           len(uploaded_template_files), uploaded_template_files))
     print("Total of %s map files uploaded: %s" %(
-          len(uploaded_map_files), uploaded_map_files))
+          len(uploaded_maps), uploaded_maps))
 
   else:
     uploaded_template_files = []
