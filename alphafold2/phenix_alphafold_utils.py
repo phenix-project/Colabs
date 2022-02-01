@@ -72,11 +72,11 @@ def get_input_output_dirs(params):
      of input_directory in default directory, or as a directory with this
      name in user's Google drive.
 
-     If create_output_dir is set, create an output_dir as well in Google
-     drive
+     If save_outputs_in_google_drive is set, create an output_dir as
+     well in Google drive
   """
   input_directory = params.get('input_directory',None)
-  create_output_dir = params.get('create_output_dir',None)
+  create_output_dir = params.get('save_outputs_in_google_drive',None)
   output_dir = params.get('output_dir',"ColabOutputs")
 
   have_input_directory = False
