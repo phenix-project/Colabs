@@ -184,6 +184,7 @@ def hh_process_seq(query_seq,template_seq,hhDB_dir,db_prefix="DB"):
     shell(" ffindex_order sorting.dat DB_a3m.ff{data,index} DB_a3m_ordered.ff{data,index}")
     shell(" mv DB_a3m_ordered.ffindex DB_a3m.ffindex")
     shell(" mv DB_a3m_ordered.ffdata DB_a3m.ffdata")
+    print("ZZ FILES:",os.listdir("."))
     os.chdir("/content/")
     os.getcwd()
 
