@@ -191,7 +191,10 @@ def hh_process_seq(query_seq,template_seq,hhDB_dir,db_prefix="DB"):
     os.getcwd()
 
   # run hhsearch
-  print("ZZ DB:",hhDB_dir,hhDB_dir.as_posix()+"/"+db_prefix,os.path.isdir(hhDB_dir))
+  db_dir = hhDB_dir.as_posix()+"/"+db_prefix
+  if not os.path.isdir(db_dir):
+    os.mkdir (db_dir)
+  print("ZZ DB:",hhDB_dir,hhDB_dir.as_posix()+"/"+db_prefix,os.path.isdir(hhDB_dir),os.path.isdir(db_dir))
 
   hhsearch_runner = hhsearch.HHSearch(binary_path="hhsearch",
       databases=[hhDB_dir.as_posix()+"/"+db_prefix])
