@@ -249,7 +249,7 @@ def get_templates_from_drive(params):
         manual_templates_uploaded.append(cif_filepath)
 
   if params.get('upload_maps',None):
-    print("Maps uploaded: %s" %(maps_uploaded))
+    print("Maps selected from Google drive: %s" %(maps_uploaded))
 
   print("Templates uploaded: %s" %(manual_templates_uploaded))
   if (not params.get('upload_maps',None)) and (not manual_templates_uploaded):
@@ -336,12 +336,10 @@ def get_jobnames_sequences_from_file(params):
                     uploaded_template_files,
                      jobname)
           if uploaded_maps:
-              print("ZZ selecting",jobname,"from",uploaded_maps)
               map_filename_dict[jobname] = \
                 select_matching_template_files(
                     uploaded_maps,
                      jobname)
-              print("ZZ selecting",jobname,"from",uploaded_maps,":",map_filename_dict[jobname])
 
   params['jobnames'] = jobnames
   params['resolutions'] = resolutions
