@@ -286,6 +286,7 @@ def get_msa(
       use_templates,
       homooligomer,
       use_msa):
+  import colabfold as cf
   template_paths = None # initialize
 
   #@title Get MSA and templates
