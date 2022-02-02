@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 
 from phenix_alphafold_utils import clear_directories
-from phenix_colab_utils import shell
+from phenix_colab_utils import runsh
 
 from alphafold_utils import (mk_mock_template,
    predict_structure,
@@ -383,7 +383,7 @@ def rebuild_model(
   log_file = rebuilt_model_name.replace(".pdb",".log")
 
   # run phenix dock_and_rebuild here
-  shell("phenix.dock_and_rebuild fragments_model_file=%s nproc=%s resolution=%s previous_model_file=%s model=%s full_map=%s output_model_prefix=%s >& %s" %(
+  runsh("phenix.dock_and_rebuild fragments_model_file=%s nproc=%s resolution=%s previous_model_file=%s model=%s full_map=%s output_model_prefix=%s >& %s" %(
      mtm_file_name,nproc,resolution,previous_model_file,
      af_model_file,map_file_name,
       rebuilt_model_stem,
@@ -403,7 +403,7 @@ def get_map_to_model(map_file_name,
     nproc = 4):
 
 
-  shell(
+  runsh(
    "phenix.map_to_model nproc=%s seq_file=%s resolution=%s %s pdb_out=%s" %(
      nproc, seq_file, resolution, map_file_name, output_file_name) )
   return output_file_name
@@ -572,7 +572,7 @@ def run_job(query_sequence,
         resolution)
 
     try:
-      shell(
+      runsh(
       "zip -FSr %s'.result.zip'  %s*.pdb %s*.j* %s*.png %s*.bibtex %s*.jsn" %(
          jobname,jobname,jobname,jobname,jobname,jobname))
       zip_file_name = f"{jobname}.result.zip"

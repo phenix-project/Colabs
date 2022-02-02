@@ -11,7 +11,7 @@ from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 import shutil
 from string import ascii_uppercase
-from phenix_colab_utils import shell
+from phenix_colab_utils import runsh
 from alphafold.data import templates
 import matplotlib.pyplot as plt
 
@@ -179,20 +179,20 @@ def hh_process_seq(query_seq,template_seq,content_dir,
   with redirect_stdout(StringIO()) as out:
     os.chdir(msa_dir)
     import subprocess
-    shell("ffindex_build -s ../DB_msa.ffdata ../DB_msa.ffindex .")
+    runsh("ffindex_build -s ../DB_msa.ffdata ../DB_msa.ffindex .")
     os.chdir(hhDB_dir)
-    shell(" ffindex_apply DB_msa.ffdata DB_msa.ffindex  -i DB_a3m.ffindex -d DB_a3m.ffdata  -- hhconsensus -M 50 -maxres 65535 -i stdin -oa3m stdout -v 0")
-    shell(" rm DB_msa.ffdata DB_msa.ffindex")
-    shell(" ffindex_apply DB_a3m.ffdata DB_a3m.ffindex -i DB_hhm.ffindex -d DB_hhm.ffdata -- hhmake -i stdin -o stdout -v 0")
+    runsh(" ffindex_apply DB_msa.ffdata DB_msa.ffindex  -i DB_a3m.ffindex -d DB_a3m.ffdata  -- hhconsensus -M 50 -maxres 65535 -i stdin -oa3m stdout -v 0")
+    runsh(" rm DB_msa.ffdata DB_msa.ffindex")
+    runsh(" ffindex_apply DB_a3m.ffdata DB_a3m.ffindex -i DB_hhm.ffindex -d DB_hhm.ffdata -- hhmake -i stdin -o stdout -v 0")
     # This one needs subprocess.call:
     subprocess.call(['cstranslate','-f','-x','0.3','-c','4','-I','a3m','-i','DB_a3m','-o','DB_cs219'])
-    shell(" sort -k3 -n -r DB_cs219.ffindex | cut -f1 > sorting.dat")
-    shell(" ffindex_order sorting.dat DB_hhm.ffdata DB_hhm.ffindex DB_hhm_ordered.ffdata DB_hhm_ordered.ffindex")
-    shell(" mv DB_hhm_ordered.ffindex DB_hhm.ffindex")
-    shell(" mv DB_hhm_ordered.ffdata DB_hhm.ffdata")
-    shell(" ffindex_order sorting.dat DB_a3m.ffdata DB_a3m.ffindex DB_a3m_ordered.ffdata DB_a3m_ordered.ffindex")
-    shell(" mv DB_a3m_ordered.ffindex DB_a3m.ffindex")
-    shell(" mv DB_a3m_ordered.ffdata DB_a3m.ffdata")
+    runsh(" sort -k3 -n -r DB_cs219.ffindex | cut -f1 > sorting.dat")
+    runsh(" ffindex_order sorting.dat DB_hhm.ffdata DB_hhm.ffindex DB_hhm_ordered.ffdata DB_hhm_ordered.ffindex")
+    runsh(" mv DB_hhm_ordered.ffindex DB_hhm.ffindex")
+    runsh(" mv DB_hhm_ordered.ffdata DB_hhm.ffdata")
+    runsh(" ffindex_order sorting.dat DB_a3m.ffdata DB_a3m.ffindex DB_a3m_ordered.ffdata DB_a3m_ordered.ffindex")
+    runsh(" mv DB_a3m_ordered.ffindex DB_a3m.ffindex")
+    runsh(" mv DB_a3m_ordered.ffdata DB_a3m.ffdata")
     os.chdir(content_dir)
 
   # run hhsearch

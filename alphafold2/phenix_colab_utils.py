@@ -6,8 +6,8 @@ from pathlib import Path
 
 # Utilities for setting up and running Phenix in Colab
 
-def shell(text):
-  """ Utility to run a string as a shell script
+def runsh(text):
+  """ Utility to run a string as a runsh script
   """
   import subprocess
   print("RUNNING:",text)
@@ -79,38 +79,38 @@ def install_alphafold(version = None, content_dir = None):
 
   # install dependencies
   print( "Installing biopython and colabfold...")
-  shell("pip -q install biopython dm-haiku ml-collections py3Dmol")
-  shell("wget -qnc https://raw.githubusercontent.com/sokrypton/ColabFold/96fe2446f454eba38ea34ca45d97dc3f393e24ed/beta/colabfold.py")
+  runsh("pip -q install biopython dm-haiku ml-collections py3Dmol")
+  runsh("wget -qnc https://raw.githubusercontent.com/sokrypton/ColabFold/96fe2446f454eba38ea34ca45d97dc3f393e24ed/beta/colabfold.py")
   # download model
   if not os.path.isdir("alphafold"):
     print("Installing AlphaFold...")
-    shell("git clone https://github.com/deepmind/alphafold.git --quiet")
+    runsh("git clone https://github.com/deepmind/alphafold.git --quiet")
     here = os.getcwd()
     os.chdir(os.path.join(here,"alphafold"))
-    shell("git checkout %s --quiet" %(version))
+    runsh("git checkout %s --quiet" %(version))
     os.chdir(here)
-    shell("mv alphafold alphafold_")
-    shell("mv alphafold_/alphafold .")
+    runsh("mv alphafold alphafold_")
+    runsh("mv alphafold_/alphafold .")
     # remove "END" from PDBs, otherwise biopython complains
     dd = os.path.join(content_dir, "alphafold","common","protein.py")
-    shell("""sed -i "s/pdb_lines.append('END')//" %s""" %(dd))
-    shell("""sed -i "s/pdb_lines.append('ENDMDL')//" %s""" %(dd))
+    runsh("""sed -i "s/pdb_lines.append('END')//" %s""" %(dd))
+    runsh("""sed -i "s/pdb_lines.append('ENDMDL')//" %s""" %(dd))
 
   # download model params (~1 min)
   if not os.path.isdir("params"):
     print("Installing AlphaFold parameters...")
-    shell("mkdir params")
-    shell("/usr/bin/curl -fsSL https://storage.googleapis.com/alphafold/alphafold_params_2021-07-14.tar | tar x -C params")
+    runsh("mkdir params")
+    runsh("/usr/bin/curl -fsSL https://storage.googleapis.com/alphafold/alphafold_params_2021-07-14.tar | tar x -C params")
 
-  shell("touch AF2_READY")
+  runsh("touch AF2_READY")
 
 
   # download libraries for interfacing with MMseqs2 API
   if not os.path.isfile("MMSEQ2_READY"):
     print( "Installing mmseq2 ...")
-    shell("apt-get -qq -y update 2>&1 1>/dev/null")
-    shell("apt-get -qq -y install jq curl zlib1g gawk 2>&1 1>/dev/null")
-    shell("touch MMSEQ2_READY")
+    runsh("apt-get -qq -y update 2>&1 1>/dev/null")
+    runsh("apt-get -qq -y install jq curl zlib1g gawk 2>&1 1>/dev/null")
+    runsh("touch MMSEQ2_READY")
 
 
 def run_fix_paths():
@@ -131,9 +131,9 @@ def run_fix_paths():
 
   here = os.getcwd()
   os.chdir("/usr/local/lib/python3.7/site-packages/")
-  shell (" tar czvf - phenix/refinement/*/*.params > phenix/tmp_phenix.tgz")
+  runsh (" tar czvf - phenix/refinement/*/*.params > phenix/tmp_phenix.tgz")
   os.chdir("/usr/local/lib/python3.7/site-packages/phenix")
-  shell("tar xzvf tmp_phenix.tgz")
+  runsh("tar xzvf tmp_phenix.tgz")
   os.chdir(here)
 
   import sys
@@ -155,10 +155,10 @@ def install_phenix(password = None, version = None):
     print("Phenix is already downloaded")
   else:
     print("Downloading Phenix...")
-    shell("wget -q --user user --password %s -r -l1 https://phenix-online.org/download/installers/%s/linux-64/ -A phenix*.tar.bz2" %(password, version))
+    runsh("wget -q --user user --password %s -r -l1 https://phenix-online.org/download/installers/%s/linux-64/ -A phenix*.tar.bz2" %(password, version))
     if not os.path.isdir("phenix-online.org"):
       # try with user as trusted
-      shell("wget -q --user trusted --password %s -r -l1 https://phenix-online.org/download/installers/%s/linux-64/ -A phenix*.tar.bz2" %(password, version))
+      runsh("wget -q --user trusted --password %s -r -l1 https://phenix-online.org/download/installers/%s/linux-64/ -A phenix*.tar.bz2" %(password, version))
     if not os.path.isdir("phenix-online.org"):
       raise AssertionError("Unable to download...please check your Phenix version and password?")
 
@@ -172,10 +172,10 @@ def install_phenix(password = None, version = None):
     if not file_name.endswith(".bz2"):
       raise AssertionError("Downloaded file does not end with .bz2")
 
-    shell("mv phenix-online.org/download/installers/%s/linux-64/%s ." %(
+    runsh("mv phenix-online.org/download/installers/%s/linux-64/%s ." %(
      version, file_name))
-    shell("rm -fr phenix-online.org")
-    shell("touch PHENIX_DOWNLOADED")
+    runsh("rm -fr phenix-online.org")
+    runsh("touch PHENIX_DOWNLOADED")
     print("Phenix has been downloaded.")
 
   if os.path.isfile("PHENIX_READY"):
@@ -188,11 +188,11 @@ def install_phenix(password = None, version = None):
     bz2_file = get_last_bz2_file()
     print("Zip file is %s" %(bz2_file))
 
-    shell("mamba install -q -y %s" %(bz2_file))
-    shell("mamba install -q -c conda-forge -y boost=1.74 boost-cpp mrcfile numpy=1.20 scipy")  # >& /dev/null")
-    shell("cp -a /usr/local/share/cctbx /usr/share")
-    shell("pip install psutil")
-    shell("touch PHENIX_READY")
+    runsh("mamba install -q -y %s" %(bz2_file))
+    runsh("mamba install -q -c conda-forge -y boost=1.74 boost-cpp mrcfile numpy=1.20 scipy")  # >& /dev/null")
+    runsh("cp -a /usr/local/share/cctbx /usr/share")
+    runsh("pip install psutil")
+    runsh("touch PHENIX_READY")
     print("Phenix has been installed.")
 
 def get_last_bz2_file():
@@ -212,10 +212,10 @@ def install_condacolab():
     print ("CondaColab is already installed")
     return
   print("Installing condacolab...")
-  shell("pip install -q condacolab")
+  runsh("pip install -q condacolab")
   import condacolab
   condacolab.install()
-  shell("touch CONDA_READY")
+  runsh("touch CONDA_READY")
   print("Done...please ignore the crash messege...")
 
 def install_bioconda():
@@ -224,8 +224,8 @@ def install_bioconda():
     print("Bioconda already installed")
   else:
     print("Installing bioconda")
-    shell("conda install -y -q -c conda-forge -c bioconda kalign3=3.2.2 hhsuite=3.3.0 python=3.7 2>&1 1>/dev/null")
-    shell("touch HH_READY")
+    runsh("conda install -y -q -c conda-forge -c bioconda kalign3=3.2.2 hhsuite=3.3.0 python=3.7 2>&1 1>/dev/null")
+    runsh("touch HH_READY")
 
 def test():
   print("testing")
@@ -243,10 +243,10 @@ def install_pdb_to_cif():
     print("pdb_to_cif is already downloaded")
   else:
     print("Downloading pdb_to_cif...")
-    shell('wget https://phenix-online.org/phenix_data/terwilliger/colab_data/maxit-v11.100-prod-src.tgz')
-    shell('tar xzf maxit-v11.100-prod-src.tgz')
-    shell('rm -f maxit-v11.100-prod-src.tgz')
-    shell('touch PDB_TO_CIF_READY')
+    runsh('wget https://phenix-online.org/phenix_data/terwilliger/colab_data/maxit-v11.100-prod-src.tgz')
+    runsh('tar xzf maxit-v11.100-prod-src.tgz')
+    runsh('rm -f maxit-v11.100-prod-src.tgz')
+    runsh('touch PDB_TO_CIF_READY')
     print("Ready with pdb_to_cif")
 
 def run_pdb_to_cif(f, content_dir = None):
@@ -263,5 +263,5 @@ def run_pdb_to_cif(f, content_dir = None):
 
     p = os.path.join(content_dir,"maxit-v11.100-prod-src")
     b = os.path.join(p, "bin","process_entry")
-    shell("chmod +x %s; RCSBROOT=%s; export RCSBROOT; echo $RCSBROOT;  %s -input %s -input_format pdb -output %s -output_format cif" %(b,p,b,f,output_file))
+    runsh("chmod +x %s; RCSBROOT=%s; export RCSBROOT; echo $RCSBROOT;  %s -input %s -input_format pdb -output %s -output_format cif" %(b,p,b,f,output_file))
     return Path(output_file)
