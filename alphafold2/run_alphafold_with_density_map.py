@@ -28,7 +28,7 @@ def run_one_cycle(cycle, template_hit_list,
         homooligomer,
         use_msa,
         use_env,
-        use_templates)
+        use_templates):
 
 
   os.chdir("/content/")
