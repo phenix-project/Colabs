@@ -100,7 +100,8 @@ def install_alphafold(version = None, content_dir = None):
   if not os.path.isdir("params"):
     print("Installing AlphaFold parameters...")
     runsh("mkdir params")
-    runsh("/usr/bin/curl -fsSL https://storage.googleapis.com/alphafold/alphafold_params_2021-07-14.tar | tar x -C params")
+    import subprocess
+    subprocess.check_output("/usr/bin/curl -fsSL https://storage.googleapis.com/alphafold/alphafold_params_2021-07-14.tar | tar x -C params", shell = True)
 
   runsh("touch AF2_READY")
 
