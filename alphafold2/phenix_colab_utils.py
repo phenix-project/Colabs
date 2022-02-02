@@ -85,7 +85,10 @@ def install_alphafold(version = None, content_dir = None):
   if not os.path.isdir("alphafold"):
     print("Installing AlphaFold...")
     shell("git clone https://github.com/deepmind/alphafold.git --quiet")
-    shell("cd alphafold; git checkout %s --quiet" %(version))
+    here = os.getcwd()
+    os.chdir(os.path.join(here,"alphafold"))
+    shell("git checkout %s --quiet" %(version))
+    os.chdir(here)
     shell("mv alphafold alphafold_")
     shell("mv alphafold_/alphafold .")
     # remove "END" from PDBs, otherwise biopython complains
@@ -126,7 +129,12 @@ def run_fix_paths():
 
   print("Updating python paths...")
 
-  shell ( """ cd /usr/local/lib/python3.7/site-packages/; tar czvf - phenix/refinement/*/*.params > phenix/tmp_phenix.tgz; cd phenix; tar xzvf tmp_phenix.tgz""")
+  here = os.getcwd()
+  os.chdir("/usr/local/lib/python3.7/site-packages/")
+  shell (" tar czvf - phenix/refinement/*/*.params > phenix/tmp_phenix.tgz")
+  os.chdir("/usr/local/lib/python3.7/site-packages/phenix")
+  shell("tar xzvf tmp_phenix.tgz")
+  os.chdir(here)
 
   import sys
   for d in ['/usr/local/lib', '/usr/local/lib/python3.7/lib-dynload', '/usr/local/lib/python3.7/site-packages']:
