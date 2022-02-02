@@ -37,8 +37,11 @@ def install_software(
     alphafold_version = '0bab1bf84d9d887aba5cfb6d09af1e8c3ecbc408',
   pdb_to_cif = True,
   fix_paths = True,
+  content_dir = None,
     ):
 
+  if content_dir is None:
+    content_dir = os.getcwd()
 
   if bioconda:
     install_bioconda()
@@ -47,7 +50,7 @@ def install_software(
     install_phenix(password = phenix_password, version = phenix_version)
 
   if alphafold:
-    install_alphafold(version = alphafold_version)
+    install_alphafold(version = alphafold_version, content_dir = content_dir)
 
   if pdb_to_cif:
     install_pdb_to_cif()
@@ -57,7 +60,9 @@ def install_software(
 
 
 
-def install_alphafold(version = None):
+def install_alphafold(version = None, content_dir = None):
+  assert content_dir is not None
+  os.chdir(content_dir)
 
   if not version:
     raise AssertionError("Need alphafold version for installation")
