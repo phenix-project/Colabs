@@ -245,7 +245,7 @@ def plot_confidence(outs, model_num=1):
   #########################################
   return plt
 
-def show_pdb(model_num=1, show_sidechains=False, show_mainchains=False, color="lDDT"):
+def show_pdb(jobname, model_num=1, show_sidechains=False, show_mainchains=False, color="lDDT"):
   model_name = f"model_{model_num}"
 
   pdb_filename = f"{jobname}_unrelaxed_{model_name}.pdb"
