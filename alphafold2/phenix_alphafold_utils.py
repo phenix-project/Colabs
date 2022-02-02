@@ -94,10 +94,11 @@ def get_input_output_dirs(params):
     need_google_drive = True
 
   if need_google_drive:
-    gdrive_dir = '/content/gdrive/MyDrive'
-    if not os.path.isdir('/content/gdrive'):
+    gdrive_path = os.path.join(content_dir,'gdrive')
+    gdrive_dir = os.path.join(content_dir,'gdrive','MyDrive')
+    if not os.path.isdir(gdrive_path):
       from google.colab import drive
-      drive.mount('/content/gdrive')
+      drive.mount(gdrive_path)
       if not os.path.isdir(gdrive_dir):
         raise Exception("Sorry, cannot find the Google drive directory %s" %(
            gdrive_dir))
@@ -362,16 +363,18 @@ def get_helper_files():
 
 def set_up_input_files(params):
 
-  # Default working directory
-  if not params.get('content_dir',None):
-    params['content_dir'] = "/content/"
 
   from pathlib import Path
   import os, sys
 
   from google.colab import files
 
-  content_dir = params.get('content_dir',".")
+  content_dir = params.get('content_dir',None)
+
+  # Default working directory
+  if not content_dir:
+    params['content_dir'] = os.getcwd()
+    content_dir = params['content_dir']
 
   # Set working directory
   os.chdir(content_dir)

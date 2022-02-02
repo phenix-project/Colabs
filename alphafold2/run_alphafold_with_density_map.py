@@ -2,16 +2,21 @@ from __future__ import division
 from __future__ import print_function
 
 import os, sys
+import shutil
 
-from alphafold_imports import *
-from alphafold_utils import *
+from pathlib import Path
+import numpy as np
 
-from alphafold.data.templates import (_get_pdb_id_and_chain,
-                                    _process_single_hit,
-                                    _build_query_to_hit_index_mapping,
-                                    _extract_template_features,
-                                    SingleHitResult,
-                                    TEMPLATE_FEATURES)
+from phenix_alphafold_utils import clear_directories
+
+from alphafold_utils import (mk_mock_template,
+   predict_structure,
+   show_pdb,
+   get_msa,
+   get_cif_file_list,
+   get_template_hit_list)
+
+
 
 
 def run_one_cycle(cycle, template_hit_list,
@@ -28,10 +33,17 @@ def run_one_cycle(cycle, template_hit_list,
         homooligomer,
         use_msa,
         use_env,
-        use_templates):
+        use_templates,
+        content_dir = None):
 
+  from alphafold.data.templates import (_get_pdb_id_and_chain,
+                                    _process_single_hit,
+                                    _build_query_to_hit_index_mapping,
+                                    _extract_template_features,
+                                    SingleHitResult,
+                                    TEMPLATE_FEATURES)
 
-  os.chdir("/content/")
+  os.chdir(content_dir)
   if template_hit_list:
     #process hits into template features
     from dataclasses import replace
@@ -99,6 +111,10 @@ def run_one_cycle(cycle, template_hit_list,
 
   print("\nPREDICTING STRUCTURE")
 
+  from alphafold.model import data
+  from alphafold.model import config
+  from alphafold.model import model
+
   # collect model weights
   use_model = {}
   model_params = {}
@@ -153,7 +169,7 @@ def run_one_cycle(cycle, template_hit_list,
                            do_relax=False)
   print("DONE WITH STRUCTURE in",os.getcwd())
 
-  os.chdir("/content/")
+  os.chdir(content_dir)
   print(os.listdir("."))
   model_file_name = "%s_unrelaxed_model_1.pdb" %(jobname)
   if os.path.isfile(model_file_name):
@@ -168,6 +184,7 @@ def run_one_cycle(cycle, template_hit_list,
 
   #@title Making plots...
   import matplotlib.pyplot as plt
+  from alphafold_utils import plot_plddt_legend, plot_confidence, write_pae_file
 
   # gather MSA info
   deduped_full_msa = list(dict.fromkeys(msa))
@@ -400,13 +417,17 @@ def run_job(query_sequence,
         include_templates_from_pdb,
         uploaded_templates_are_map_to_model,
         output_directory,
-        skip_all_msa_after_first_cycle):
+        skip_all_msa_after_first_cycle,
+        content_dir = None):
 
   from Bio.SeqRecord import SeqRecord
   from Bio.Seq import Seq
   from Bio import SeqIO
 
-  os.chdir("/content/")
+  if not content_dir:
+    content_dir = "/content/"
+
+  os.chdir(content_dir)
 
   #standard values of parameters
   num_models = 1
@@ -426,8 +447,8 @@ def run_job(query_sequence,
   #Process templates
   print("PROCESSING TEMPLATES")
 
-  other_cif_dir = Path("/content/%s" %(template_paths))
-  parent_dir = Path("/content/manual_templates")
+  other_cif_dir = Path(os.path.join(content_dir,template_paths))
+  parent_dir = Path(os.path.join(content_dir,"manual_templates"))
   cif_dir = Path(parent_dir,"mmcif")
   fasta_dir = Path(parent_dir,"fasta")
   hhDB_dir = Path(parent_dir,"hhDB")
@@ -474,7 +495,7 @@ def run_job(query_sequence,
   print(query_sequence, file = ff)
   ff.close()
 
-  # Run first cycle
+  # Run cycles
 
   for cycle in range(1, maximum_cycles + 1):
     print("\nStarting cycle %s" %(cycle))
@@ -501,9 +522,10 @@ def run_job(query_sequence,
       cif_files = working_cif_file_list,
       fasta_dir = fasta_dir,
       query_seq = query_seq,
-      hhDB_dir = hhDB_dir)
+      hhDB_dir = hhDB_dir,
+      content_dir = content_dir)
 
-    os.chdir("/content/")
+    os.chdir(content_dir)
 
     cycle_model_file_name = run_one_cycle(
         cycle, template_hit_list,
@@ -520,19 +542,18 @@ def run_job(query_sequence,
         homooligomer,
         use_msa,
         use_env,
-        use_templates)
+        use_templates,
+        content_dir)
 
-    cycle_model_file_name = Path(cycle_model_file_name)
-
+    if (not cycle_model_file_name) or (
+         not os.path.isfile(cycle_model_file_name.as_posix())):
+      print("Modeling failed cycle %s" %(cycle))
+      return None
 
     print("\nFinished with cycle %s of AlphaFold model generation" %(cycle))
-    if not os.path.isfile(cycle_model_file_name.as_posix()):
-      print("No AlphaFold model obtained...quitting")
-      return None
+    cycle_model_file_name = Path(cycle_model_file_name)
     print("Current AlphaFold model is in %s" %(
         cycle_model_file_name.as_posix()))
-
-
 
 
     print("\nGetting a new rebuilt model at a resolution of %.2f A" %(
@@ -578,7 +599,7 @@ def run_job(query_sequence,
           final_model_file_name_in_output_dir))
     from phenix_colab_utils import run_pdb_to_cif
     final_model_file_name_as_cif_in_cif_dir = run_pdb_to_cif(
-       final_model_file_name_in_cif_dir)
+       final_model_file_name_in_cif_dir, content_dir = content_dir)
     manual_cif_file_list = get_cif_file_list(
       include_templates_from_pdb = False,
       manual_templates_uploaded = [final_model_file_name_as_cif_in_cif_dir.name],

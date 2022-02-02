@@ -81,8 +81,9 @@ def install_alphafold(version = None):
     shell("mv alphafold alphafold_")
     shell("mv alphafold_/alphafold .")
     # remove "END" from PDBs, otherwise biopython complains
-    shell("""sed -i "s/pdb_lines.append('END')//" /content/alphafold/common/protein.py""")
-    shell("""sed -i "s/pdb_lines.append('ENDMDL')//" /content/alphafold/common/protein.py""")
+    dd = os.path.join(content_dir, "alphafold","common","protein.py")
+    shell("""sed -i "s/pdb_lines.append('END')//" %s""" %(dd))
+    shell("""sed -i "s/pdb_lines.append('ENDMDL')//" %s""" %(dd))
 
   # download model params (~1 min)
   if not os.path.isdir("params"):
@@ -219,19 +220,20 @@ def install_pdb_to_cif():
     shell('touch PDB_TO_CIF_READY')
     print("Ready with pdb_to_cif")
 
-def run_pdb_to_cif(f):
-    if not os.path.isfile("/content/maxit-v11.100-prod-src/bin/process_entry"):
+def run_pdb_to_cif(f, content_dir = None):
+    assert content_dir is not None
+
+    if not os.path.isfile(os.path.join(content_dir,
+        "maxit-v11.100-prod-src/bin/process_entry")):
       print("Sorry, pdb_to_cif is not available..."+
         "install with phenix_colab_utils.install_pdb_to_cif")
       return
     if hasattr(f,'as_posix'):
       f = f.as_posix()  # make it a string
     output_file = f.replace(".pdb",".cif")
-    import shutil
-    shutil.copyfile(f,'/content/pdb.pdb')
-    print("RUNNING")
-    print("chmod +x /content/maxit-v11.100-prod-src/bin/process_entry; RCSBROOT=/content/maxit-v11.100-prod-src; export RCSBROOT; echo $RCSBROOT;  /content/maxit-v11.100-prod-src/bin/process_entry -input /content/pdb.pdb -input_format pdb -output /content/pdb.cif -output_format cif")
+    shutil.copyfile(f,os.path.join(content_dir,'pdb.pdb'))
 
-    shell("chmod +x /content/maxit-v11.100-prod-src/bin/process_entry; RCSBROOT=/content/maxit-v11.100-prod-src; export RCSBROOT; echo $RCSBROOT;  /content/maxit-v11.100-prod-src/bin/process_entry -input /content/pdb.pdb -input_format pdb -output /content/pdb.cif -output_format cif")
-    shutil.copyfile('/content/pdb.cif',output_file)
+    p = os.path.join(content_dir,"maxit-v11.100-prod-src")
+    b = os.path.join(p, "bin","process_entry")
+    shell("chmod +x %s; RCSBROOT=%s; export RCSBROOT; echo $RCSBROOT;  %s -input %s -input_format pdb -output %s -output_format cif" %(b,p,b,f,output_file))
     return Path(output_file)

@@ -109,7 +109,12 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
       model_runner.params = params
 
       processed_feature_dict = model_runner.process_features(feature_dict, random_seed=random_seed)
-      prediction_result = model_runner.predict(processed_feature_dict)
+      try:
+        prediction_result = model_runner.predict(processed_feature_dict)
+      except Exception as e:
+        print("Prediction failed...\n%s\n...skipping" %(str(e)))
+        return None
+
       unrelaxed_protein = protein.from_prediction(processed_feature_dict,prediction_result)
       unrelaxed_pdb_lines.append(protein.to_pdb(unrelaxed_protein))
       plddts.append(prediction_result['plddt'])
@@ -138,7 +143,8 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
 
 
 
-def hh_process_seq(query_seq,template_seq,hhDB_dir,db_prefix="DB"):
+def hh_process_seq(query_seq,template_seq,content_dir,
+    hhDB_dir,db_prefix="DB"):
   """
   This is a hack to get hhsuite output strings to pass on
   to the AlphaFold template featurizer.
@@ -156,7 +162,8 @@ def hh_process_seq(query_seq,template_seq,hhDB_dir,db_prefix="DB"):
   from Bio import SeqIO
   from alphafold.data.tools import hhsearch
 
-  # set up directory for hhsuite DB. Place one template fasta file to be the DB contents
+  # set up directory for hhsuite DB.
+  #  Place one template fasta file to be the DB contents
   if hhDB_dir.exists():
     shutil.rmtree(hhDB_dir)
 
@@ -186,8 +193,7 @@ def hh_process_seq(query_seq,template_seq,hhDB_dir,db_prefix="DB"):
     shell(" ffindex_order sorting.dat DB_a3m.ffdata DB_a3m.ffindex DB_a3m_ordered.ffdata DB_a3m_ordered.ffindex")
     shell(" mv DB_a3m_ordered.ffindex DB_a3m.ffindex")
     shell(" mv DB_a3m_ordered.ffdata DB_a3m.ffdata")
-    os.chdir("/content/")
-    os.getcwd()
+    os.chdir(content_dir)
 
   # run hhsearch
   db_dir = hhDB_dir.as_posix()+"/"+db_prefix
@@ -374,7 +380,9 @@ def get_cif_file_list(
 
 def get_template_hit_list(cif_files = None, fasta_dir = None,
     query_seq = None,
-    hhDB_dir = None):
+    hhDB_dir = None,
+    content_dir = None):
+  assert content_dir is not None
   from alphafold.data import mmcif_parsing
   from Bio.SeqRecord import SeqRecord
   from Bio.Seq import Seq
@@ -412,7 +420,7 @@ def get_template_hit_list(cif_files = None, fasta_dir = None,
         SeqIO.write([seq], sys.stdout, "fasta")
         SeqIO.write([query_seq], sys.stdout, "fasta")
         try:
-          hit = hh_process_seq(query_seq,seq,hhDB_dir)
+          hit = hh_process_seq(query_seq,seq,hhDB_dir,content_dir)
         except Exception as e:
           print("Failed to process %s" %(filepath),e)
           hit = None
