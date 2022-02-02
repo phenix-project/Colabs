@@ -9,7 +9,8 @@ from pathlib import Path
 def shell(text):
   """ Utility to run a string as a shell script
   """
-  result = os.system(text)
+  import subprocess
+  result = subprocess.call(text.split())
   return result
 
 def clear_python_caches(modules = None):
@@ -238,7 +239,6 @@ def run_pdb_to_cif(f, content_dir = None):
     if hasattr(f,'as_posix'):
       f = f.as_posix()  # make it a string
     output_file = f.replace(".pdb",".cif")
-    shutil.copyfile(f,os.path.join(content_dir,'pdb.pdb'))
 
     p = os.path.join(content_dir,"maxit-v11.100-prod-src")
     b = os.path.join(p, "bin","process_entry")
