@@ -1,24 +1,17 @@
 from __future__ import division
 from __future__ import print_function
 
-import os
+import os, sys
 from pathlib import Path
 
 # Utilities for setting up and running Phenix in Colab
 
-def run_command(command):
+def run_command(command, log = sys.stdout):
     "Run and get output to terminal"
     import shlex
     import subprocess
-    process = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE)
-    while True:
-        output = process.stdout.readline()
-        if output == '' and process.poll() is not None:
-            break
-        if output:
-            print (output.strip())
-    rc = process.poll()
-    return rc
+    process = subprocess.run(shlex.split(command), stdout=subprocess.PIPE)
+    print (process.stdout.decode("utf-8"), file = log)
 
 def runsh(text):
   """ Utility to run a string as a shell script and toss output
