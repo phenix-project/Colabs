@@ -10,6 +10,7 @@ def shell(text):
   """ Utility to run a string as a shell script
   """
   import subprocess
+  print("RUNNING:",text)
   result = subprocess.call(text.split())
   return result
 
@@ -112,8 +113,12 @@ def run_fix_paths():
   # Get path correct in pulchra.sh
   print("Fixing path in pulchra.sh...")
   if os.path.isfile("/usr/local/lib/python3.7/site-packages/phenix/command_line/pulchra.sh"):
-
-    shell(""" exec /usr/local/share/cctbx/pulchra/exe/pulchra "$@" > /usr/local/lib/python3.7/site-packages/phenix/command_line/pulchra.sh""")
+    f = open(
+     "/usr/local/lib/python3.7/site-packages/phenix/command_line/pulchra.sh",
+     'w')
+    print("""exec /usr/local/share/cctbx/pulchra/exe/pulchra "$@" """),
+      file = f
+    f.close()
 
 
   print("Updating python paths...")
