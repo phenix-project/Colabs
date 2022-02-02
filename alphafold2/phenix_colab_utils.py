@@ -151,12 +151,10 @@ def install_phenix(password = None, version = None):
       raise AssertionError("Unable to download...please check your Phenix version and password?")
 
     # Move files to working directory
-    print("ZZ download:")
-    shell("ls -tlr phenix-online.org/download/installers/%s/linux-64/ > download.list" %(version))
-    print("ZZ here:")
-    shell("ls -tlr > local.list")
+    print("ZZ download:",os.listdir("phenix-online.org/download/installers/%s/linux-64/" %(version))
+    print("ZZ here:",os.listdir("."))
     shell("mv phenix-online.org/download/installers/%s/linux-64/* ." %(version))
-    shell("rm -fr phenix-online.org")
+    #shell("rm -fr phenix-online.org")
     shell("touch PHENIX_DOWNLOADED")
     print("Phenix has been downloaded.")
 
