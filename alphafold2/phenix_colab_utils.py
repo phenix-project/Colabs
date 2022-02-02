@@ -143,7 +143,6 @@ def install_phenix(password = None, version = None):
     print("Phenix is already downloaded")
   else:
     print("Downloading Phenix...")
-    """
     shell("wget -q --user user --password %s -r -l1 https://phenix-online.org/download/installers/%s/linux-64/ -A phenix*.tar.bz2" %(password, version))
     if not os.path.isdir("phenix-online.org"):
       # try with user as trusted
@@ -151,7 +150,6 @@ def install_phenix(password = None, version = None):
     if not os.path.isdir("phenix-online.org"):
       raise AssertionError("Unable to download...please check your Phenix version and password?")
 
-    """
     # Move files to working directory
     file_list = os.listdir(
        "phenix-online.org/download/installers/%s/linux-64/" %(version))
@@ -164,7 +162,7 @@ def install_phenix(password = None, version = None):
 
     shell("mv phenix-online.org/download/installers/%s/linux-64/%s ." %(
      version, file_name))
-    #shell("rm -fr phenix-online.org")
+    shell("rm -fr phenix-online.org")
     shell("touch PHENIX_DOWNLOADED")
     print("Phenix has been downloaded.")
 
