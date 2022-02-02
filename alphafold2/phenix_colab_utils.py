@@ -127,6 +127,10 @@ def run_fix_paths():
 
 
 def install_phenix(password = None, version = None):
+  if os.path.isfile("PHENIX_READY"):
+    print("Phenix is already installed")
+    return
+
   if ((not version) or (not password)):
     raise AssertionError("Need version and password for Phenix")
 
