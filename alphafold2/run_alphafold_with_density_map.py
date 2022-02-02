@@ -546,7 +546,7 @@ def run_job(query_sequence,
         content_dir)
 
     if (not cycle_model_file_name) or (
-         not os.path.isfile(cycle_model_file_name.as_posix())):
+         not os.path.isfile(cycle_model_file_name)):
       print("Modeling failed cycle %s" %(cycle))
       return None
 
