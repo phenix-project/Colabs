@@ -311,30 +311,28 @@ def write_pae_file(pae_matrix, file_name):
   print("Wrote pae file to %s" %(file_name))
 
 
-def get_msa(
-      query_sequence, jobname, use_env,
-      use_templates,
-      homooligomer,
-      use_msa):
+def get_msa(params):
   import colabfold as cf
   from alphafold.data import pipeline
   template_paths = None # initialize
 
   #@title Get MSA and templates
   print("Getting MSA and templates...")
-  if use_templates:
-    a3m_lines, template_paths = cf.run_mmseqs2(query_sequence, jobname, use_env, use_templates=True)
+  if params.use_templates:
+    a3m_lines, template_paths = cf.run_mmseqs2(params.query_sequence,
+     params.jobname, params.use_env, use_templates=True)
   elif use_msa:
-    a3m_lines = cf.run_mmseqs2(query_sequence, jobname, use_env)
+    a3m_lines = cf.run_mmseqs2(params.query_sequence,
+     params.jobname, params.use_env)
 
 
 
-  if (not use_msa):
-    a3m_lines = ">query sequence \n%s" %(query_sequence)
+  if (not params.use_msa):
+    a3m_lines = ">query sequence \n%s" %(params.query_sequence)
     print("Not using any MSA information")
 
   # File for a3m
-  a3m_file = f"{jobname}.a3m"
+  a3m_file = f"{params.jobname}.a3m"
 
   with open(a3m_file, "w") as text_file:
       text_file.write(a3m_lines)

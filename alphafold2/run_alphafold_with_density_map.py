@@ -20,22 +20,12 @@ from alphafold_utils import (mk_mock_template,
 
 
 
-def run_one_cycle(cycle, template_hit_list,
-        query_sequence,
-        jobname,
-        maps_uploaded,
-        maximum_cycles,
-        resolution,
-        num_models,
-        msa, deletion_matrix, template_paths,
-        mtm_file_name,
-        cif_dir,
-        output_directory,
-        homooligomer,
-        use_msa,
-        use_env,
-        use_templates,
-        content_dir = None):
+def run_one_cycle(params):
+
+  # Add all params values to locals()
+  params_dict = params()
+  for key in params_dict.keys():
+    locals()[key] = params_dict[key]
 
   from alphafold.data.templates import (_get_pdb_id_and_chain,
                                     _process_single_hit,
@@ -48,13 +38,15 @@ def run_one_cycle(cycle, template_hit_list,
   if template_hit_list:
     #process hits into template features
     from dataclasses import replace
-    template_hit_list = [[replace(hit,**{"index":i+1}),mmcif] for i,[hit,mmcif] in enumerate(template_hit_list)]
+    template_hit_list = [[replace(hit,**{"index":i+1}),mmcif]
+        for i,[hit,mmcif] in enumerate(template_hit_list)]
 
     template_features = {}
     for template_feature_name in TEMPLATE_FEATURES:
       template_features[template_feature_name] = []
 
-    for i,[hit,mmcif] in enumerate(sorted(template_hit_list, key=lambda xx: xx[0].sum_probs, reverse=True)):
+    for i,[hit,mmcif] in enumerate(sorted(template_hit_list,
+          key=lambda xx: xx[0].sum_probs, reverse=True)):
       # modifications to alphafold/data/templates.py _process_single_hit
       hit_pdb_code, hit_chain_id = _get_pdb_id_and_chain(hit)
       mapping = _build_query_to_hit_index_mapping(
@@ -74,7 +66,8 @@ def run_one_cycle(cycle, template_hit_list,
       except Exception as e:
         continue
       features['template_sum_probs'] = [hit.sum_probs]
-      single_hit_result = SingleHitResult(features=features, error=None, warning=None)
+      single_hit_result = SingleHitResult(
+        features=features, error=None, warning=None)
       for k in template_features:
         template_features[k].append(features[k])
 
@@ -121,7 +114,8 @@ def run_one_cycle(cycle, template_hit_list,
   model_params = {}
   model_runner_1 = None
   model_runner_3 = None
-  for model_name in ["model_1","model_2","model_3","model_4","model_5"][:num_models]:
+  for model_name in ["model_1","model_2","model_3",
+      "model_4","model_5"][:num_models]:
     use_model[model_name] = True
     if model_name not in list(model_params.keys()):
       model_params[model_name] = data.get_model_haiku_params(model_name=model_name+"_ptm", data_dir=".")
@@ -156,11 +150,11 @@ def run_one_cycle(cycle, template_hit_list,
   # gather features
   from alphafold.data import pipeline
   feature_dict = {
-      **pipeline.make_sequence_features(sequence=query_sequence*homooligomer,
-                                        description="none",
-                                        num_res=len(query_sequence)*homooligomer),
-      **pipeline.make_msa_features(msas=msas,deletion_matrices=deletion_matrices),
-      **template_features
+    **pipeline.make_sequence_features(sequence=query_sequence*homooligomer,
+                                      description="none",
+                                      num_res=len(query_sequence)*homooligomer),
+    **pipeline.make_msa_features(msas=msas,deletion_matrices=deletion_matrices),
+    **template_features
   }
   outs = predict_structure(jobname, feature_dict,
                            Ls=[len(query_sequence)]*homooligomer,
@@ -256,105 +250,15 @@ def run_one_cycle(cycle, template_hit_list,
 
   #@markdown When modeling is complete .zip files with results will be downloaded automatically.
 
-  citations = {
-  "Mirdita2021":  """@article{Mirdita2021,
-  author = {Mirdita, Milot and Ovchinnikov, Sergey and Steinegger, Martin},
-  doi = {10.1101/2021.08.15.456425},
-  journal = {bioRxiv},
-  title = {{ColabFold - Making Protein folding accessible to all}},
-  year = {2021},
-  comment = {ColabFold including MMseqs2 MSA server}
-  }""",
-    "Mitchell2019": """@article{Mitchell2019,
-  author = {Mitchell, Alex L and Almeida, Alexandre and Beracochea, Martin and Boland, Miguel and Burgin, Josephine and Cochrane, Guy and Crusoe, Michael R and Kale, Varsha and Potter, Simon C and Richardson, Lorna J and Sakharova, Ekaterina and Scheremetjew, Maxim and Korobeynikov, Anton and Shlemov, Alex and Kunyavskaya, Olga and Lapidus, Alla and Finn, Robert D},
-  doi = {10.1093/nar/gkz1035},
-  journal = {Nucleic Acids Res.},
-  title = {{MGnify: the microbiome analysis resource in 2020}},
-  year = {2019},
-  comment = {MGnify database}
-  }""",
-    "Jumper2021": """@article{Jumper2021,
-  author = {Jumper, John and Evans, Richard and Pritzel, Alexander and Green, Tim and Figurnov, Michael and Ronneberger, Olaf and Tunyasuvunakool, Kathryn and Bates, Russ and {\v{Z}}{\'{i}}dek, Augustin and Potapenko, Anna and Bridgland, Alex and Meyer, Clemens and Kohl, Simon A. A. and Ballard, Andrew J. and Cowie, Andrew and Romera-Paredes, Bernardino and Nikolov, Stanislav and Jain, Rishub and Adler, Jonas and Back, Trevor and Petersen, Stig and Reiman, David and Clancy, Ellen and Zielinski, Michal and Steinegger, Martin and Pacholska, Michalina and Berghammer, Tamas and Bodenstein, Sebastian and Silver, David and Vinyals, Oriol and Senior, Andrew W. and Kavukcuoglu, Koray and Kohli, Pushmeet and Hassabis, Demis},
-  doi = {10.1038/s41586-021-03819-2},
-  journal = {Nature},
-  pmid = {34265844},
-  title = {{Highly accurate protein structure prediction with AlphaFold.}},
-  year = {2021},
-  comment = {AlphaFold2 + BFD Database}
-  }""",
-    "Mirdita2019": """@article{Mirdita2019,
-  author = {Mirdita, Milot and Steinegger, Martin and S{\"{o}}ding, Johannes},
-  doi = {10.1093/bioinformatics/bty1057},
-  journal = {Bioinformatics},
-  number = {16},
-  pages = {2856--2858},
-  pmid = {30615063},
-  title = {{MMseqs2 desktop and local web server app for fast, interactive sequence searches}},
-  volume = {35},
-  year = {2019},
-  comment = {MMseqs2 search server}
-  }""",
-    "Steinegger2019": """@article{Steinegger2019,
-  author = {Steinegger, Martin and Meier, Markus and Mirdita, Milot and V{\"{o}}hringer, Harald and Haunsberger, Stephan J. and S{\"{o}}ding, Johannes},
-  doi = {10.1186/s12859-019-3019-7},
-  journal = {BMC Bioinform.},
-  number = {1},
-  pages = {473},
-  pmid = {31521110},
-  title = {{HH-suite3 for fast remote homology detection and deep protein annotation}},
-  volume = {20},
-  year = {2019},
-  comment = {PDB70 database}
-  }""",
-    "Mirdita2017": """@article{Mirdita2017,
-  author = {Mirdita, Milot and von den Driesch, Lars and Galiez, Clovis and Martin, Maria J. and S{\"{o}}ding, Johannes and Steinegger, Martin},
-  doi = {10.1093/nar/gkw1081},
-  journal = {Nucleic Acids Res.},
-  number = {D1},
-  pages = {D170--D176},
-  pmid = {27899574},
-  title = {{Uniclust databases of clustered and deeply annotated protein sequences and alignments}},
-  volume = {45},
-  year = {2017},
-  comment = {Uniclust30/UniRef30 database},
-  }""",
-    "Berman2003": """@misc{Berman2003,
-  author = {Berman, Helen and Henrick, Kim and Nakamura, Haruki},
-  booktitle = {Nat. Struct. Biol.},
-  doi = {10.1038/nsb1203-980},
-  number = {12},
-  pages = {980},
-  pmid = {14634627},
-  title = {{Announcing the worldwide Protein Data Bank}},
-  volume = {10},
-  year = {2003},
-  comment = {templates downloaded from wwPDB server}
-  }""",
-  }
-
-  to_cite = [ "Mirdita2021", "Jumper2021" ]
-  if use_msa:       to_cite += ["Mirdita2019"]
-  if use_msa:       to_cite += ["Mirdita2017"]
-  if use_env:       to_cite += ["Mitchell2019"]
-  if use_templates: to_cite += ["Steinegger2019"]
-  if use_templates: to_cite += ["Berman2003"]
-
-  with open(f"{jobname}.bibtex", 'w') as writer:
-    for i in to_cite:
-      writer.write(citations[i])
-      writer.write("\n")
-
   return cycle_model_file_name
 
-def rebuild_model(
-        cycle_model_file_name,
-        previous_final_model_name,
-        mtm_file_name,
-        cycle,
-        jobname,
-        maps_uploaded,
-        resolution,
+def rebuild_model(params,
         nproc = 4):
+
+  params_dict = params()
+  for key in params_dict.keys():
+    locals()[key] = params_dict[key]
+
   assert len(maps_uploaded) == 1  # just one map
   map_file_name = maps_uploaded[0]
   af_model_file = os.path.abspath(
@@ -403,73 +307,56 @@ def get_map_to_model(map_file_name,
     output_file_name = None,
     nproc = 4):
 
-
   runsh(
    "phenix.map_to_model nproc=%s seq_file=%s resolution=%s %s pdb_out=%s" %(
      nproc, seq_file, resolution, map_file_name, output_file_name) )
   return output_file_name
 
-def run_job(query_sequence,
-        jobname,
-        upload_manual_templates,
-        manual_templates_uploaded,
-        maps_uploaded,
-        maximum_cycles,
-        resolution,
-        maximum_templates_from_pdb,
-        use_msa,
-        include_templates_from_pdb,
-        uploaded_templates_are_map_to_model,
-        output_directory,
-        skip_all_msa_after_first_cycle,
-        content_dir = None):
+def run_job(params = None):
 
   from Bio.SeqRecord import SeqRecord
   from Bio.Seq import Seq
   from Bio import SeqIO
 
-  if not content_dir:
-    content_dir = "/content/"
+  if not params.content_dir:
+    params.content_dir = "/content/"
 
-  os.chdir(content_dir)
+  os.chdir(params.content_dir)
 
   #standard values of parameters
-  num_models = 1
-  homooligomer = 1
-  use_env = True
-  use_custom_msa = False
-  use_templates = True
+  params.num_models = 1
+  params.homooligomer = 1
+  params.use_env = True
+  params.use_custom_msa = False
+  params.use_templates = True
 
 
   #Get the MSA
-  msa, deletion_matrix, template_paths = get_msa(
-      query_sequence, jobname, use_env,
-      use_templates,
-      homooligomer,
-      use_msa)
+  params.msa, params.deletion_matrix, params.template_paths = get_msa(params)
 
   #Process templates
   print("PROCESSING TEMPLATES")
 
-  other_cif_dir = Path(os.path.join(content_dir,template_paths))
-  parent_dir = Path(os.path.join(content_dir,"manual_templates"))
+  other_cif_dir = Path(os.path.join(params.content_dir,template_paths))
+  parent_dir = Path(os.path.join(params.content_dir,"manual_templates"))
   cif_dir = Path(parent_dir,"mmcif")
   fasta_dir = Path(parent_dir,"fasta")
   hhDB_dir = Path(parent_dir,"hhDB")
   msa_dir = Path(hhDB_dir,"msa")
   clear_directories([fasta_dir,hhDB_dir,msa_dir])
+  params.cif_dir = cif_dir
 
-  if uploaded_templates_are_map_to_model and \
-      manual_templates_uploaded: # mtm
+  if params.uploaded_templates_are_map_to_model and \
+      params.manual_templates_uploaded: # mtm
     print("Uploaded tempates are map to model")
-    mtm_file_name = manual_templates_uploaded[0]
-    manual_templates_uploaded = []
+    params.mtm_file_name = params.manual_templates_uploaded[0]
+    params.manual_templates_uploaded = []
   else:
     print("Uploaded templates are actual templates")
-    mtm_file_name = "None"
+    params.mtm_file_name = "None"
 
   pdb_cif_file_list = get_cif_file_list(
-    include_templates_from_pdb = include_templates_from_pdb,
+    include_templates_from_pdb = params.include_templates_from_pdb,
     manual_templates_uploaded = None,
     cif_dir = cif_dir,
     other_cif_dir = other_cif_dir)
@@ -477,77 +364,58 @@ def run_job(query_sequence,
 
   manual_cif_file_list = get_cif_file_list(
     include_templates_from_pdb = False,
-    manual_templates_uploaded = manual_templates_uploaded,
+    manual_templates_uploaded = params.manual_templates_uploaded,
     cif_dir = cif_dir)
   print("Uploaded CIF files to include:",manual_cif_file_list)
 
-  query_seq = SeqRecord(Seq(query_sequence),id="query",
+  query_seq = SeqRecord(Seq(params.query_sequence),id="query",
     name="",description="")
   query_seq_path = Path(fasta_dir,"query.fasta")
   with query_seq_path.open("w") as fh:
       SeqIO.write([query_seq], fh, "fasta")
   shutil.copyfile(query_seq_path,Path(msa_dir,"query.fasta"))
 
-  previous_final_model_name = manual_templates_uploaded[0] if \
-      manual_templates_uploaded else None
+  previous_final_model_name = params.manual_templates_uploaded[0] if \
+      params.manual_templates_uploaded else None
 
   assert len(maps_uploaded) == 1  # just one map
-  map_file_name = maps_uploaded[0]
+  map_file_name = params.maps_uploaded[0]
 
-  seq_file = "%s.seq" %(jobname)
+  seq_file = "%s.seq" %(params.jobname)
   ff = open(seq_file,'w')
-  print(query_sequence, file = ff)
+  print(params.query_sequence, file = ff)
   ff.close()
 
   # Run cycles
 
-  for cycle in range(1, maximum_cycles + 1):
-    print("\nStarting cycle %s" %(cycle))
+  for cycle in range(1, params.maximum_cycles + 1):
 
-    if cycle == 2 and skip_all_msa_after_first_cycle:
+    params.cycle = cycle
+    print("\nStarting cycle %s" %(cycle))
+    if params.cycle == 2 and params.skip_all_msa_after_first_cycle:
       print("Getting dummy msa for cycles after the first")
       #Get dummy msa
-      use_msa = False
-      msa, deletion_matrix, template_paths = get_msa(
-        query_sequence, jobname, use_env,
-        use_templates,
-        homooligomer,
-        use_msa)
-
+      params.use_msa = False
+      params.msa, params.deletion_matrix, params.template_paths = get_msa(
+        params)
 
     working_cif_file_list = \
-     list(manual_cif_file_list) + \
-     list(pdb_cif_file_list)[:maximum_templates_from_pdb]
+     list(params.manual_cif_file_list) + \
+     list(pdb_cif_file_list)[:params.maximum_templates_from_pdb]
 
     print("Templates used in this cycle: %s" %(
         " ".join([w.as_posix() for w in working_cif_file_list])))
 
-    template_hit_list = get_template_hit_list(
+    params.template_hit_list = get_template_hit_list(
       cif_files = working_cif_file_list,
       fasta_dir = fasta_dir,
       query_seq = query_seq,
       hhDB_dir = hhDB_dir,
-      content_dir = content_dir)
+      content_dir = params.content_dir)
 
-    os.chdir(content_dir)
+    os.chdir(params.content_dir)
 
-    cycle_model_file_name = run_one_cycle(
-        cycle, template_hit_list,
-        query_sequence,
-        jobname,
-        maps_uploaded,
-        maximum_cycles,
-        resolution,
-        num_models,
-        msa, deletion_matrix, template_paths,
-        mtm_file_name,
-        cif_dir,
-        output_directory,
-        homooligomer,
-        use_msa,
-        use_env,
-        use_templates,
-        content_dir)
+    cycle_model_file_name = run_one_cycle(params)
 
     if (not cycle_model_file_name) or (
          not os.path.isfile(cycle_model_file_name)):
@@ -563,15 +431,12 @@ def run_job(query_sequence,
     print("\nGetting a new rebuilt model at a resolution of %.2f A" %(
         resolution))
     # Now get a new rebuilt model
-    final_model_file_name = rebuild_model(
-        cycle_model_file_name,
-        previous_final_model_name,
-        mtm_file_name,
-        cycle,
-        jobname,
-        maps_uploaded,
-        resolution)
+    params.cycle_model_file_name = cycle_model_file_name
+    params.previous_final_model_name = previous_final_model_name
 
+    final_model_file_name = rebuild_model(params)
+
+    jobname = params.jobname
     try:
       runsh(
       "zip -FSr %s'.result.zip'  %s*.pdb %s*.j* %s*.png %s*.bibtex %s*.jsn" %(
@@ -625,77 +490,3 @@ def run_job(query_sequence,
   else:
     print("No .zip file %s created" %(filename))
     return None
-
-def run_alphafold_with_density_map_jobs(params):
-
-  # Set locals from params:
-  print("Values of parameters:")
-  for key in params.keys():
-    locals()[key] = params[key]
-    print("Set ",key,":",params[key])
-
-
-  # RUN THE JOBS HERE
-
-  for query_sequence, jobname, resolution in zip(query_sequences, jobnames, resolutions):
-    print("\n","****************************************","\n",
-         "RUNNING JOB %s with sequence %s at resolution of %s\n" %(
-      jobname, query_sequence, resolution),
-      "****************************************","\n")
-    # GET TEMPLATES AND SET UP FILES
-
-    # User input of manual templates
-    manual_templates_uploaded = cif_filename_dict.get(
-      jobname,[])
-    if manual_templates_uploaded:
-      print("Using uploaded templates %s for this run" %(
-          manual_templates_uploaded))
-    maps_uploaded = map_filename_dict.get(
-      jobname,[])
-    if maps_uploaded:
-      print("Using uploaded maps %s for this run" %(
-          maps_uploaded))
-      assert len(maps_uploaded) == 1
-
-    try:
-      filename = run_job(query_sequence,
-        jobname,
-        upload_manual_templates,
-        manual_templates_uploaded,
-        maps_uploaded,
-        maximum_cycles,
-        resolution,
-        maximum_templates_from_pdb,
-        num_models,
-        homooligomer,
-        use_msa,
-        use_env,
-        use_custom_msa,
-        use_templates,
-        include_templates_from_pdb,
-        uploaded_templates_are_map_to_model,
-        output_directory,
-        skip_all_msa_after_first_cycle)
-      if filename:
-        print("FINISHED JOB (%s) %s with sequence %s\n" %(
-        filename, jobname, query_sequence),
-        "****************************************","\n")
-      else:
-        print("NO RESULT FOR JOB %s with sequence %s\n" %(
-      jobname, query_sequence),
-      "****************************************","\n")
-
-    except Exception as e:
-      print("FAILED: JOB %s with sequence %s\n\n%s\n" %(
-      jobname, query_sequence, str(e)),
-      "****************************************","\n")
-
-
-  print("\nDOWNLOADING FILES NOW:\n")
-  for query_sequence, jobname in zip(query_sequences, jobnames):
-    filename = f"{jobname}.result.zip"
-    if os.path.isfile(filename):
-      print(filename)
-
-  print("\nALL DONE\n")
-
