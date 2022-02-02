@@ -382,12 +382,13 @@ def rebuild_model(
   rebuilt_model_stem = rebuilt_model_name.replace(".pdb","")
 
   # run phenix dock_and_rebuild here
-  import subprocess
-  ("phenix.dock_and_rebuild fragments_model_file=%s nproc=%s resolution=%s previous_model_file=%s model=%s full_map=%s output_model_prefix=%s " %(
+  from phenix_colab_utils import run_command # run and get output to terminal
+  text = "phenix.dock_and_rebuild fragments_model_file=%s nproc=%s resolution=%s previous_model_file=%s model=%s full_map=%s output_model_prefix=%s " %(
      mtm_file_name,nproc,resolution,previous_model_file,
      af_model_file,map_file_name,
       rebuilt_model_stem,
-      ))
+      )
+  result = run_command(text)
 
   if os.path.isfile(rebuilt_model_name):
     print("Rebuilding successful")
