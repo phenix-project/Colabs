@@ -380,7 +380,7 @@ def rebuild_model(
 
   rebuilt_model_name = af_model_file.replace(".pdb","_rebuilt.pdb")
   rebuilt_model_stem = rebuilt_model_name.replace(".pdb","")
-  log_file = rebuilt_model_name.replace(".pdb",".log)
+  log_file = rebuilt_model_name.replace(".pdb",".log")
 
   # run phenix dock_and_rebuild here
   shell("phenix.dock_and_rebuild fragments_model_file=%s nproc=%s resolution=%s previous_model_file=%s model=%s full_map=%s output_model_prefix=%s >& %s" %(
