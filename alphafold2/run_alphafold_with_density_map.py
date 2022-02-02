@@ -337,7 +337,7 @@ def run_job(params = None):
   #Process templates
   print("PROCESSING TEMPLATES")
 
-  other_cif_dir = Path(os.path.join(params.content_dir,template_paths))
+  other_cif_dir = Path(os.path.join(params.content_dir,params.template_paths))
   parent_dir = Path(os.path.join(params.content_dir,"manual_templates"))
   cif_dir = Path(parent_dir,"mmcif")
   fasta_dir = Path(parent_dir,"fasta")
