@@ -158,7 +158,7 @@ def install_phenix(password = None, version = None):
     if len(file_list)< 1:
       raise AssertionError("Unable to download...please check your Phenix version and password?")
     file_name = file_list[0]
-    print("Downloaded bz2 file: %s" %(file_name)
+    print("Downloaded bz2 file: %s" %(file_name))
     if not file_name.endswith(".bz2"):
       raise AssertionError("Downloaded file does not end with .bz2")
 
