@@ -7,6 +7,7 @@ from pathlib import Path
 # Utilities for setting up and running Phenix in Colab
 
 def run_command(command):
+    "Run and get output to terminal"
     import shlex
     import subprocess
     process = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE)
@@ -20,11 +21,12 @@ def run_command(command):
     return rc
 
 def runsh(text):
-  """ Utility to run a string as a runsh script
+  """ Utility to run a string as a shell script and toss output
   """
   import subprocess
+  import shlex
   print("RUNNING:",text)
-  result = subprocess.run(text.split())
+  result = subprocess.run(shlex.split(text))
   return result
 
 def clear_python_caches(modules = None, keep_list = None):
