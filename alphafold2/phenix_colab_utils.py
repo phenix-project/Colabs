@@ -152,9 +152,9 @@ def install_phenix(password = None, version = None):
 
     # Move files to working directory
     print("ZZ download:")
-    shell("ls -tlr phenix-online.org/download/installers/%s/linux-64/" %(version))
+    shell("ls -tlr phenix-online.org/download/installers/%s/linux-64/ > download.list" %(version))
     print("ZZ here:")
-    shell("ls -tlr ")
+    shell("ls -tlr > local.list")
     shell("mv phenix-online.org/download/installers/%s/linux-64/* ." %(version))
     shell("rm -fr phenix-online.org")
     shell("touch PHENIX_DOWNLOADED")
