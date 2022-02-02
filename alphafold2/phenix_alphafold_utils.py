@@ -78,6 +78,7 @@ def get_input_output_dirs(params):
   input_directory = params.get('input_directory',None)
   create_output_dir = params.get('save_outputs_in_google_drive',None)
   output_dir = params.get('output_dir',"ColabOutputs")
+  content_dir = params.get('content_dir',None)
 
   have_input_directory = False
   need_google_drive = False
@@ -92,7 +93,6 @@ def get_input_output_dirs(params):
 
   if create_output_dir:
     need_google_drive = True
-
   if need_google_drive:
     gdrive_path = os.path.join(content_dir,'gdrive')
     gdrive_dir = os.path.join(content_dir,'gdrive','MyDrive')
