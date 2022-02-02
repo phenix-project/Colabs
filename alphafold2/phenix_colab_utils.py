@@ -16,14 +16,18 @@ def shell(text):
   result = subprocess.call(text.split())
   return result
 
-def clear_python_caches(modules = None):
+def clear_python_caches(modules = None, keep_list = None):
   import sys
   print("Clearing python caches ...")
   if modules is None:
-    modules = ['phenix_colab_utils','phenix_alphafold_utils','install_alphafold','cu','install_phenix','install_software',
+    modules = ['phenix_colab_utils','phenix_alphafold_utils',
+     'install_alphafold','cu','install_phenix','install_software',
      'alphafold','protein', 'Alphafold', 'Protein', 'colabfold', ]
+  if keep_list is None:
+    keep_list = "ls cd rm mv cat ".split()
   for x in list(sys.modules.keys(  )) + list(globals()):
     for key in modules:
+       if x in keep_list: continue
        if x.find(key)>-1:
         if x in list(sys.modules.keys()):
           del(sys.modules[x])
