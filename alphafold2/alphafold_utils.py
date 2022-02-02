@@ -225,7 +225,7 @@ def plot_plddt_legend():
   plt.axis(False)
   return plt
 
-def plot_confidence(homooligomer, outs, model_num=1):
+def plot_confidence(homooligomer,query_sequence, outs, model_num=1):
   model_name = f"model_{model_num}"
   plt.figure(figsize=(10,3),dpi=100)
   """Plots the legend for plDDT."""
