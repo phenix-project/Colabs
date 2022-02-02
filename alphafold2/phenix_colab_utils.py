@@ -11,8 +11,6 @@ def shell(text):
   """
   import subprocess
   print("RUNNING:",text)
-  for x in '(){}':
-    text = text.replace(x," %s " %x)
   result = subprocess.call(text.split())
   return result
 
@@ -87,7 +85,7 @@ def install_alphafold(version = None, content_dir = None):
   if not os.path.isdir("alphafold"):
     print("Installing AlphaFold...")
     shell("git clone https://github.com/deepmind/alphafold.git --quiet")
-    shell("(cd alphafold; git checkout %s --quiet)" %(version))
+    shell("cd alphafold; git checkout %s --quiet" %(version))
     shell("mv alphafold alphafold_")
     shell("mv alphafold_/alphafold .")
     # remove "END" from PDBs, otherwise biopython complains
