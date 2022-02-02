@@ -326,12 +326,6 @@ def run_one_cycle(cycle, template_hit_list,
       writer.write(citations[i])
       writer.write("\n")
 
-  print(f"Found {len(to_cite)} citation{'s' if len(to_cite) > 1 else ''} for tools or databases.")
-  if use_custom_msa:
-    print("Don't forget to cite your custom MSA generation method.")
-
-
-
   return cycle_model_file_name
 
 def rebuild_model(
