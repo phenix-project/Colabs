@@ -23,10 +23,8 @@ def clear_python_caches(modules = None):
        if x.find(key)>-1:
         if x in list(sys.modules.keys()):
           del(sys.modules[x])
-          print("deleting ",x,'in modules')
         if x in list(globals().keys()):
           del globals()[x]
-          print ("deleting",x,'in globals')
           assert not x in list(globals().keys())
           break
 
