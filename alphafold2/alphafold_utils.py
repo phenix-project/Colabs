@@ -246,10 +246,10 @@ def plot_confidence(outs, model_num=1):
   return plt
 
 def show_pdb(jobname, model_num=1, show_sidechains=False, show_mainchains=False, color="lDDT"):
+  import py3Dmol
   model_name = f"model_{model_num}"
 
   pdb_filename = f"{jobname}_unrelaxed_{model_name}.pdb"
-
   view = py3Dmol.view(js='https://3dmol.org/build/3Dmol.js',)
   view.addModel(open(pdb_filename,'r').read(),'pdb')
 
