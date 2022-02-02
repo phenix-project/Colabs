@@ -11,7 +11,7 @@ def runsh(text):
   """
   import subprocess
   print("RUNNING:",text)
-  result = subprocess.call(text.split())
+  result = subprocess.run(text.split(), capture_output=True, shell = True)
   return result
 
 def clear_python_caches(modules = None, keep_list = None):

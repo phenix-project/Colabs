@@ -380,14 +380,14 @@ def rebuild_model(
 
   rebuilt_model_name = af_model_file.replace(".pdb","_rebuilt.pdb")
   rebuilt_model_stem = rebuilt_model_name.replace(".pdb","")
-  log_file = rebuilt_model_name.replace(".pdb",".log")
 
   # run phenix dock_and_rebuild here
-  runsh("phenix.dock_and_rebuild fragments_model_file=%s nproc=%s resolution=%s previous_model_file=%s model=%s full_map=%s output_model_prefix=%s >& %s" %(
+  import subprocess
+  ("phenix.dock_and_rebuild fragments_model_file=%s nproc=%s resolution=%s previous_model_file=%s model=%s full_map=%s output_model_prefix=%s " %(
      mtm_file_name,nproc,resolution,previous_model_file,
      af_model_file,map_file_name,
       rebuilt_model_stem,
-      log_file))
+      ))
 
   if os.path.isfile(rebuilt_model_name):
     print("Rebuilding successful")
