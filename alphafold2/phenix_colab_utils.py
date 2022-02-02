@@ -79,10 +79,9 @@ def install_alphafold(version = None, content_dir = None):
   shell("wget -qnc https://raw.githubusercontent.com/sokrypton/ColabFold/96fe2446f454eba38ea34ca45d97dc3f393e24ed/beta/colabfold.py")
   # download model
   if not os.path.isdir("alphafold"):
-    os.environ['version'] = version
     print("Installing AlphaFold...")
     shell("git clone https://github.com/deepmind/alphafold.git --quiet")
-    shell("(cd alphafold; git checkout $version --quiet)")
+    shell("(cd alphafold; git checkout %s --quiet)" %(version))
     shell("mv alphafold alphafold_")
     shell("mv alphafold_/alphafold .")
     # remove "END" from PDBs, otherwise biopython complains
@@ -140,18 +139,14 @@ def install_phenix(password = None, version = None):
   if ((not version) or (not password)):
     raise AssertionError("Need version and password for Phenix")
 
-  # Set environment variables for password and version for wget command
-  os.environ['password'] = password
-  os.environ['version'] = version
-
   if (os.path.isfile("PHENIX_DOWNLOADED") or os.path.isfile("PHENIX_READY")):
     print("Phenix is already downloaded")
   else:
     print("Downloading Phenix...")
-    shell("wget -q --user user --password $password -r -l1 https://phenix-online.org/download/installers/$version/linux-64/ -A phenix*.tar.bz2")
+    shell("wget -q --user user --password %s -r -l1 https://phenix-online.org/download/installers/%s/linux-64/ -A phenix*.tar.bz2" %(password, version))
     if not os.path.isdir("phenix-online.org"):
       # try with user as trusted
-      shell("wget -q --user trusted --password $password -r -l1 https://phenix-online.org/download/installers/$version/linux-64/ -A phenix*.tar.bz2")
+      shell("wget -q --user trusted --password %s -r -l1 https://phenix-online.org/download/installers/%s/linux-64/ -A phenix*.tar.bz2" %(password, version))
     if not os.path.isdir("phenix-online.org"):
       raise AssertionError("Unable to download...please check your Phenix version and password?")
 
@@ -170,9 +165,8 @@ def install_phenix(password = None, version = None):
     #   by accident
     bz2_file = get_last_bz2_file()
     print("Zip file is %s" %(bz2_file))
-    os.environ['bz2_file'] = bz2_file
 
-    shell("mamba install -q -y $bz2_file")
+    shell("mamba install -q -y %s" %(bz2_file))
     shell("mamba install -q -c conda-forge -y boost=1.74 boost-cpp mrcfile numpy=1.20 scipy")  # >& /dev/null")
     shell("cp -a /usr/local/share/cctbx /usr/share")
     shell("pip install psutil")
