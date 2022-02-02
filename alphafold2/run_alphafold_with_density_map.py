@@ -164,6 +164,7 @@ def run_one_cycle(cycle, template_hit_list,
     cycle_model_file_name = None
 
   #@title Making plots...
+  import matplotlib.pyplot as plt
 
   # gather MSA info
   deduped_full_msa = list(dict.fromkeys(msa))
