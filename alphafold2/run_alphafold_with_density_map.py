@@ -400,7 +400,7 @@ def run_job(params = None):
         params)
 
     working_cif_file_list = \
-     list(params.manual_cif_file_list) + \
+     list(manual_cif_file_list) + \
      list(pdb_cif_file_list)[:params.maximum_templates_from_pdb]
 
     print("Templates used in this cycle: %s" %(
