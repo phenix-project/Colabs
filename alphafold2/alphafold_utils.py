@@ -97,7 +97,7 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
   plddts,paes = [],[]
   unrelaxed_pdb_lines = []
   relaxed_pdb_lines = []
-
+  from alphafold.common import protein
   for model_name, params in model_params.items():
     if model_name in use_model:
       print(f"running {model_name}")

@@ -24,7 +24,6 @@ if os.path.isfile('AF2_READY'):
 
   import numpy as np
   import pickle
-  from alphafold.common import protein
   from alphafold.data import templates
   from alphafold.model import data
   from alphafold.model import config
