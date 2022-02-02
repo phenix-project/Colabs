@@ -365,7 +365,8 @@ def rebuild_model(
 
   # run phenix dock_and_rebuild here
   shell("phenix.dock_and_rebuild fragments_model_file=%s nproc=%s resolution=%s previous_model_file=%s model=%s full_map=%s output_model_prefix=%s" %(
-     mtm_file_name,nproc,resolution,previous_model,af_model_file,map_file_name,
+     mtm_file_name,nproc,resolution,previous_model_file_name,
+     af_model_file,map_file_name,
       rebuilt_model_stem))
 
   if os.path.isfile(rebuilt_model_name):
