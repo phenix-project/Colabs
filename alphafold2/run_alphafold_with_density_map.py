@@ -378,7 +378,7 @@ def run_job(params = None):
   previous_final_model_name = params.manual_templates_uploaded[0] if \
       params.manual_templates_uploaded else None
 
-  assert len(maps_uploaded) == 1  # just one map
+  assert len(params.maps_uploaded) == 1  # just one map
   map_file_name = params.maps_uploaded[0]
 
   seq_file = "%s.seq" %(params.jobname)
