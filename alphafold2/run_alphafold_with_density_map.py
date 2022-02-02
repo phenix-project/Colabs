@@ -8,6 +8,7 @@ from pathlib import Path
 import numpy as np
 
 from phenix_alphafold_utils import clear_directories
+from phenix_colab_utils import shell
 
 from alphafold_utils import (mk_mock_template,
    predict_structure,
