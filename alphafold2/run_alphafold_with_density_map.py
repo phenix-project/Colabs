@@ -230,7 +230,7 @@ def run_one_cycle(cycle, template_hit_list,
 
   show_pdb(jobname, model_num,show_sidechains, show_mainchains, color).show()
   if color == "lDDT": plot_plddt_legend().show()
-  plot_confidence(outs, model_num).show()
+  plot_confidence(homooligomer, outs, model_num).show()
   #@title Packaging and downloading results...
 
   #@markdown When modeling is complete .zip files with results will be downloaded automatically.
