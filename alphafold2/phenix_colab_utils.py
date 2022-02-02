@@ -11,6 +11,8 @@ def shell(text):
   """
   import subprocess
   print("RUNNING:",text)
+  for x in '(){}':
+    text = text.replace(x," %s " %x)
   result = subprocess.call(text.split())
   return result
 
