@@ -116,7 +116,7 @@ def run_fix_paths():
     f = open(
      "/usr/local/lib/python3.7/site-packages/phenix/command_line/pulchra.sh",
      'w')
-    print("""exec /usr/local/share/cctbx/pulchra/exe/pulchra "$@" """),
+    print("""exec /usr/local/share/cctbx/pulchra/exe/pulchra "$@" """,
       file = f
     f.close()
 
