@@ -171,7 +171,7 @@ def hh_process_seq(
   if not hasattr(hhDB_dir,'exists'):
     hhDB_dir = Path(hhDB_dir)
   if hhDB_dir.exists() and \
-        not hhDB_dir.as_posix()  in ["/content", "/content/"]):
+        not hhDB_dir.as_posix()  in ["/content", "/content/"]:
     shutil.rmtree(hhDB_dir)
 
   msa_dir = Path(hhDB_dir,"msa")
