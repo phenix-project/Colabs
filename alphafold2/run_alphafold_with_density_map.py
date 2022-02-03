@@ -17,7 +17,7 @@ from alphafold_utils import (mk_mock_template,
    get_cif_file_list,
    get_template_hit_list)
 
-def run_one_cycle(params):
+def run_one_af_cycle(params):
 
   from alphafold.data.templates import (_get_pdb_id_and_chain,
                                     _process_single_hit,
@@ -248,7 +248,12 @@ def run_one_cycle(params):
 
   #@markdown When modeling is complete .zip files with results will be downloaded automatically.
 
-  return cycle_model_file_name
+
+  from libtbx import group_args
+  return group_args(
+    group_args_type = 'result for one cycle',
+    cycle_model_file_name = cycle_model_file_name,
+    )
 
 def rebuild_model(params,
         nproc = 4):
@@ -290,10 +295,26 @@ def rebuild_model(params,
 
   if os.path.isfile(rebuilt_model_name):
     print("Rebuilding successful")
-    return rebuilt_model_name
+    from iotbx import data_manager
+    from libtbx import group_args
+    return group_args(
+      group_args_type = 'rebuilt model',
+      rebuilt_model_name = rebuilt_model_name,
+      cc = get_map_model_cc(map_file_name = map_file_name,
+        model_file_name = rebuilt_model_name,
+        resolution = resolution))
   else:
     print("Rebuilding not successful")
     return None
+
+def get_map_model_cc(map_file_name, model_file_name, resolution):
+  from iotbx.data_manager import DataManager
+  dm = DataManager()
+  dm.set_overwrite(True)
+  mmm = dm.get_map_model_manager(map_files = map_file_name,
+      model_file = model_file_name)
+  mmm.set_resolution(resolution)
+  return mmm.map_model_cc()
 
 def get_map_to_model(map_file_name,
     resolution,
@@ -409,12 +430,13 @@ def run_job(params = None):
 
     os.chdir(params.content_dir)
 
-    cycle_model_file_name = run_one_cycle(params)
+    result = run_one_af_cycle(params)
 
-    if (not cycle_model_file_name) or (
-         not os.path.isfile(cycle_model_file_name)):
+    if (not result) or (not result.cycle_model_file_name) or (
+         not os.path.isfile(result.cycle_model_file_name)):
       print("Modeling failed cycle %s" %(cycle))
       return None
+    cycle_model_file_name = result.cycle_model_file_name
 
     print("\nFinished with cycle %s of AlphaFold model generation" %(cycle))
     cycle_model_file_name = Path(cycle_model_file_name)
@@ -428,7 +450,16 @@ def run_job(params = None):
     params.cycle_model_file_name = cycle_model_file_name
     params.previous_final_model_name = previous_final_model_name
 
-    final_model_file_name = rebuild_model(params)
+    rebuild_result = rebuild_model(params)
+    if not rebuild_result or not rebuild_result.final_model_file_name:
+      print("No rebuilt model obtained")
+      final_model_file_name = None
+      cc = None
+    else:
+      print("Rebuilt model with map-model cc of %s obtained" %(
+         rebuild_result.cc if rebuild_result.cc is not None else 0))
+      final_model_file_name = rebuild_result.final_model_file_name
+      cc = rebuild_result.cc
 
     jobname = params.jobname
     try:
@@ -481,7 +512,9 @@ def run_job(params = None):
       return group_args(
         grep_args_type = 'rebuilding result',
         filename = filename,
-        cc = cc)
+        cc = get_map_model_cc(map_file_name = map_file_name,
+          model_file_name = filename,
+          resolution = params.resolution))
 
     except Exception as e:
       print("Unable to download zip file %s" %(filename))
