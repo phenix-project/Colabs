@@ -164,6 +164,7 @@ def hh_process_seq(query_seq,template_seq,content_dir,
 
   # set up directory for hhsuite DB.
   #  Place one template fasta file to be the DB contents
+  print("ZZGG",type(hhDB_dir).hhDB_dir)
   if hhDB_dir.exists():
     shutil.rmtree(hhDB_dir)
 
