@@ -78,7 +78,8 @@ def get_input_output_dirs(params):
   input_directory = params.get('input_directory',None)
   create_output_dir = params.get('save_outputs_in_google_drive',None)
   output_dir = params.get('output_dir',"ColabOutputs")
-  content_dir = params.get('content_dir',None)
+  content_dir = params.get('content_dir')
+  assert content_dir is not None
 
   have_input_directory = False
   need_google_drive = False
@@ -131,7 +132,8 @@ def add_hash(x,y):
 def clear_directories(all_dirs):
 
   for d in all_dirs:
-    if d and d != "." and d != Path(".") and d.exists():
+    if d and d not in [".", Path("."),"/content",Path("/content")] \
+         and d.exists():
       print("Clearing %s" %(d))
       shutil.rmtree(d)
     d.mkdir(parents=True)
@@ -402,6 +404,7 @@ def set_up_input_files(params):
   for dd in [parent_dir,params.get('cif_dir','')]:
     if dd and os.path.isdir(dd):
       dirs_to_clear.append(dd)
+  print("ZZ directories to clear:",dirs_to_clear)
   clear_directories(dirs_to_clear)
 
   if params.get(

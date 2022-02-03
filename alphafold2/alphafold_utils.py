@@ -164,9 +164,11 @@ def hh_process_seq(query_seq,template_seq,content_dir,
 
   # set up directory for hhsuite DB.
   #  Place one template fasta file to be the DB contents
+  print("ZZRR",hhDB_dir)
   if not hasattr(hhDB_dir,'exists'):
     hhDB_dir = Path(hhDB_dir)
-  if hhDB_dir.exists():
+  if hhDB_dir.exists() and not hhDB_dir.as_posix().startswith("/content"):
+    print("ZZQQ removing:",hhDB_dir)
     shutil.rmtree(hhDB_dir)
 
   msa_dir = Path(hhDB_dir,"msa")
