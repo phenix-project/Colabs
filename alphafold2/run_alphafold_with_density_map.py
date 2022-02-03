@@ -47,7 +47,7 @@ def run_jobs(params):
           working_params.maps_uploaded))
       assert len(working_params.maps_uploaded) == 1
 
-    if debug:
+    if working_params.debug:
       result = run_job(params = working_params)
     else: # usual
       try:
