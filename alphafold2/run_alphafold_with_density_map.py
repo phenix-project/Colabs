@@ -23,11 +23,10 @@ from alphafold_utils import (mk_mock_template,
 def run_one_cycle(params):
 
   # Add all params values to locals()
-  print("ZZA",params)
   params_dict = params()
   for key in params_dict.keys():
     locals()[key] = params_dict[key]
-    print("ZZ paramsA",key,params_dict[key])
+    print("ZZ paramsA",key,str(params_dict[key])[:100])
 
   from alphafold.data.templates import (_get_pdb_id_and_chain,
                                     _process_single_hit,
@@ -417,7 +416,6 @@ def run_job(params = None):
 
     os.chdir(params.content_dir)
 
-    print("ZZB paramsbefore",params)
     cycle_model_file_name = run_one_cycle(params)
 
     if (not cycle_model_file_name) or (
