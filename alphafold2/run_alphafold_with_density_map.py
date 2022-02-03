@@ -17,6 +17,65 @@ from alphafold_utils import (mk_mock_template,
    get_cif_file_list,
    get_template_hit_list)
 
+def run_jobs(params):
+
+  # RUN THE JOBS HERE
+
+  for query_sequence, jobname, resolution in zip(
+    params.query_sequences, params.jobnames, params.resolutions):
+    print("\n","****************************************","\n",
+         "RUNNING JOB %s with sequence %s at resolution of %s\n" %(
+      jobname, query_sequence, resolution),
+      "****************************************","\n")
+    # GET TEMPLATES AND SET UP FILES
+    from copy import deepcopy
+    working_params = deepcopy(params)
+    working_params.query_sequence = query_sequence
+    working_params.jobname = jobname
+    working_params.resolution =resolution
+
+    # User input of manual templates
+    working_params.manual_templates_uploaded = working_params.cif_filename_dict.get(
+      working_params.jobname,[])
+    if working_params.manual_templates_uploaded:
+      print("Using uploaded templates %s for this run" %(
+          working_params.manual_templates_uploaded))
+    working_params.maps_uploaded = working_params.map_filename_dict.get(
+      working_params.jobname,[])
+    if working_params.maps_uploaded:
+      print("Using uploaded maps %s for this run" %(
+          working_params.maps_uploaded))
+      assert len(working_params.maps_uploaded) == 1
+
+    if debug:
+      result = run_job(params = working_params)
+    else: # usual
+      try:
+        result = run_job(params = working_params)
+        if result and result.filename:
+          filename = result.filename
+          print("FINISHED JOB (%s) %s with sequence %s and map-model CC of %.2f\n" %(
+          filename, working_params.jobname, working_params.query_sequence,
+          result.cc if result.cc is not None else 0.0),
+          "****************************************","\n")
+        else:
+          print("NO RESULT FOR JOB %s with sequence %s\n" %(
+        working_params.jobname, working_params.query_sequence),
+        "****************************************","\n")
+
+      except Exception as e:
+        print("FAILED: JOB %s with sequence %s\n\n%s\n" %(
+        working_params.jobname, working_params.query_sequence, str(e)),
+        "****************************************","\n")
+
+
+  print("\nDOWNLOADING FILES NOW:\n")
+  for query_sequence, jobname in zip(params.query_sequences, params.jobnames):
+    filename = f"{jobname}.result.zip"
+    if os.path.isfile(filename):
+      print(filename)
+
+
 def run_one_af_cycle(params):
 
   from alphafold.data.templates import (_get_pdb_id_and_chain,
@@ -328,10 +387,10 @@ def get_map_model_cc(map_file_name, model_file_name, resolution):
   from iotbx.data_manager import DataManager
   dm = DataManager()
   dm.set_overwrite(True)
-  if hasattr(map_file_name,'name'):
-    map_file_name = map_file_name.name
-  if hasattr(model_file_name,'name'):
-    model_file_name = model_file_name.name
+  if hasattr(map_file_name,'as_posix'):
+    map_file_name = map_file_name.as_posix()
+  if hasattr(model_file_name,'as_posix'):
+    model_file_name = model_file_name.as_posix()
   mmm = dm.get_map_model_manager(map_files = map_file_name,
       model_file = model_file_name)
   mmm.set_resolution(resolution)
