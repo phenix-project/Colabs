@@ -165,8 +165,10 @@ def run_one_af_cycle(params):
     print("Model file is in %s" %(model_file_name))
     cycle_model_file_name = "%s_unrelaxed_model_1_%s.pdb" %(
         params.jobname, params.cycle)
-    shutil.copyfile(model_file_name,cycle_model_file_name)
-    if params.output_directory is not None:
+    if model_file_name != cycle_model_file_name:
+      shutil.copyfile(model_file_name,cycle_model_file_name)
+    if params.output_directory is not None and model_file_name != \
+         os.path.join(params.output_directory, cycle_model_file_name):
       shutil.copyfile(model_file_name,os.path.join(
         params.output_directory, cycle_model_file_name))
   else:
@@ -261,6 +263,7 @@ def get_rebuilt_file_names(params):
       params.cycle_model_file_name.as_posix())
   rebuilt_model_name = af_model_file.replace(".pdb","_rebuilt.pdb")
   rebuilt_model_stem = rebuilt_model_name.replace(".pdb","")
+  from libtbx import group_args
   return group_args(group_args_type = ' rebuilt file names',
     af_model_file = af_model_file,
     rebuilt_model_name = rebuilt_model_name,
@@ -473,10 +476,11 @@ def run_job(params = None):
     if params.output_directory is not None:
       cycle_model_file_name_in_output_dir = Path(
         os.path.join(params.output_directory,cycle_model_file_name.name))
-      shutil.copyfile(
-        cycle_model_file_name,
-        cycle_model_file_name_in_output_dir)
-      print("Copied AF model to %s" %(
+      if cycle_model_file_name != cycle_model_file_name_in_output_dir:
+        shutil.copyfile(
+          cycle_model_file_name,
+          cycle_model_file_name_in_output_dir)
+        print("Copied AF model to %s" %(
           cycle_model_file_name_in_output_dir))
 
 
@@ -530,16 +534,18 @@ def run_job(params = None):
 
     final_model_file_name_in_cif_dir = Path(
         os.path.join(cif_dir,final_model_file_name.name))
-    shutil.copyfile(
-      final_model_file_name,
-      final_model_file_name_in_cif_dir)
+    if final_model_file_name != final_model_file_name_in_cif_dir:
+      shutil.copyfile(
+        final_model_file_name,
+        final_model_file_name_in_cif_dir)
 
     if params.output_directory is not None:
       final_model_file_name_in_output_dir = Path(
         os.path.join(params.output_directory,final_model_file_name.name))
-      shutil.copyfile(
-        final_model_file_name,
-        final_model_file_name_in_output_dir)
+      if final_model_file_name != final_model_file_name_in_output_dir:
+        shutil.copyfile(
+          final_model_file_name,
+          final_model_file_name_in_output_dir)
       print("Copied rebuilt model to %s" %(
           final_model_file_name_in_output_dir))
 
