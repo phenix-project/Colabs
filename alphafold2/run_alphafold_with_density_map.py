@@ -453,6 +453,7 @@ def run_job(params = None):
          expected_cycle_model_file_name_in_output_dir):
       print("Reading in AF model from %s" %(
         expected_cycle_model_file_name_in_output_dir))
+      from libtbx import group_args
       result = group_args(group_args_type = 'af model read in directly',
         cycle_model_file_name = expected_cycle_model_file_name_in_output_dir)
     else:
@@ -493,6 +494,7 @@ def run_job(params = None):
     if params.carry_on and params.output_directory and \
           os.path.isfile(final_model_file_name):
       print("Reading rebuilt model from %s" %(final_model_file_name))
+      from libtbx import group_args
       rebuild_result = group_args(group_args_type = 'rebuild result read in',
         final_model_file_name  = final_model_file_name,
         cc = get_map_model_cc(map_file_name = map_file_name,
