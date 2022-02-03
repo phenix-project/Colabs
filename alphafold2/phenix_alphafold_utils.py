@@ -211,7 +211,8 @@ def get_templates_from_drive(params):
       "No Google drive folder available. Please specify input_directory")
 
   jobname = params.get('jobname',None)
-  cif_dir = params.get('cif_dir','.')
+  cif_dir = params.get('cif_dir',None)
+  assert cif_dir is not None
 
   filename_list = os.listdir(input_directory)
 
@@ -385,6 +386,8 @@ def set_up_input_files(params):
 
   if not params.get('cif_dir',None):
     params['cif_dir'] = Path(parent_dir,"mmcif")
+
+  print("CIF dir will be: %s" %(params['cif_dir']))
 
   # get input and output directories
   params = get_input_output_dirs(params)
