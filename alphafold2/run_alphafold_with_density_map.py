@@ -375,7 +375,7 @@ def rebuild_model(params,
     from libtbx import group_args
     return group_args(
       group_args_type = 'rebuilt model',
-      rebuilt_model_name = rebuilt_model_name,
+      final_model_file_name = rebuilt_model_name,
       cc = get_map_model_cc(map_file_name = map_file_name,
         model_file_name = rebuilt_model_name,
         resolution = params.resolution))
