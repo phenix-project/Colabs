@@ -174,6 +174,9 @@ def hh_process_seq(
     shutil.rmtree(hhDB_dir)
 
   msa_dir = Path(hhDB_dir,"msa")
+  if msa_dir.exists() and not msa_dir.as_posix().startswith("/content"):
+    shutil.rmtree(msa_dir)
+
   msa_dir.mkdir(parents=True)
   assert os.path.isdir(hhDB_dir)
 
