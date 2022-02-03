@@ -126,7 +126,7 @@ def run_one_af_cycle(params):
       template_features[name] = np.stack(
           template_features[name], axis=0).astype(TEMPLATE_FEATURES[name])
     #overwrite template data
-    template_paths = cif_dir.as_posix()
+    template_paths = params.cif_dir.as_posix()
 
 
     # Select only one chain from any cif file
