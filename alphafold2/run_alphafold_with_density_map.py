@@ -17,20 +17,7 @@ from alphafold_utils import (mk_mock_template,
    get_cif_file_list,
    get_template_hit_list)
 
-
-
-
 def run_one_cycle(params):
-
-  # Add all params values to globals()
-  params_dict = params()
-  for key in params_dict.keys():
-    globals()[key] = params_dict[key]
-    print("ZZ paramsA",key,str(globals()[key])[:100])
-
-  print("ZZ",params_dict.get('content_dir',None))
-  print("ZZB",globals().get('content_dir',None))
-  print("ZZC",content_dir)
 
   from alphafold.data.templates import (_get_pdb_id_and_chain,
                                     _process_single_hit,
@@ -40,17 +27,17 @@ def run_one_cycle(params):
                                     TEMPLATE_FEATURES)
 
   os.chdir(content_dir)
-  if template_hit_list:
+  if params.template_hit_list:
     #process hits into template features
     from dataclasses import replace
-    template_hit_list = [[replace(hit,**{"index":i+1}),mmcif]
-        for i,[hit,mmcif] in enumerate(template_hit_list)]
+    params.template_hit_list = [[replace(hit,**{"index":i+1}),mmcif]
+        for i,[hit,mmcif] in enumerate(params.template_hit_list)]
 
     template_features = {}
     for template_feature_name in TEMPLATE_FEATURES:
       template_features[template_feature_name] = []
 
-    for i,[hit,mmcif] in enumerate(sorted(template_hit_list,
+    for i,[hit,mmcif] in enumerate(sorted(params.template_hit_list,
           key=lambda xx: xx[0].sum_probs, reverse=True)):
       # modifications to alphafold/data/templates.py _process_single_hit
       hit_pdb_code, hit_chain_id = _get_pdb_id_and_chain(hit)
@@ -65,7 +52,7 @@ def run_one_cycle(params):
           pdb_id=hit_pdb_code,
           mapping=mapping,
           template_sequence=template_sequence,
-          query_sequence=query_sequence,
+          query_sequence=params.query_sequence,
           template_chain_id=hit_chain_id,
           kalign_binary_path="kalign")
       except Exception as e:
@@ -86,7 +73,7 @@ def run_one_cycle(params):
     # Select only one chain from any cif file
     unique_template_hits = []
     pdb_text_list = []
-    for hit, mmcif in template_hit_list:
+    for hit, mmcif in params.template_hit_list:
       pdb_text = hit.name.split()[0].split("_")[0]
       if not pdb_text in pdb_text_list:
         pdb_text_list.append(pdb_text)
@@ -94,9 +81,9 @@ def run_one_cycle(params):
     template_hits = unique_template_hits
 
     print("\nIncluding templates:")
-    for hit,mmcif in template_hit_list:
+    for hit,mmcif in params.template_hit_list:
       print("\t",hit.name.split()[0])
-    if len(template_hit_list) == 0:
+    if len(params.template_hit_list) == 0:
       print("No templates found...quitting")
       raise AssertionError("No templates found...quitting")
 
@@ -106,7 +93,7 @@ def run_one_cycle(params):
         print("ERROR: Some template features are empty")
   else:  # no templates
     print("Not using any templates")
-    template_features = mk_mock_template(query_sequence * homooligomer)
+    template_features = mk_mock_template(params.query_sequence * params.homooligomer)
 
   print("\nPREDICTING STRUCTURE")
 
@@ -132,9 +119,9 @@ def run_one_cycle(params):
         model_config = config.model_config(model_name+"_ptm")
         model_config.data.eval.num_ensemble = 1
         model_runner_3 = model.RunModel(model_config, model_params[model_name])
-  if homooligomer == 1:
-    msas = [msa]
-    deletion_matrices = [deletion_matrix]
+  if params.homooligomer == 1:
+    msas = [params.msa]
+    deletion_matrices = [params.deletion_matrix]
   else:
     # make multiple copies of msa for each copy
     # AAA------
@@ -145,41 +132,46 @@ def run_one_cycle(params):
     # AAAAAAAAA
     msas = []
     deletion_matrices = []
-    Ln = len(query_sequence)
-    for o in range(homooligomer):
+    Ln = len(params.query_sequence)
+    for o in range(params.homooligomer):
       L = Ln * o
-      R = Ln * (homooligomer-(o+1))
-      msas.append(["-"*L+seq+"-"*R for seq in msa])
-      deletion_matrices.append([[0]*L+mtx+[0]*R for mtx in deletion_matrix])
+      R = Ln * (params.homooligomer-(o+1))
+      msas.append(["-"*L+seq+"-"*R for seq in params.msa])
+      deletion_matrices.append([[0]*L+mtx+[0]*R for mtx in params.deletion_matrix])
 
   # gather features
   from alphafold.data import pipeline
   feature_dict = {
-    **pipeline.make_sequence_features(sequence=query_sequence*homooligomer,
-                                      description="none",
-                                      num_res=len(query_sequence)*homooligomer),
+    **pipeline.make_sequence_features(
+                  sequence=params.query_sequence*params.homooligomer,
+                   description="none",
+                   num_res=len(params.query_sequence)*params.homooligomer),
     **pipeline.make_msa_features(msas=msas,deletion_matrices=deletion_matrices),
     **template_features
   }
-  outs = predict_structure(jobname, feature_dict,
-                           Ls=[len(query_sequence)]*homooligomer,
-                           model_params=model_params, use_model=use_model,
+  outs = predict_structure(params.jobname, feature_dict,
+                           Ls=[len(params.query_sequence)]*params.homooligomer,
+                           model_params=model_params,
+                           use_model=use_model,
                            model_runner_1=model_runner_1,
                            model_runner_3=model_runner_3,
                            do_relax=False)
   print("DONE WITH STRUCTURE in",os.getcwd())
 
-  os.chdir(content_dir)
+  os.chdir(params.content_dir)
   print(os.listdir("."))
-  model_file_name = "%s_unrelaxed_model_1.pdb" %(jobname)
+  model_file_name = "%s_unrelaxed_model_1.pdb" %(params.jobname)
   if os.path.isfile(model_file_name):
     print("Model file is in %s" %(model_file_name))
-    cycle_model_file_name = "%s_unrelaxed_model_1_%s.pdb" %(jobname, cycle)
+    cycle_model_file_name = "%s_unrelaxed_model_1_%s.pdb" %(
+        params.jobname, params.cycle)
     shutil.copyfile(model_file_name,cycle_model_file_name)
-    if output_directory is not None:
-      shutil.copyfile(model_file_name,os.path.join(output_directory, cycle_model_file_name))
+    if params.output_directory is not None:
+      shutil.copyfile(model_file_name,os.path.join(
+        params.output_directory, cycle_model_file_name))
   else:
-    print("No model file %s found for job %s" %(model_file_name, jobname))
+    print("No model file %s found for job %s" %(model_file_name,
+      params.jobname))
     cycle_model_file_name = None
 
   #@title Making plots...
@@ -187,9 +179,9 @@ def run_one_cycle(params):
   from alphafold_utils import plot_plddt_legend, plot_confidence, write_pae_file
 
   # gather MSA info
-  deduped_full_msa = list(dict.fromkeys(msa))
+  deduped_full_msa = list(dict.fromkeys(params.msa))
   msa_arr = np.array([list(seq) for seq in deduped_full_msa])
-  seqid = (np.array(list(query_sequence)) == msa_arr).mean(-1)
+  seqid = (np.array(list(params.query_sequence)) == msa_arr).mean(-1)
   seqid_sort = seqid.argsort() #[::-1]
   non_gaps = (msa_arr != "-").astype(float)
   non_gaps[non_gaps == 0] = np.nan
@@ -212,9 +204,9 @@ def run_one_cycle(params):
   plt.subplot(1,2,2); plt.title("Predicted lDDT per position")
   for model_name,value in outs.items():
     plt.plot(value["plddt"],label=model_name)
-  if homooligomer > 0:
-    for n in range(homooligomer+1):
-      x = n*(len(query_sequence)-1)
+  if params.homooligomer > 0:
+    for n in range(params.homooligomer+1):
+      x = n*(len(params.query_sequence)-1)
       plt.plot([x,x],[0,100],color="black")
   plt.legend()
   plt.ylim(0,100)
@@ -234,7 +226,7 @@ def run_one_cycle(params):
     plt.imshow(value["pae"],label=model_name,cmap="bwr",vmin=0,vmax=30)
     plt.colorbar()
     # Write pae file
-    pae_file = jobname+"_"+model_name+"_PAE.jsn"
+    pae_file = params.jobname+"_"+model_name+"_PAE.jsn"
     write_pae_file(value["pae"], pae_file)
     pae_file_list.append(pae_file)
   plt.savefig(jobname+"_PAE.png")
@@ -250,7 +242,8 @@ def run_one_cycle(params):
 
   show_pdb(jobname, model_num,show_sidechains, show_mainchains, color).show()
   if color == "lDDT": plot_plddt_legend().show()
-  plot_confidence(homooligomer, query_sequence, outs, model_num).show()
+  plot_confidence(params.homooligomer,
+     params.query_sequence, outs, model_num).show()
   #@title Packaging and downloading results...
 
   #@markdown When modeling is complete .zip files with results will be downloaded automatically.
@@ -260,27 +253,23 @@ def run_one_cycle(params):
 def rebuild_model(params,
         nproc = 4):
 
-  params_dict = params()
-  for key in params_dict.keys():
-    globals()[key] = params_dict[key]
-
-  assert len(maps_uploaded) == 1  # just one map
-  map_file_name = maps_uploaded[0]
+  assert len(params.maps_uploaded) == 1  # just one map
+  map_file_name = params.maps_uploaded[0]
   af_model_file = os.path.abspath(
-      cycle_model_file_name.as_posix())
-  if previous_final_model_name:
+      params.cycle_model_file_name.as_posix())
+  if params.previous_final_model_name:
     previous_model_file = os.path.abspath(
-      previous_final_model_name.as_posix())
+      params.previous_final_model_name.as_posix())
   else:
     previous_model_file = None
   output_file_name = os.path.abspath(
-      "%s_rebuilt_%s.pdb" %(jobname,cycle))
+      "%s_rebuilt_%s.pdb" %(params.jobname,params.cycle))
   print("Rebuilding %s %s with map in %s at resolution of %.2f" %(
        af_model_file,
         " with previous model of %s" %(previous_model_file) \
         if previous_model_file else "",
        map_file_name,
-      resolution,))
+      params.resolution,))
 
   for ff in (map_file_name,af_model_file, previous_model_file):
     if ff and not os.path.isfile(ff):
@@ -293,7 +282,7 @@ def rebuild_model(params,
   # run phenix dock_and_rebuild here
   from phenix_colab_utils import run_command # run and get output to terminal
   text = "phenix.dock_and_rebuild fragments_model_file=%s nproc=%s resolution=%s previous_model_file=%s model=%s full_map=%s output_model_prefix=%s " %(
-     mtm_file_name,nproc,resolution,previous_model_file,
+     params.mtm_file_name,nproc,params.resolution,previous_model_file,
      af_model_file,map_file_name,
       rebuilt_model_stem,
       )
@@ -434,7 +423,7 @@ def run_job(params = None):
 
 
     print("\nGetting a new rebuilt model at a resolution of %.2f A" %(
-        resolution))
+        params.resolution))
     # Now get a new rebuilt model
     params.cycle_model_file_name = cycle_model_file_name
     params.previous_final_model_name = previous_final_model_name
