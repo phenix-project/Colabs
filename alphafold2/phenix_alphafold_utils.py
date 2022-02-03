@@ -131,7 +131,7 @@ def add_hash(x,y):
 def clear_directories(all_dirs):
 
   for d in all_dirs:
-    if d.exists():
+    if d and d != "." and d != Path(".") and d.exists():
       print("Clearing %s" %(d))
       shutil.rmtree(d)
     d.mkdir(parents=True)
