@@ -255,13 +255,29 @@ def run_one_af_cycle(params):
     cycle_model_file_name = cycle_model_file_name,
     )
 
+def get_rebuilt_file_names(params):
+  from libtbx import group_args
+  af_model_file = os.path.abspath(
+      params.cycle_model_file_name.as_posix())
+  rebuilt_model_name = af_model_file.replace(".pdb","_rebuilt.pdb")
+  rebuilt_model_stem = rebuilt_model_name.replace(".pdb","")
+  return group_args(group_args_type = ' rebuilt file names',
+    af_model_file = af_model_file,
+    rebuilt_model_name = rebuilt_model_name,
+    rebuilt_model_stem = rebuilt_model_stem)
+
+
 def rebuild_model(params,
         nproc = 4):
 
   assert len(params.maps_uploaded) == 1  # just one map
   map_file_name = params.maps_uploaded[0]
-  af_model_file = os.path.abspath(
-      params.cycle_model_file_name.as_posix())
+
+  file_name_info = get_rebuilt_file_names(params)
+  af_model_file = file_name_info.af_model_file
+  rebuilt_model_name = file_name_info.rebuilt_model_name
+  rebuilt_model_stem = file_name_info.rebuilt_model_stem
+
   if params.previous_final_model_name:
     previous_model_file = os.path.abspath(
       params.previous_final_model_name.as_posix())
@@ -281,8 +297,6 @@ def rebuild_model(params,
       print("\nMissing the file: %s" %(ff))
       return None
 
-  rebuilt_model_name = af_model_file.replace(".pdb","_rebuilt.pdb")
-  rebuilt_model_stem = rebuilt_model_name.replace(".pdb","")
 
   # run phenix dock_and_rebuild here
   from phenix_colab_utils import run_command # run and get output to terminal
@@ -302,7 +316,7 @@ def rebuild_model(params,
       rebuilt_model_name = rebuilt_model_name,
       cc = get_map_model_cc(map_file_name = map_file_name,
         model_file_name = rebuilt_model_name,
-        resolution = resolution))
+        resolution = params.resolution))
   else:
     print("Rebuilding not successful")
     return None
@@ -430,7 +444,19 @@ def run_job(params = None):
 
     os.chdir(params.content_dir)
 
-    result = run_one_af_cycle(params)
+    if params.carry_on and params.output_directory:
+      expected_cycle_model_file_name = "%s_unrelaxed_model_1_%s.pdb" %(
+        params.jobname, params.cycle)
+      expected_cycle_model_file_name_in_output_dir = os.path.join(
+        params.output_directory,expected_cycle_model_file_name)
+    if params.carry_on and params.output_directory and os.path.isfile(
+         expected_cycle_model_file_name_in_output_dir):
+      print("Reading in AF model from %s" %(
+        expected_cycle_model_file_name_in_output_dir))
+      result = group_args(group_args_type = 'af model read in directly',
+        cycle_model_file_name = expected_cycle_model_file_name_in_output_dir)
+    else:
+      result = run_one_af_cycle(params)
 
     if (not result) or (not result.cycle_model_file_name) or (
          not os.path.isfile(result.cycle_model_file_name)):
@@ -443,6 +469,15 @@ def run_job(params = None):
     print("Current AlphaFold model is in %s" %(
         cycle_model_file_name.as_posix()))
 
+    if params.output_directory is not None:
+      cycle_model_file_name_in_output_dir = Path(
+        os.path.join(params.output_directory,cycle_model_file_name.name))
+      shutil.copyfile(
+        cycle_model_file_name,
+        cycle_model_file_name_in_output_dir)
+      print("Copied AF model to %s" %(
+          cycle_model_file_name_in_output_dir))
+
 
     print("\nGetting a new rebuilt model at a resolution of %.2f A" %(
         params.resolution))
@@ -450,7 +485,22 @@ def run_job(params = None):
     params.cycle_model_file_name = cycle_model_file_name
     params.previous_final_model_name = previous_final_model_name
 
-    rebuild_result = rebuild_model(params)
+    # Decide if we can just read it in...or really build it
+    file_name_info = get_rebuilt_file_names(params)
+    if params.carry_on and params.output_directory:
+       final_model_file_name = os.path.join(
+         params.output_directory,file_name_info.rebuilt_model_name)
+    if params.carry_on and params.output_directory and \
+          os.path.isfile(final_model_file_name):
+      print("Reading rebuilt model from %s" %(final_model_file_name))
+      rebuild_result = group_args(group_args_type = 'rebuild result read in',
+        final_model_file_name  = final_model_file_name,
+        cc = get_map_model_cc(map_file_name = map_file_name,
+          model_file_name = final_model_file_name,
+          resolution = params.resolution))
+    else: # usual
+      rebuild_result = rebuild_model(params)
+
     if not rebuild_result or not rebuild_result.final_model_file_name:
       print("No rebuilt model obtained")
       final_model_file_name = None
@@ -474,7 +524,6 @@ def run_job(params = None):
       print("\nEnding cycles as no rebuilt model obtained")
       break
 
-    # now update template_hit_list
     final_model_file_name = Path(final_model_file_name)
 
     final_model_file_name_in_cif_dir = Path(
@@ -491,6 +540,7 @@ def run_job(params = None):
         final_model_file_name_in_output_dir)
       print("Copied rebuilt model to %s" %(
           final_model_file_name_in_output_dir))
+
     from phenix_colab_utils import run_pdb_to_cif
     final_model_file_name_as_cif_in_cif_dir = run_pdb_to_cif(
        final_model_file_name_in_cif_dir, content_dir = params.content_dir)
