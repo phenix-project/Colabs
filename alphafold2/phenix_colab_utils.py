@@ -117,8 +117,8 @@ def install_alphafold(version = None, content_dir = None):
   # download libraries for interfacing with MMseqs2 API
   if not os.path.isfile("MMSEQ2_READY"):
     print( "Installing mmseq2 ...")
-    runsh("apt-get -qq -y update 2>&1 1>/dev/null")
-    runsh("apt-get -qq -y install jq curl zlib1g gawk 2>&1 1>/dev/null")
+    runsh("apt-get -qq -y update ")
+    runsh("apt-get -qq -y install jq curl zlib1g gawk ")
     runsh("touch MMSEQ2_READY")
 
 
@@ -198,7 +198,7 @@ def install_phenix(password = None, version = None):
     print("Zip file is %s" %(bz2_file))
 
     runsh("mamba install -q -y %s" %(bz2_file))
-    runsh("mamba install -q -c conda-forge -y boost=1.74 boost-cpp mrcfile numpy=1.20 scipy")  # >& /dev/null")
+    runsh("mamba install -q -c conda-forge -y boost=1.74 boost-cpp mrcfile numpy=1.20 scipy")
     runsh("cp -a /usr/local/share/cctbx /usr/share")
     runsh("pip install psutil")
     runsh("touch PHENIX_READY")
@@ -233,7 +233,7 @@ def install_bioconda():
     print("Bioconda already installed")
   else:
     print("Installing bioconda")
-    runsh("conda install -y -q -c conda-forge -c bioconda kalign3=3.2.2 hhsuite=3.3.0 python=3.7 2>&1 1>/dev/null")
+    runsh("conda install -y -q -c conda-forge -c bioconda kalign3=3.2.2 hhsuite=3.3.0 python=3.7 ")
     runsh("touch HH_READY")
 
 def test():
