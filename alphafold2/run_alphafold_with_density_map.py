@@ -28,6 +28,10 @@ def run_one_cycle(params):
     locals()[key] = params_dict[key]
     print("ZZ paramsA",key,str(locals()[key])[:100])
 
+  print("ZZ",params_dict.get('content_dir',None))
+  print("ZZB",locals().get('content_dir',None))
+  print("ZZCcontent_dir)
+
   from alphafold.data.templates import (_get_pdb_id_and_chain,
                                     _process_single_hit,
                                     _build_query_to_hit_index_mapping,
