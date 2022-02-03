@@ -437,7 +437,6 @@ def run_job(params = None):
   cif_dir = Path(parent_dir,"mmcif")
   fasta_dir = Path(parent_dir,"fasta")
   hhDB_dir = Path(parent_dir,"hhDB")
-  print("ZZAA",type(hhDB_dir), hhDB_dir)
   msa_dir = Path(hhDB_dir,"msa")
   clear_directories([fasta_dir,hhDB_dir,msa_dir])
   params.cif_dir = cif_dir

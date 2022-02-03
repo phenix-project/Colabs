@@ -164,7 +164,8 @@ def hh_process_seq(query_seq,template_seq,content_dir,
 
   # set up directory for hhsuite DB.
   #  Place one template fasta file to be the DB contents
-  print("ZZGG",type(hhDB_dir),hhDB_dir)
+  if not hasattr(hhDB_dir,'exists'):
+    hhDB_dir = Path(hhDB_dir)
   if hhDB_dir.exists():
     shutil.rmtree(hhDB_dir)
 
@@ -418,13 +419,9 @@ def get_template_hit_list(cif_files = None, fasta_dir = None,
         """
         SeqIO.write([seq], sys.stdout, "fasta")
         SeqIO.write([query_seq], sys.stdout, "fasta")
-        if 1: # ZZtry:
-          print("ZZ query_seq",query_seq)
-          print("ZZ seq",seq)
-          print("ZZ hhDB_dir",type(hhDB_dir),hhDB_dir)
-          print("ZZ content_dir",type(content_dir),content_dir)
+        try:
           hit = hh_process_seq(query_seq,seq,hhDB_dir,content_dir)
-        if 0: #ZZexcept Exception as e:
+        except Exception as e:
           print("Failed to process %s" %(filepath),e)
           hit = None
         if hit is not None:
