@@ -212,7 +212,7 @@ def run_one_cycle(params):
   plt.ylim(0,100)
   plt.ylabel("Predicted lDDT")
   plt.xlabel("Positions")
-  plt.savefig(jobname+"_coverage_lDDT.png")
+  plt.savefig(params.jobname+"_coverage_lDDT.png")
   ##################################################################
   plt.show()
 
@@ -229,7 +229,7 @@ def run_one_cycle(params):
     pae_file = params.jobname+"_"+model_name+"_PAE.jsn"
     write_pae_file(value["pae"], pae_file)
     pae_file_list.append(pae_file)
-  plt.savefig(jobname+"_PAE.png")
+  plt.savefig(params.jobname+"_PAE.png")
   plt.show()
   ##################################################################
   #@title Displaying 3D structure... {run: "auto"}
@@ -240,7 +240,7 @@ def run_one_cycle(params):
 
 
 
-  show_pdb(jobname, model_num,show_sidechains, show_mainchains, color).show()
+  show_pdb(params.jobname, model_num,show_sidechains, show_mainchains, color).show()
   if color == "lDDT": plot_plddt_legend().show()
   plot_confidence(params.homooligomer,
      params.query_sequence, outs, model_num).show()
