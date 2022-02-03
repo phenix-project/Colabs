@@ -389,6 +389,9 @@ def set_up_input_files(params):
   if not params.get('cif_dir',None):
     params['cif_dir'] = Path(parent_dir,"mmcif")
 
+  if not os.path.isdir(params['cif_dir']):
+    params['cif_dir'].mkdir(parents=True)
+
   print("CIF dir will be: %s" %(params['cif_dir']))
 
   # get input and output directories
