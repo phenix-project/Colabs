@@ -378,7 +378,9 @@ def get_cif_file_list(
 
   return cif_files
 
-def get_template_hit_list(cif_files = None, fasta_dir = None,
+def get_template_hit_list(
+    cif_files = None,
+    fasta_dir = None,
     query_seq = None,
     hhDB_dir = None,
     content_dir = None):
@@ -419,6 +421,7 @@ def get_template_hit_list(cif_files = None, fasta_dir = None,
         """
         SeqIO.write([seq], sys.stdout, "fasta")
         SeqIO.write([query_seq], sys.stdout, "fasta")
+        print("ZZFF before",hhDB_dir)
         try:
           hit = hh_process_seq(query_seq,seq,hhDB_dir,content_dir)
         except Exception as e:
