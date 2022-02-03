@@ -170,11 +170,13 @@ def hh_process_seq(
   #  Place one template fasta file to be the DB contents
   if not hasattr(hhDB_dir,'exists'):
     hhDB_dir = Path(hhDB_dir)
-  if hhDB_dir.exists() and not hhDB_dir.as_posix().startswith("/content"):
+  if hhDB_dir.exists() and \
+        not hhDB_dir.as_posix()  in ["/content", "/content/"]):
     shutil.rmtree(hhDB_dir)
 
   msa_dir = Path(hhDB_dir,"msa")
-  if msa_dir.exists() and not msa_dir.as_posix().startswith("/content"):
+  if msa_dir.exists() and \
+        not msa_dir.as_posix()  in ["/content", "/content/"]):
     shutil.rmtree(msa_dir)
 
   msa_dir.mkdir(parents=True)
