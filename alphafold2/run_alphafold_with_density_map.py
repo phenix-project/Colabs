@@ -102,7 +102,7 @@ def run_one_af_cycle(params):
       hit_pdb_code, hit_chain_id = _get_pdb_id_and_chain(hit)
       mapping = _build_query_to_hit_index_mapping(
       hit.query, hit.hit_sequence, hit.indices_hit, hit.indices_query,
-      query_sequence)
+      params.query_sequence)
       template_sequence = hit.hit_sequence.replace('-', '')
 
       try:
@@ -152,7 +152,8 @@ def run_one_af_cycle(params):
         print("ERROR: Some template features are empty")
   else:  # no templates
     print("Not using any templates")
-    template_features = mk_mock_template(params.query_sequence * params.homooligomer)
+    template_features = mk_mock_template(
+       params.query_sequence * params.homooligomer)
 
   print("\nPREDICTING STRUCTURE")
 
