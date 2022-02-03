@@ -30,7 +30,7 @@ def run_one_cycle(params):
 
   print("ZZ",params_dict.get('content_dir',None))
   print("ZZB",locals().get('content_dir',None))
-  print("ZZCcontent_dir)
+  print("ZZC",content_dir)
 
   from alphafold.data.templates import (_get_pdb_id_and_chain,
                                     _process_single_hit,
