@@ -26,7 +26,7 @@ def run_one_cycle(params):
   params_dict = params()
   for key in params_dict.keys():
     locals()[key] = params_dict[key]
-    print("ZZ paramsA",key,str(params_dict[key])[:100])
+    print("ZZ paramsA",key,str(locals()[key])[:100])
 
   from alphafold.data.templates import (_get_pdb_id_and_chain,
                                     _process_single_hit,
