@@ -19,7 +19,7 @@ def runsh(text):
   import subprocess
   import shlex
   print("RUNNING:",text)
-  result = subprocess.run(shlex.split(text))
+  result = os.system(text) # ZZZsubprocess.run(shlex.split(text))
   return result
 
 def clear_python_caches(modules = None, keep_list = None):
