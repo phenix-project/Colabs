@@ -420,8 +420,8 @@ def get_template_hit_list(cif_files = None, fasta_dir = None,
         if 1: # ZZtry:
           print("ZZ query_seq",query_seq)
           print("ZZ seq",seq)
-          print("ZZ hhDB_dir",hhDB_dir)
-          print("ZZ content_dir",content_dir)
+          print("ZZ hhDB_dir",type(hhDB_dir),hhDB_dir)
+          print("ZZ content_dir",type(content_dir),content_dir)
           hit = hh_process_seq(query_seq,seq,hhDB_dir,content_dir)
         if 0: #ZZexcept Exception as e:
           print("Failed to process %s" %(filepath),e)
