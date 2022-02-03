@@ -107,7 +107,7 @@ def run_one_cycle(params):
   model_runner_1 = None
   model_runner_3 = None
   for model_name in ["model_1","model_2","model_3",
-      "model_4","model_5"][:num_models]:
+      "model_4","model_5"][:params.num_models]:
     use_model[model_name] = True
     if model_name not in list(model_params.keys()):
       model_params[model_name] = data.get_model_haiku_params(model_name=model_name+"_ptm", data_dir=".")
@@ -219,9 +219,9 @@ def run_one_cycle(params):
   print("Predicted Alignment Error")
   ##################################################################
   pae_file_list = []
-  plt.figure(figsize=(3*num_models,2), dpi=100)
+  plt.figure(figsize=(3*params.num_models,2), dpi=100)
   for n,(model_name,value) in enumerate(outs.items()):
-    plt.subplot(1,num_models,n+1)
+    plt.subplot(1,params.num_models,n+1)
     plt.title(model_name)
     plt.imshow(value["pae"],label=model_name,cmap="bwr",vmin=0,vmax=30)
     plt.colorbar()
