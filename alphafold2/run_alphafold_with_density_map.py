@@ -356,6 +356,7 @@ def rebuild_model(params,
 
   for ff in (map_file_name,af_model_file, previous_model_file):
     if ff and not os.path.isfile(ff):
+      print("ZZff",ff,type(ff), os.path.isfile(ff))
       print("\nMissing the file: %s" %(ff))
       return None
 

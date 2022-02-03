@@ -230,8 +230,6 @@ def get_templates_from_drive(params):
         ff = open(filepath, 'wb')
         ff.write(contents)
         maps_uploaded.append(filepath)
-        print("ZZ wrote to ",filepath)
-        assert os.path.isfile(filepath) # ZZ
 
       elif params.get('upload_manual_templates',None) and \
            str(filename).endswith(".cif"):
