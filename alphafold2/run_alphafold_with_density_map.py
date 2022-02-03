@@ -26,7 +26,7 @@ def run_one_cycle(params):
                                     SingleHitResult,
                                     TEMPLATE_FEATURES)
 
-  os.chdir(content_dir)
+  os.chdir(params.content_dir)
   if params.template_hit_list:
     #process hits into template features
     from dataclasses import replace
