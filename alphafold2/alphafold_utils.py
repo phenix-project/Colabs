@@ -143,8 +143,12 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
 
 
 
-def hh_process_seq(query_seq,template_seq,content_dir,
-    hhDB_dir,db_prefix="DB"):
+def hh_process_seq(
+  query_seq = None,
+  template_seq = None,
+  content_dir = None,
+  hhDB_dir = None,
+  db_prefix="DB"):
   """
   This is a hack to get hhsuite output strings to pass on
   to the AlphaFold template featurizer.
@@ -164,11 +168,9 @@ def hh_process_seq(query_seq,template_seq,content_dir,
 
   # set up directory for hhsuite DB.
   #  Place one template fasta file to be the DB contents
-  print("ZZRR",hhDB_dir)
   if not hasattr(hhDB_dir,'exists'):
     hhDB_dir = Path(hhDB_dir)
   if hhDB_dir.exists() and not hhDB_dir.as_posix().startswith("/content"):
-    print("ZZQQ removing:",hhDB_dir)
     shutil.rmtree(hhDB_dir)
 
   msa_dir = Path(hhDB_dir,"msa")
@@ -423,11 +425,14 @@ def get_template_hit_list(
         """
         SeqIO.write([seq], sys.stdout, "fasta")
         SeqIO.write([query_seq], sys.stdout, "fasta")
-        print("ZZFF before",hhDB_dir)
-        if 1: # ZZtry:
-          print("ZZHH",query_seq,seq,hhDB_dir,content_dir)
-          hit = hh_process_seq(query_seq,seq,hhDB_dir,content_dir)
-        if 0: #ZZexcept Exception as e:
+        try:
+          hit = hh_process_seq(
+           query_seq = query_seq,
+           template_seq = seq,
+           hhDB_dir = hhDB_dir,
+           content_dir = content_dir)
+
+        except Exception as e:
           print("Failed to process %s" %(filepath),e)
           hit = None
         if hit is not None:

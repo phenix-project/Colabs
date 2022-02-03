@@ -404,7 +404,6 @@ def set_up_input_files(params):
   for dd in [parent_dir,params.get('cif_dir','')]:
     if dd and os.path.isdir(dd):
       dirs_to_clear.append(dd)
-  print("ZZ directories to clear:",dirs_to_clear)
   clear_directories(dirs_to_clear)
 
   if params.get(

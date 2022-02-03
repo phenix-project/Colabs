@@ -356,7 +356,6 @@ def rebuild_model(params,
 
   for ff in (map_file_name,af_model_file, previous_model_file):
     if ff and not os.path.isfile(ff):
-      print("ZZff",ff,type(ff), os.path.isfile(ff))
       print("\nMissing the file: %s" %(ff))
       return None
 
@@ -440,8 +439,7 @@ def run_job(params = None):
   hhDB_dir = Path(parent_dir,"hhDB")
   msa_dir = Path(hhDB_dir,"msa")
   clear_directories([fasta_dir,hhDB_dir,msa_dir])
-  assert params.cif_dir == cif_dir # ZZ
-  print("ZZEE hhDB_dir",hhDB_dir)
+  assert params.cif_dir == cif_dir
 
   if params.uploaded_templates_are_map_to_model and \
       params.manual_templates_uploaded: # mtm
