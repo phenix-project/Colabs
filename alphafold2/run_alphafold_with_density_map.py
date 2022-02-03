@@ -452,9 +452,9 @@ def run_job(params = None):
       final_model_file_name,
       final_model_file_name_in_cif_dir)
 
-    if output_directory is not None:
+    if params.output_directory is not None:
       final_model_file_name_in_output_dir = Path(
-        os.path.join(output_directory,final_model_file_name.name))
+        os.path.join(params.output_directory,final_model_file_name.name))
       shutil.copyfile(
         final_model_file_name,
         final_model_file_name_in_output_dir)
