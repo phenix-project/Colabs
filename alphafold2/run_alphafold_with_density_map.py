@@ -328,6 +328,10 @@ def get_map_model_cc(map_file_name, model_file_name, resolution):
   from iotbx.data_manager import DataManager
   dm = DataManager()
   dm.set_overwrite(True)
+  if hasattr(map_file_name,'name'):
+    map_file_name = map_file_name.name
+  if hasattr(model_file_name,'name'):
+    model_file_name = model_file_name.name
   mmm = dm.get_map_model_manager(map_files = map_file_name,
       model_file = model_file_name)
   mmm.set_resolution(resolution)
@@ -546,7 +550,10 @@ def run_job(params = None):
         shutil.copyfile(
           final_model_file_name,
           final_model_file_name_in_output_dir)
-      print("Copied rebuilt model to %s" %(
+        print("Copied rebuilt model to %s" %(
+          final_model_file_name_in_output_dir))
+      else:
+        print("Rebuilt model is %s" %(
           final_model_file_name_in_output_dir))
 
     from phenix_colab_utils import run_pdb_to_cif

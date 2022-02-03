@@ -247,7 +247,9 @@ def import_tensorflow():
     print("Tensorflow available")
     return tf
 
-def install_pdb_to_cif():
+def install_pdb_to_cif(content_dir = None):
+  if not content_dir:
+    content_dir = "/content"
   if os.path.isfile('PDB_TO_CIF_READY'):
     print("pdb_to_cif is already downloaded")
   else:
@@ -255,6 +257,9 @@ def install_pdb_to_cif():
     runsh('wget https://phenix-online.org/phenix_data/terwilliger/colab_data/maxit-v11.100-prod-src.tgz')
     runsh('tar xzf maxit-v11.100-prod-src.tgz')
     runsh('rm -f maxit-v11.100-prod-src.tgz')
+    p = os.path.join(content_dir,"maxit-v11.100-prod-src")
+    b = os.path.join(p, "bin","process_entry")
+    runsh("chmod +x %s" %(b))
     runsh('touch PDB_TO_CIF_READY')
     print("Ready with pdb_to_cif")
 
@@ -272,5 +277,7 @@ def run_pdb_to_cif(f, content_dir = None):
 
     p = os.path.join(content_dir,"maxit-v11.100-prod-src")
     b = os.path.join(p, "bin","process_entry")
-    runsh("chmod +x %s; RCSBROOT=%s; export RCSBROOT; echo $RCSBROOT;  %s -input %s -input_format pdb -output %s -output_format cif" %(b,p,b,f,output_file))
+    here = os.getcwd()
+    os.environ['RCSBROOT'] = p
+    runsh("%s -input %s -input_format pdb -output %s -output_format cif" %(b,f,output_file))
     return Path(output_file)
