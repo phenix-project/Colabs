@@ -462,7 +462,7 @@ def run_job(params = None):
           final_model_file_name_in_output_dir))
     from phenix_colab_utils import run_pdb_to_cif
     final_model_file_name_as_cif_in_cif_dir = run_pdb_to_cif(
-       final_model_file_name_in_cif_dir, content_dir = content_dir)
+       final_model_file_name_in_cif_dir, content_dir = params.content_dir)
     manual_cif_file_list = get_cif_file_list(
       include_templates_from_pdb = False,
       manual_templates_uploaded = [final_model_file_name_as_cif_in_cif_dir.name],
@@ -477,7 +477,12 @@ def run_job(params = None):
       print("Downloading zip file %s" %(filename))
       files.download(filename)
       print("Start of download successful (NOTE: if the download symbol does not go away it did not work. Download it manually using the folder icon to the left)")
-      return filename
+      from libtbx import group_args
+      return group_args(
+        grep_args_type = 'rebuilding result',
+        filename = filename,
+        cc = cc)
+
     except Exception as e:
       print("Unable to download zip file %s" %(filename))
       return None
