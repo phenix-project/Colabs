@@ -132,6 +132,7 @@ def clear_directories(all_dirs):
 
   for d in all_dirs:
     if d.exists():
+      print("Clearing %s" %(d))
       shutil.rmtree(d)
     d.mkdir(parents=True)
 
@@ -394,7 +395,11 @@ def set_up_input_files(params):
   resolutions = []
   cif_filename_dict = {}
   map_filename_dict = {}
-  clear_directories([parent_dir,params.get('cif_dir','')])
+  dirs_to_clear = []
+  for dd in [parent_dir,params.get('cif_dir','')]:
+    if dd and os.path.isdir(dd):
+      dirs_to_clear.append(dd)
+  clear_directories(dirs_to_clear)
 
   if params.get(
      'upload_file_with_jobname_resolution_sequence_lines',None):
