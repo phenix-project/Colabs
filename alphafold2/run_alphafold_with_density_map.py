@@ -22,14 +22,14 @@ from alphafold_utils import (mk_mock_template,
 
 def run_one_cycle(params):
 
-  # Add all params values to locals()
+  # Add all params values to globals()
   params_dict = params()
   for key in params_dict.keys():
-    locals()[key] = params_dict[key]
-    print("ZZ paramsA",key,str(locals()[key])[:100])
+    globals()[key] = params_dict[key]
+    print("ZZ paramsA",key,str(globals()[key])[:100])
 
   print("ZZ",params_dict.get('content_dir',None))
-  print("ZZB",locals().get('content_dir',None))
+  print("ZZB",globals().get('content_dir',None))
   print("ZZC",content_dir)
 
   from alphafold.data.templates import (_get_pdb_id_and_chain,
@@ -262,7 +262,7 @@ def rebuild_model(params,
 
   params_dict = params()
   for key in params_dict.keys():
-    locals()[key] = params_dict[key]
+    globals()[key] = params_dict[key]
 
   assert len(maps_uploaded) == 1  # just one map
   map_file_name = maps_uploaded[0]
