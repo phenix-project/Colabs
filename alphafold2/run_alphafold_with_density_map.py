@@ -216,7 +216,11 @@ def run_one_af_cycle(params):
                            model_runner_1=model_runner_1,
                            model_runner_3=model_runner_3,
                            do_relax=False)
-  print("DONE WITH STRUCTURE in",os.getcwd())
+  if outs: # ok
+    print("Done with prediction in",os.getcwd())
+  else: # failed
+    print("Prediction failed...probably ran out of memory...quitting")
+    return None
 
   os.chdir(params.content_dir)
   print(os.listdir("."))
@@ -530,6 +534,7 @@ def run_job(params = None):
          not os.path.isfile(result.cycle_model_file_name)):
       print("Modeling failed cycle %s" %(cycle))
       return None
+
     cycle_model_file_name = result.cycle_model_file_name
 
     print("\nFinished with cycle %s of AlphaFold model generation" %(cycle))
