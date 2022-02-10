@@ -124,7 +124,8 @@ def get_input_output_dirs(params):
            gdrive_dir))
 
   if not have_input_directory:  # get it
-    input_directory = os.path.join(gdrive_dir, input_directory)
+    if not os.path.isdir(input_directory):
+      input_directory = os.path.join(gdrive_dir, input_directory)
     print("Input files will be taken from the folder %s" %(
         input_directory))
     if not os.path.isdir(input_directory):
