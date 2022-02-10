@@ -443,7 +443,10 @@ def get_rmsd(fn_1, fn_2):
   rmsd_info = mb.ca_rmsd_after_lsq_superpose(
     fixed_model = m1,
     moving_model = m2)
-  return rmsd_info.rmsd
+  if rmsd_info:
+    return rmsd_info.rmsd
+  else:
+    return None
 
 def get_map_to_model(map_file_name,
     resolution,
