@@ -311,6 +311,7 @@ def run_one_af_cycle(params):
     pae_file_list = []
     plt.figure(figsize=(3*params.num_models,2), dpi=100)
     for n,(model_name,value) in enumerate(outs.items()):
+      if n > 1: break # only do one
       plt.subplot(1,params.num_models,n+1)
       plt.title(model_name)
       plt.imshow(value["pae"],label=model_name,cmap="bwr",vmin=0,vmax=30)
