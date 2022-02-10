@@ -178,7 +178,7 @@ def install_phenix(password = None, version = None):
     print("Phenix is already downloaded")
   else:
     print("Downloading Phenix...")
-    runsh("wget -q --user user --password %s -r -l1 https://phenix-online.org/download/installers/%s/linux-64/ -A phenix*.tar.bz2" %(password, version))
+    runsh("wget -q --user download --password %s -r -l1 https://phenix-online.org/download/installers/%s/linux-64/ -A phenix*.tar.bz2" %(password, version))
     if not os.path.isdir("phenix-online.org"):
       # try with user as trusted
       runsh("wget -q --user trusted --password %s -r -l1 https://phenix-online.org/download/installers/%s/linux-64/ -A phenix*.tar.bz2" %(password, version))
