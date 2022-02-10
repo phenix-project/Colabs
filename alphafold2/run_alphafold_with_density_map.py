@@ -20,6 +20,8 @@ from alphafold_utils import (mk_mock_template,
 def run_jobs(params):
 
   # RUN THE JOBS HERE
+  os.chdir(params.content_dir)
+  print("Working directory: %s" %(os.getcwd()))
 
   for query_sequence, jobname, resolution in zip(
     params.query_sequences, params.jobnames, params.resolutions):
@@ -35,8 +37,8 @@ def run_jobs(params):
     working_params.resolution =resolution
 
     # User input of manual templates
-    working_params.manual_templates_uploaded = working_params.cif_filename_dict.get(
-      working_params.jobname,[])
+    working_params.manual_templates_uploaded = \
+        working_params.cif_filename_dict.get(working_params.jobname,[])
     if working_params.manual_templates_uploaded:
       print("Using uploaded templates %s for this run" %(
           working_params.manual_templates_uploaded))
@@ -170,7 +172,7 @@ def run_one_af_cycle(params):
       "model_4","model_5"][:params.num_models]:
     use_model[model_name] = True
     if model_name not in list(model_params.keys()):
-      model_params[model_name] = data.get_model_haiku_params(model_name=model_name+"_ptm", data_dir=".")
+      model_params[model_name] = data.get_model_haiku_params(model_name=model_name+"_ptm", data_dir = params.data_dir)
       if model_name == "model_1":
         model_config = config.model_config(model_name+"_ptm")
         model_config.data.eval.num_ensemble = 1
@@ -182,7 +184,7 @@ def run_one_af_cycle(params):
   if params.homooligomer == 1:
     msas = [params.msa]
     deletion_matrices = [params.deletion_matrix]
-  else:
+  else: # ZZZ THis won't work with msa_is_msa_object = True yet ZZ
     # make multiple copies of msa for each copy
     # AAA------
     # ---AAA---
@@ -201,21 +203,40 @@ def run_one_af_cycle(params):
 
   # gather features
   from alphafold.data import pipeline
-  feature_dict = {
-    **pipeline.make_sequence_features(
+  if params.msa_is_msa_object:
+    feature_dict = {
+      **pipeline.make_sequence_features(
                   sequence=params.query_sequence*params.homooligomer,
                    description="none",
                    num_res=len(params.query_sequence)*params.homooligomer),
-    **pipeline.make_msa_features(msas=msas,deletion_matrices=deletion_matrices),
-    **template_features
-  }
+      **pipeline.make_msa_features(msas),
+      **template_features
+     }
+  else: # original version
+    feature_dict = {
+      **pipeline.make_sequence_features(
+                  sequence=params.query_sequence*params.homooligomer,
+                   description="none",
+                   num_res=len(params.query_sequence)*params.homooligomer),
+      **pipeline.make_msa_features(
+         msas=msas,deletion_matrices=deletion_matrices),
+      **template_features
+     }
+
+
+
   outs = predict_structure(params.jobname, feature_dict,
                            Ls=[len(params.query_sequence)]*params.homooligomer,
                            model_params=model_params,
                            use_model=use_model,
                            model_runner_1=model_runner_1,
                            model_runner_3=model_runner_3,
-                           do_relax=False)
+                           do_relax=False,
+                           msa_is_msa_object = params.msa_is_msa_object,
+                       random_seed = params.random_seed,
+                       random_seed_iterations = 
+                         params.random_seed_iterations if params.cycle == 1 else
+                         params.minimum_random_seed_iterations)
   if outs: # ok
     print("Done with prediction in",os.getcwd())
   else: # failed
@@ -223,16 +244,16 @@ def run_one_af_cycle(params):
     return None
 
   os.chdir(params.content_dir)
-  print(os.listdir("."))
   model_file_name = "%s_unrelaxed_model_1.pdb" %(params.jobname)
   if os.path.isfile(model_file_name):
     print("Model file is in %s" %(model_file_name))
     cycle_model_file_name = "%s_unrelaxed_model_1_%s.pdb" %(
         params.jobname, params.cycle)
-    if model_file_name != cycle_model_file_name:
+    if not same_file(model_file_name, cycle_model_file_name):
       shutil.copyfile(model_file_name,cycle_model_file_name)
-    if params.output_directory is not None and model_file_name != \
-         os.path.join(params.output_directory, cycle_model_file_name):
+    if params.output_directory is not None and (not
+        same_file (model_file_name,
+         os.path.join(params.output_directory, cycle_model_file_name))):
       shutil.copyfile(model_file_name,os.path.join(
         params.output_directory, cycle_model_file_name))
   else:
@@ -241,76 +262,81 @@ def run_one_af_cycle(params):
     cycle_model_file_name = None
 
   #@title Making plots...
-  import matplotlib.pyplot as plt
-  from alphafold_utils import plot_plddt_legend, plot_confidence, write_pae_file
+  try:
+    import matplotlib.pyplot as plt
+    from alphafold_utils import plot_plddt_legend, plot_confidence, write_pae_file
+  except Exception as e: # No matplotlib
+    plt = None
 
-  # gather MSA info
-  deduped_full_msa = list(dict.fromkeys(params.msa))
-  msa_arr = np.array([list(seq) for seq in deduped_full_msa])
-  seqid = (np.array(list(params.query_sequence)) == msa_arr).mean(-1)
-  seqid_sort = seqid.argsort() #[::-1]
-  non_gaps = (msa_arr != "-").astype(float)
-  non_gaps[non_gaps == 0] = np.nan
+  if plt and (not params.msa_is_msa_object):
+    # gather MSA info # ZZZ This won't work with msa_is_msa_object
+    deduped_full_msa = list(dict.fromkeys(params.msa))
+    msa_arr = np.array([list(seq) for seq in deduped_full_msa])
+    seqid = (np.array(list(params.query_sequence)) == msa_arr).mean(-1)
+    seqid_sort = seqid.argsort() #[::-1]
+    non_gaps = (msa_arr != "-").astype(float)
+    non_gaps[non_gaps == 0] = np.nan
+    ##################################################################
+    plt.figure(figsize=(14,4),dpi=100)
+    ##################################################################
+    plt.subplot(1,2,1); plt.title("Sequence coverage")
+    plt.imshow(non_gaps[seqid_sort]*seqid[seqid_sort,None],
+               interpolation='nearest', aspect='auto',
+               cmap="rainbow_r", vmin=0, vmax=1, origin='lower')
+    plt.plot((msa_arr != "-").sum(0), color='black')
+    plt.xlim(-0.5,msa_arr.shape[1]-0.5)
+    plt.ylim(-0.5,msa_arr.shape[0]-0.5)
+    plt.colorbar(label="Sequence identity to query",)
+    plt.xlabel("Positions")
+    plt.ylabel("Sequences")
 
-  ##################################################################
-  plt.figure(figsize=(14,4),dpi=100)
-  ##################################################################
-  plt.subplot(1,2,1); plt.title("Sequence coverage")
-  plt.imshow(non_gaps[seqid_sort]*seqid[seqid_sort,None],
-             interpolation='nearest', aspect='auto',
-             cmap="rainbow_r", vmin=0, vmax=1, origin='lower')
-  plt.plot((msa_arr != "-").sum(0), color='black')
-  plt.xlim(-0.5,msa_arr.shape[1]-0.5)
-  plt.ylim(-0.5,msa_arr.shape[0]-0.5)
-  plt.colorbar(label="Sequence identity to query",)
-  plt.xlabel("Positions")
-  plt.ylabel("Sequences")
+    ##################################################################
+    plt.subplot(1,2,2); plt.title("Predicted lDDT per position")
+    for model_name,value in outs.items():
+      plt.plot(value["plddt"],label=model_name)
+    if params.homooligomer > 0:
+      for n in range(params.homooligomer+1):
+        x = n*(len(params.query_sequence)-1)
+        plt.plot([x,x],[0,100],color="black")
+    plt.legend()
+    plt.ylim(0,100)
+    plt.ylabel("Predicted lDDT")
+    plt.xlabel("Positions")
+    plt.savefig(params.jobname+"_coverage_lDDT.png")
+    ##################################################################
+    plt.show()
 
-  ##################################################################
-  plt.subplot(1,2,2); plt.title("Predicted lDDT per position")
-  for model_name,value in outs.items():
-    plt.plot(value["plddt"],label=model_name)
-  if params.homooligomer > 0:
-    for n in range(params.homooligomer+1):
-      x = n*(len(params.query_sequence)-1)
-      plt.plot([x,x],[0,100],color="black")
-  plt.legend()
-  plt.ylim(0,100)
-  plt.ylabel("Predicted lDDT")
-  plt.xlabel("Positions")
-  plt.savefig(params.jobname+"_coverage_lDDT.png")
-  ##################################################################
-  plt.show()
-
-  print("Predicted Alignment Error")
-  ##################################################################
-  pae_file_list = []
-  plt.figure(figsize=(3*params.num_models,2), dpi=100)
-  for n,(model_name,value) in enumerate(outs.items()):
-    plt.subplot(1,params.num_models,n+1)
-    plt.title(model_name)
-    plt.imshow(value["pae"],label=model_name,cmap="bwr",vmin=0,vmax=30)
-    plt.colorbar()
-    # Write pae file
-    pae_file = params.jobname+"_"+model_name+"_PAE.jsn"
-    write_pae_file(value["pae"], pae_file)
-    pae_file_list.append(pae_file)
-  plt.savefig(params.jobname+"_PAE.png")
-  plt.show()
-  ##################################################################
-  #@title Displaying 3D structure... {run: "auto"}
-  model_num = 1
-  color = "lDDT"
-  show_sidechains = False
-  show_mainchains = False
+    print("Predicted Alignment Error")
+    ##################################################################
+    pae_file_list = []
+    plt.figure(figsize=(3*params.num_models,2), dpi=100)
+    for n,(model_name,value) in enumerate(outs.items()):
+      plt.subplot(1,params.num_models,n+1)
+      plt.title(model_name)
+      plt.imshow(value["pae"],label=model_name,cmap="bwr",vmin=0,vmax=30)
+      plt.colorbar()
+      # Write pae file
+      pae_file = params.jobname+"_"+model_name+"_PAE.jsn"
+      write_pae_file(value["pae"], pae_file)
+      pae_file_list.append(pae_file)
+    plt.savefig(params.jobname+"_PAE.png")
+    plt.show()
+    ##################################################################
+    #@title Displaying 3D structure... {run: "auto"}
+    model_num = 1
+    color = "lDDT"
+    show_sidechains = False
+    show_mainchains = False
 
 
 
-  show_pdb(params.jobname, model_num,show_sidechains, show_mainchains, color).show()
-  if color == "lDDT": plot_plddt_legend().show()
-  plot_confidence(params.homooligomer,
-     params.query_sequence, outs, model_num).show()
-  #@title Packaging and downloading results...
+    show_pdb(params.jobname, model_num,show_sidechains,
+        show_mainchains, color).show()
+    if color == "lDDT": plot_plddt_legend().show()
+    plot_confidence(params.homooligomer,
+       params.query_sequence, outs, model_num).show()
+    #@title Packaging and downloading results...
+
 
   #@markdown When modeling is complete .zip files with results will be downloaded automatically.
 
@@ -401,6 +427,23 @@ def get_map_model_cc(map_file_name, model_file_name, resolution):
   mmm.set_resolution(resolution)
   return mmm.map_model_cc()
 
+def get_rmsd(fn_1, fn_2):
+  # Get rmsd between these models
+  from iotbx.data_manager import DataManager
+  dm = DataManager()
+  if hasattr(fn_1,'as_posix'):
+    fn_1 = fn_1.as_posix()
+  if hasattr(fn_2,'as_posix'):
+    fn_2 = fn_2.as_posix()
+  m1 = dm.get_model(fn_1)
+  m2 = dm.get_model(fn_2)
+  mmm = m1.as_map_model_manager()
+  mb = mmm.model_building()
+  rmsd_info = mb.ca_rmsd_after_lsq_superpose(
+    fixed_model = m1,
+    moving_model = m2)
+  return rmsd_info.rmsd
+
 def get_map_to_model(map_file_name,
     resolution,
     seq_file,
@@ -421,6 +464,9 @@ def run_job(params = None):
   if not params.content_dir:
     params.content_dir = "/content/"
 
+  if params.random_seed is None:
+    params.random_seed = 717217
+
   os.chdir(params.content_dir)
 
   #standard values of parameters
@@ -432,7 +478,8 @@ def run_job(params = None):
 
 
   #Get the MSA
-  params.msa, params.deletion_matrix, params.template_paths = get_msa(params)
+  params.msa, params.deletion_matrix, params.template_paths, \
+    params.msa_is_msa_object = get_msa(params)
 
   #Process templates
   print("PROCESSING TEMPLATES")
@@ -488,7 +535,16 @@ def run_job(params = None):
 
   # Run cycles
 
+  rmsd_from_previous_cycle_list = []
+  previous_cycle_model_file_name = None
+
   for cycle in range(1, params.maximum_cycles + 1):
+
+    # Decide if it is time to quit
+    if change_is_small(params, rmsd_from_previous_cycle_list):
+      print("Ending cycles as changes are small...")
+      break
+
 
     params.cycle = cycle
     print("\nStarting cycle %s" %(cycle))
@@ -496,8 +552,8 @@ def run_job(params = None):
       print("Getting dummy msa for cycles after the first")
       #Get dummy msa
       params.use_msa = False
-      params.msa, params.deletion_matrix, params.template_paths = get_msa(
-        params)
+      params.msa, params.deletion_matrix, params.template_paths, \
+        params.msa_is_msa_object = get_msa(params)
 
     working_cif_file_list = \
      list(manual_cif_file_list) + \
@@ -542,10 +598,20 @@ def run_job(params = None):
     print("Current AlphaFold model is in %s" %(
         cycle_model_file_name.as_posix()))
 
+    if previous_cycle_model_file_name:
+      rmsd_from_previous = get_rmsd(cycle_model_file_name.as_posix(),
+        previous_cycle_model_file_name.as_posix())
+      if rmsd_from_previous is not None:
+        rmsd_from_previous_cycle_list.append(rmsd_from_previous)
+        print("RMSD of predicted model from last cycle: %.2f A" %(
+          rmsd_from_previous))
+    previous_cycle_model_file_name = cycle_model_file_name
+
     if params.output_directory is not None:
       cycle_model_file_name_in_output_dir = Path(
         os.path.join(params.output_directory,cycle_model_file_name.name))
-      if cycle_model_file_name != cycle_model_file_name_in_output_dir:
+      if not same_file(cycle_model_file_name,
+         cycle_model_file_name_in_output_dir):
         shutil.copyfile(
           cycle_model_file_name,
           cycle_model_file_name_in_output_dir)
@@ -572,7 +638,7 @@ def run_job(params = None):
         final_model_file_name  = final_model_file_name,
         cc = get_map_model_cc(map_file_name = map_file_name,
           model_file_name = final_model_file_name,
-          resolution = params.resolution))
+          resolution = params.resolution),)
     else: # usual
       rebuild_result = rebuild_model(params)
 
@@ -603,7 +669,8 @@ def run_job(params = None):
 
     final_model_file_name_in_cif_dir = Path(
         os.path.join(cif_dir,final_model_file_name.name))
-    if final_model_file_name != final_model_file_name_in_cif_dir:
+    if not same_file(final_model_file_name,
+      final_model_file_name_in_cif_dir):
       shutil.copyfile(
         final_model_file_name,
         final_model_file_name_in_cif_dir)
@@ -611,7 +678,8 @@ def run_job(params = None):
     if params.output_directory is not None:
       final_model_file_name_in_output_dir = Path(
         os.path.join(params.output_directory,final_model_file_name.name))
-      if final_model_file_name != final_model_file_name_in_output_dir:
+      if not same_file(final_model_file_name,
+          final_model_file_name_in_output_dir):
         shutil.copyfile(
           final_model_file_name,
           final_model_file_name_in_output_dir)
@@ -652,3 +720,20 @@ def run_job(params = None):
   else:
     print("No .zip file %s created" %(filename))
     return None
+
+def same_file(f1,f2):
+  if not f1 or not f2 or not os.path.isfile(f1) or not os.path.isfile(f2):
+    return False
+  return os.path.samefile(os.path.abspath(f1),os.path.abspath(f2))
+
+def change_is_small(params, rmsd_from_previous_cycle_list, n = 2):
+  if len(rmsd_from_previous_cycle_list) < n:
+    return False
+  biggest_recent_rmsd = 0
+  for x in rmsd_from_previous_cycle_list[-n:]:
+    if x > biggest_recent_rmsd:
+      biggest_recent_rmsd = x
+  if x <= params.resolution * params.cycle_rmsd_to_resolution_ratio:
+    return True
+  else:
+    return False 

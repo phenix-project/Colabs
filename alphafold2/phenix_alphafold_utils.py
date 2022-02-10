@@ -66,64 +66,89 @@ class save_locals:
       if verbose:
         print("Set variable %s as %s" %(k, new_locals[k]))
 
+def params_as_dict(params):
+  # Convert params object to a dict (only works if 1 level)
+  p = {}
+  for key in dir(params):
+    if key.startswith("_"): continue
+    print (key)
+    p[key] = getattr(params, key)
+  return p
+
 def get_input_output_dirs(params):
   """
      Identify input directory as either a directory named with the value
      of input_directory in default directory, or as a directory with this
      name in user's Google drive.
 
-     If save_outputs_in_google_drive is set, create an output_dir as
-     well in Google drive
+     If output_dir is set or save_outputs_in_google_drive is set, 
+     create an output_dir as
+     well. Save in Google drive if input_directory is in Google drive
   """
   input_directory = params.get('input_directory',None)
-  create_output_dir = params.get('save_outputs_in_google_drive',None)
-  output_dir = params.get('output_dir',"ColabOutputs")
+  save_outputs_in_google_drive = params.get('save_outputs_in_google_drive',None)
+  output_dir = params.get('output_directory', None)
+
+  create_output_dir = save_outputs_in_google_drive or output_dir
+
+  if save_outputs_in_google_drive and not output_dir:
+    output_dir = "ColabOutputs"
+
   content_dir = params.get('content_dir')
   assert content_dir is not None
 
   have_input_directory = False
   need_google_drive = False
+  gdrive_dir = None
 
   if os.path.isdir(input_directory):
     input_directory = Path(input_directory)
     print("Input files will be taken from %s" %(
         input_directory))
     have_input_directory = True
-  else:
+  elif save_outputs_in_google_drive:
     need_google_drive = True
 
-  if create_output_dir:
-    need_google_drive = True
   if need_google_drive:
     gdrive_path = os.path.join(content_dir,'gdrive')
     gdrive_dir = os.path.join(content_dir,'gdrive','MyDrive')
     if not os.path.isdir(gdrive_path):
-      from google.colab import drive
+      try:
+        from google.colab import drive
+      except Exception as e:
+        raise Exception("Sorry, cannot find the Google drive directory %s" %(
+           gdrive_dir))
       drive.mount(gdrive_path)
       if not os.path.isdir(gdrive_dir):
         raise Exception("Sorry, cannot find the Google drive directory %s" %(
            gdrive_dir))
 
   if not have_input_directory:  # get it
-    print("Input files will be taken from Google drive folder %s" %(
-        input_directory))
     input_directory = os.path.join(gdrive_dir, input_directory)
+    print("Input files will be taken from the folder %s" %(
+        input_directory))
     if not os.path.isdir(input_directory):
       raise Exception("Sorry, cannot find the Google drive directory %s" %(
            input_directory))
     input_directory = Path(input_directory)
 
   if create_output_dir:
-    full_output_dir = os.path.join(gdrive_dir, output_dir)
+    if gdrive_dir and os.path.isdir(gdrive_dir):
+      full_output_dir = os.path.join(gdrive_dir, output_dir)
+    else:  # make it in content_dir
+      full_output_dir = os.path.join(content_dir, output_dir)
     if not os.path.isdir(full_output_dir):
       os.mkdir(full_output_dir)
-    print("Output files will be copied to %s in Google drive" %(output_dir))
+    print("Output files will be copied to %s " %(output_dir))
+    
     full_output_dir = Path(full_output_dir)
   else:
     full_output_dir = None
 
   params['input_directory'] = input_directory
   params['output_directory'] = full_output_dir
+  print("Input directory: ",input_directory)
+  print("Output directory: ",full_output_dir)
   return params
 
 def add_hash(x,y):
@@ -354,24 +379,19 @@ def get_jobnames_sequences_from_file(params):
   return params
 
 
-def get_helper_files():
-
-  # Upload utilities python files to get started
-  import os
-  result = os.system("wget -qnc https://raw.githubusercontent.com/phenix-project/Colabs/main/alphafold2/phenix_alphafold_utils.py")
-  result = os.system("wget -qnc https://raw.githubusercontent.com/phenix-project/Colabs/main/alphafold2/phenix_colab_utils.py")
-  for file_name in ['phenix_alphafold_utils.py', 'phenix_colab_utils.py']:
-    if not os.path.isfile(file_name):
-      print('Unable to set up the helper file %s' %(file_name))
-      raise AssertionError('Unable to set up the helper file %s' %(file_name))
-
 def set_up_input_files(params):
 
 
   from pathlib import Path
   import os, sys
 
-  from google.colab import files
+  if type(params) == type ({}):
+    params_is_dict = True
+    original_params = params
+  else: # make it one
+    params_is_dict = False
+    original_params = params
+    params = params_as_dict(original_params)  # makes a dict
 
   content_dir = params.get('content_dir',None)
 
@@ -493,5 +513,12 @@ def set_up_input_files(params):
   params['map_filename_dict'] = map_filename_dict
   params['cif_filename_dict'] = cif_filename_dict
   params['query_sequences'] = query_sequences
-  return params
 
+  if params_is_dict: # convert to params
+    from phenix.programs.alphafold_with_density_map import master_phil_str
+    import iotbx.phil
+    original_params = iotbx.phil.parse(master_phil_str).extract()
+
+  for key in params.keys():
+    setattr(original_params,key,params[key])
+  return original_params

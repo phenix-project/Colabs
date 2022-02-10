@@ -49,6 +49,9 @@ def install_software(
     phenix_password = None,
   alphafold = True,
     alphafold_version = '0bab1bf84d9d887aba5cfb6d09af1e8c3ecbc408',
+  colabfold = True,
+  biopython = True,
+  mmseq2 = True,
   pdb_to_cif = True,
   fix_paths = True,
   content_dir = None,
@@ -63,8 +66,12 @@ def install_software(
   if phenix:
     install_phenix(password = phenix_password, version = phenix_version)
 
-  if alphafold:
-    install_alphafold(version = alphafold_version, content_dir = content_dir)
+  if alphafold or colabfold or biopython or mmseq2:
+    install_alphafold(version = alphafold_version, content_dir = content_dir,
+      colabfold = colabfold,
+      biopython = biopython,
+      mmseq2 = mmseq2,
+      alphafold = alphafold)
 
   if pdb_to_cif:
     install_pdb_to_cif()
@@ -74,11 +81,16 @@ def install_software(
 
 
 
-def install_alphafold(version = None, content_dir = None):
+def install_alphafold(version = None, content_dir = None,
+    colabfold = True,
+    biopython = True,
+    mmseq2 = True,
+    alphafold = True,
+    ):
   assert content_dir is not None
   os.chdir(content_dir)
 
-  if not version:
+  if not version and alphafold:
     raise AssertionError("Need alphafold version for installation")
 
   if os.path.isfile("AF2_READY"):
@@ -87,10 +99,12 @@ def install_alphafold(version = None, content_dir = None):
 
   # install dependencies
   print( "Installing biopython and colabfold...")
-  runsh("pip -q install biopython dm-haiku ml-collections py3Dmol")
-  runsh("wget -qnc https://raw.githubusercontent.com/sokrypton/ColabFold/96fe2446f454eba38ea34ca45d97dc3f393e24ed/beta/colabfold.py")
+  if biopython:
+    runsh("pip -q install biopython dm-haiku ml-collections py3Dmol")
+  if colabfold:
+    runsh("wget -qnc https://raw.githubusercontent.com/sokrypton/ColabFold/96fe2446f454eba38ea34ca45d97dc3f393e24ed/beta/colabfold.py")
   # download model
-  if not os.path.isdir("alphafold"):
+  if alphafold and (not os.path.isdir("alphafold")):
     print("Installing AlphaFold...")
     runsh("git clone https://github.com/deepmind/alphafold.git --quiet")
     here = os.getcwd()
@@ -105,7 +119,7 @@ def install_alphafold(version = None, content_dir = None):
     runsh("""sed -i "s/pdb_lines.append('ENDMDL')//" %s""" %(dd))
 
   # download model params (~1 min)
-  if not os.path.isdir("params"):
+  if alphafold and (not os.path.isdir("params")):
     print("Installing AlphaFold parameters...")
     runsh("mkdir params")
     import subprocess
@@ -115,7 +129,7 @@ def install_alphafold(version = None, content_dir = None):
 
 
   # download libraries for interfacing with MMseqs2 API
-  if not os.path.isfile("MMSEQ2_READY"):
+  if mmseq2 and (not os.path.isfile("MMSEQ2_READY")):
     print( "Installing mmseq2 ...")
     runsh("apt-get -qq -y update ")
     runsh("apt-get -qq -y install jq curl zlib1g gawk ")

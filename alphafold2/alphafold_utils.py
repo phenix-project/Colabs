@@ -13,7 +13,11 @@ import shutil
 from string import ascii_uppercase
 from phenix_colab_utils import runsh
 from alphafold.data import templates
-import matplotlib.pyplot as plt
+
+try:
+  import matplotlib.pyplot as plt
+except Exception as e:
+  plt = None
 
 def set_up_alphafold_logging():
   warnings.filterwarnings('ignore')
@@ -79,7 +83,10 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
   use_model,
   model_runner_1,
   model_runner_3,
-  do_relax=False, random_seed=0):
+  do_relax=False,
+  random_seed=0,
+  msa_is_msa_object = None,
+  random_seed_iterations = 5):
   """Predicts structure using AlphaFold for the given sequence."""
   import numpy as np
 
@@ -99,26 +106,38 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
   unrelaxed_pdb_lines = []
   relaxed_pdb_lines = []
   from alphafold.common import protein
-  for model_name, params in model_params.items():
+  for model_name, local_params in model_params.items():
     if model_name in use_model:
       print(f"running {model_name}")
       # swap params to avoid recompiling
       # note: models 1,2 have diff number of params compared to models 3,4,5
       if any(str(m) in model_name for m in [1,2]): model_runner = model_runner_1
       if any(str(m) in model_name for m in [3,4,5]): model_runner = model_runner_3
-      model_runner.params = params
+      model_runner.params = local_params
 
-      processed_feature_dict = model_runner.process_features(feature_dict, random_seed=random_seed)
-      try:
-        prediction_result = model_runner.predict(processed_feature_dict)
-      except Exception as e:
-        print("Prediction failed...\n%s\n...skipping" %(str(e)))
-        return None
 
-      unrelaxed_protein = protein.from_prediction(processed_feature_dict,prediction_result)
-      unrelaxed_pdb_lines.append(protein.to_pdb(unrelaxed_protein))
-      plddts.append(prediction_result['plddt'])
-      paes.append(prediction_result['predicted_aligned_error'])
+      for i in range(max(1,random_seed_iterations)):
+        import random
+        random.seed(random_seed)
+        random_seed = random.randint(0,1000000)
+        print("Random seed for try ",i,model_name,":",random_seed)
+        processed_feature_dict = model_runner.process_features(feature_dict,
+           random_seed=random_seed)
+        try:
+          if msa_is_msa_object:
+            prediction_result = model_runner.predict(processed_feature_dict,
+              random_seed = random_seed)
+          else:
+            prediction_result = model_runner.predict(processed_feature_dict)
+        except Exception as e:
+          print("Prediction failed...\n%s\n...skipping" %(str(e)))
+          return None
+
+        unrelaxed_protein = protein.from_prediction(
+           processed_feature_dict,prediction_result)
+        unrelaxed_pdb_lines.append(protein.to_pdb(unrelaxed_protein))
+        plddts.append(prediction_result['plddt'])
+        paes.append(prediction_result['predicted_aligned_error'])
 
 
 
@@ -181,6 +200,9 @@ def hh_process_seq(
 
   msa_dir.mkdir(parents=True)
   assert os.path.isdir(hhDB_dir)
+  msa_dir = Path(os.path.abspath(msa_dir))
+  hhDB_dir = Path(os.path.abspath(hhDB_dir))
+  content_dir = Path(os.path.abspath(content_dir))
 
   template_seq_path = Path(msa_dir,"template.fasta")
   with template_seq_path.open("w") as fh:
@@ -229,6 +251,8 @@ def hh_process_seq(
   return hit
 
 def plot_plddt_legend():
+  if not plt:
+    return # no plotting
   thresh = ['plDDT:','Very low (<50)','Low (60)','OK (70)','Confident (80)','Very high (>90)']
   plt.figure(figsize=(1,0.1),dpi=100)
   ########################################
@@ -243,6 +267,8 @@ def plot_plddt_legend():
   return plt
 
 def plot_confidence(homooligomer,query_sequence, outs, model_num=1):
+  if not plt:
+    return # No plotting
   model_name = f"model_{model_num}"
   plt.figure(figsize=(10,3),dpi=100)
   """Plots the legend for plDDT."""
@@ -348,11 +374,17 @@ def get_msa(params):
   with open(a3m_file, "w") as text_file:
       text_file.write(a3m_lines)
 
-  # parse MSA
-  msa, deletion_matrix = pipeline.parsers.parse_a3m(a3m_lines)
+  # parse MSA; allow both versions of return from parse_a3m
+  msa = pipeline.parsers.parse_a3m(a3m_lines)
+  if type(msa) in [ type([1,2,3]), type((1,2,3))]:
+    msa, deletion_matrix = msa
+    msa_is_msa_object = False
+  else:
+    deletion_matrix = msa.deletion_matrix
+    msa_is_msa_object = True 
 
   print("Done with MSA and templates")
-  return msa, deletion_matrix, template_paths
+  return msa, deletion_matrix, template_paths, msa_is_msa_object
 
 def get_cif_file_list(
     include_templates_from_pdb = None,
