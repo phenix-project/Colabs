@@ -87,9 +87,18 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
   random_seed=0,
   msa_is_msa_object = None,
   random_seed_iterations = 5,
-  big_improvement = 5):
+  big_improvement = 5,
+  confidence_dict = None,):
+
   """Predicts structure using AlphaFold for the given sequence."""
   import numpy as np
+
+  if confidence_dict is None: # if we have looked at 5 tries only skip
+    #   if prob of success is very very low, moderate for 10 tries
+    confidence_dict = {
+        5: 0.0001,
+       10: 0.01,
+       20: 0.02,}
 
   # Minkyung's code
   # add big enough number to residue index to indicate chain breaks
@@ -167,9 +176,16 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
           p_good_z = 0.5 * math.exp(-0.5*min(good_z,20.)**2)
           n_remaining = max(0,random_seed_iterations - i)
           p_get_good_z_in_n = 1 - (1-p_good_z)**n_remaining
+          keys = list(confidence_dict.keys())
+          keys.sort()
+          confidence_level = 0
+          for key in keys:
+            if n_remaining > key:
+              confidence_level = confidence_dict[key]
         else:
           p_get_good_z_in_n = None
-        if p_get_good_z_in_n is not None and p_get_good_z_in_n < 0.02:
+        if p_get_good_z_in_n is not None and \
+           p_get_good_z_in_n < confidence_level:
           # forget it
           print("Ending randomization as it is unlikely we will improve by\n",
           "%.2f more than current best value of %.2f (mean = %.2f, sd= %.2f)" %(
