@@ -188,6 +188,8 @@ def upload_templates(params):
   manual_templates_uploaded = []
   maps_uploaded = []
   from google.colab import files
+  upload_dir = params.get("upload_dir")
+  assert upload_dir is not None and os.path.isdir(upload_dir)
   with redirect_stdout(StringIO()) as out:
     uploaded = files.upload()
     for filename,contents in uploaded.items():
@@ -198,7 +200,7 @@ def upload_templates(params):
            str(filename).lower().endswith(".map") or
            str(filename).lower().endswith(".mrc")):
 
-        filepath = Path(cif_dir,filename)
+        filepath = Path(upload_dir,filename)
         ff = open(filepath, 'wb')
         ff.write(contents)
         maps_uploaded.append(filepath)
@@ -206,7 +208,7 @@ def upload_templates(params):
       elif params.get('upload_manual_templates',None) and \
            str(filename).endswith(".cif"):
 
-        filepath = Path(cif_dir,filename)
+        filepath = Path(upload_dir,filename)
         with filepath.open("w") as fh:
           fh.write(contents.decode("UTF-8"))
           manual_templates_uploaded.append(filepath)
@@ -382,7 +384,6 @@ def get_jobnames_sequences_from_file(params):
 
 def set_up_input_files(params):
 
-
   from pathlib import Path
   import os, sys
 
@@ -405,15 +406,8 @@ def set_up_input_files(params):
   os.chdir(content_dir)
 
   # Clear out directories
-  parent_dir = Path(os.path.join(content_dir,"manual_templates"))
-
-  if not params.get('cif_dir',None):
-    params['cif_dir'] = Path(parent_dir,"mmcif")
-
-  if not os.path.isdir(params['cif_dir']):
-    params['cif_dir'].mkdir(parents=True)
-
-  print("CIF dir will be: %s" %(params['cif_dir']))
+  from run_alphafold_with_density_map import get_parent_dir
+  parent_dir = get_parent_dir(content_dir)
 
   # get input and output directories
   params = get_input_output_dirs(params)
@@ -425,13 +419,10 @@ def set_up_input_files(params):
   cif_filename_dict = {}
   map_filename_dict = {}
   dirs_to_clear = []
-  for dd in [parent_dir,params.get('cif_dir','')]:
-    if dd and os.path.isdir(dd):
-      dirs_to_clear.append(dd)
-  clear_directories(dirs_to_clear)
 
   if params.get(
      'upload_file_with_jobname_resolution_sequence_lines',None):
+    params = set_upload_dir(params)
     params = get_jobnames_sequences_from_file(params)
     jobnames = params['jobnames']
     resolutions = params['resolutions']
@@ -462,11 +453,16 @@ def set_up_input_files(params):
         query_sequences.append(query_sequence)
         jobnames.append(jobname)
         resolutions.append(resolution)
+        from run_alphafold_with_density_map import get_cif_dir
+        params['cif_dir'] = get_cif_dir(params['content_dir'], jobname)
+        clear_directories([params['cif_dir']])
+
         if upload_manual_templates or upload_maps:
           if params.get('input_directory', None):
             cif_filename_dict[jobname], map_filename_dict[jobname] = \
               get_templates_from_drive(params)
           else:
+            params['upload_dir'] = params['cif_dir']
             print("\nPlease upload %s for %s" %(
               "template and map" if upload_manual_templates and upload_maps
               else "template" if upload_manual_templates
@@ -475,7 +471,6 @@ def set_up_input_files(params):
             sys.stdout.flush()
             cif_filename_dict[jobname], map_filename_dict[jobname] = \
               upload_templates(params)
-
 
   # Save sequence
   for i in range(len(query_sequences)):
@@ -523,3 +518,11 @@ def set_up_input_files(params):
   for key in params.keys():
     setattr(original_params,key,params[key])
   return original_params
+
+def set_upload_dir(params):
+    params['upload_dir'] = Path(parent_dir,"upload_dir")
+    if not os.path.isdir(params['upload_dir']):
+      params['upload_dir'].mkdir(parents=True)
+    print("Upload dir will be: %s" %(params['upload_dir']))
+    return params
+

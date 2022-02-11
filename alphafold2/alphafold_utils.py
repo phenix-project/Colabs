@@ -86,7 +86,8 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
   do_relax=False,
   random_seed=0,
   msa_is_msa_object = None,
-  random_seed_iterations = 5):
+  random_seed_iterations = 5,
+  big_improvement = 5):
   """Predicts structure using AlphaFold for the given sequence."""
   import numpy as np
 
@@ -153,16 +154,18 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
           sd = None
         if (best_value is None) or mmm.max > best_value:
           best_value = mmm.max
-          print("New maximum plDDT (try %s): %.2f " %(list(lddt_rank)[0], best_value))
+          print("New maximum plDDT (try %s): %.2f " %(list(lddt_rank)[0]+1,
+             best_value))
         if sd is not None: # estimate SD and see if we want to keep going
-           # Let's say params.big_improvement = 5 is worth getting in
+           # Let's say big_improvement = 5 is worth getting in
            #   random_seed_iterations tries.  If we have mean = a and current
            # best of best_value -> z = (best_value - mean)/sd
            # We want a pick that gives a Z-score of z + BI/sd. About how many
            # tries will it take? p(Z) ~ exp - Z**2/2
-          good_z = (best_value + params.big_improvement - mmm.mean)/sd
+          good_z = (best_value + big_improvement - mmm.mean)/sd
+          import math
           p_good_z = math.exp(-0.5*min(good_z,20.)**2)
-          n_remaining = max(0,random_seed_iterations - cycle)
+          n_remaining = max(0,random_seed_iterations - i)
           p_get_good_z_in_n = 1 - (1-p_good_z)**n_remaining
         else:
           p_get_good_z_in_n = None
@@ -170,7 +173,7 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
           # forget it
           print("Ending randomization as it is unlikely we will improve by",
           "%.2f more than current best value of %.2f (mean = %.2f, sd= %.2f)" %(
-           params.big_improvement,best_value,mmm.mean,sd))
+           big_improvement,best_value,mmm.mean,sd))
           break
      
 

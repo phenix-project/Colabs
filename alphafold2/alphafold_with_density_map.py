@@ -160,6 +160,11 @@ Inputs:
                model with the highest plDDT will be used
       .short_caption = Random seed iterations
 
+  big_improvement = 5
+      .type = float
+      .help = How much improvement in plDDT is worth going through all \
+              randomization cycles
+      .short_caption = Big improvement value
 
   debug = False
       .type = bool

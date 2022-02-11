@@ -235,7 +235,8 @@ def run_one_af_cycle(params):
                        random_seed = params.random_seed,
                        random_seed_iterations = 
                          params.random_seed_iterations if params.cycle == 1 else
-                         params.minimum_random_seed_iterations)
+                         params.minimum_random_seed_iterations,
+                       big_improvement = params.big_improvement)
   if outs: # ok
     print("Done with prediction in",os.getcwd())
   else: # failed
@@ -490,13 +491,13 @@ def run_job(params = None):
   jobname = params.jobname
 
   other_cif_dir = Path(os.path.join(params.content_dir,params.template_paths))
-  parent_dir = Path(os.path.join(params.content_dir,"manual_templates"))
-  cif_dir = Path(parent_dir,jobname,"mmcif")
+  parent_dir = get_parent_dir(params.content_dir)
+  cif_dir = get_cif_dir(params.content_dir, jobname)
+
   fasta_dir = Path(parent_dir,jobname,"fasta")
   hhDB_dir = Path(parent_dir,jobname,"hhDB")
   msa_dir = Path(hhDB_dir,"msa")
   clear_directories([fasta_dir,hhDB_dir,msa_dir])
-  print("ZZA",params.cif_dir)
   assert params.cif_dir == cif_dir
 
   if params.uploaded_templates_are_map_to_model and \
@@ -742,3 +743,9 @@ def change_is_small(params, rmsd_from_previous_cycle_list, n = 2):
     return True
   else:
     return False 
+def get_parent_dir(content_dir):
+  return Path(os.path.join(content_dir,"manual_templates"))
+def get_cif_dir(content_dir, jobname):
+  parent_dir = get_parent_dir(content_dir)
+  return Path(parent_dir,jobname,"mmcif")
+
