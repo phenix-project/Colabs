@@ -562,9 +562,10 @@ def run_job(params = None):
       params.msa, params.deletion_matrix, params.template_paths, \
         params.msa_is_msa_object = get_msa(params)
 
-    working_cif_file_list = \
-     list(manual_cif_file_list) + \
-     list(pdb_cif_file_list)[:params.maximum_templates_from_pdb]
+    working_cif_file_list = list(manual_cif_file_list) 
+    if params.cycle == 1:
+      working_cif_file_list +=  \
+       list(pdb_cif_file_list)[:params.maximum_templates_from_pdb]
 
     print("Templates used in this cycle: %s" %(
         " ".join([w.as_posix() for w in working_cif_file_list])))
