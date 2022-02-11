@@ -120,7 +120,6 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
         import random
         random.seed(random_seed)
         random_seed = random.randint(0,1000000)
-        print("Random seed for try ",i,model_name,":",random_seed)
         processed_feature_dict = model_runner.process_features(feature_dict,
            random_seed=random_seed)
         try:
@@ -149,12 +148,12 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
           values.append(value)
         mmm = values.min_max_mean()
         if values.size() >= 5:
-          sd = values.standard_deviation_of_the_mean()
+          sd = values.standard_deviation_of_the_sample()
         else:
           sd = None
         if (best_value is None) or mmm.max > best_value:
           best_value = mmm.max
-          print("New maximum: %.2f  (%) " %(list(lddt_rank)[0], best_value))
+          print("New maximum plDDT (try %s): %.2f " %(list(lddt_rank)[0], best_value))
         if sd is not None: # estimate SD and see if we want to keep going
            # Let's say params.big_improvement = 5 is worth getting in
            #   random_seed_iterations tries.  If we have mean = a and current

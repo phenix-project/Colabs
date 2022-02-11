@@ -127,8 +127,6 @@ def run_one_af_cycle(params):
     for name in template_features:
       template_features[name] = np.stack(
           template_features[name], axis=0).astype(TEMPLATE_FEATURES[name])
-    #overwrite template data
-    template_paths = params.cif_dir.as_posix()
 
 
     # Select only one chain from any cif file
@@ -172,7 +170,8 @@ def run_one_af_cycle(params):
       "model_4","model_5"][:params.num_models]:
     use_model[model_name] = True
     if model_name not in list(model_params.keys()):
-      model_params[model_name] = data.get_model_haiku_params(model_name=model_name+"_ptm", data_dir = params.data_dir)
+      model_params[model_name] = data.get_model_haiku_params(
+        model_name=model_name+"_ptm", data_dir = params.data_dir)
       if model_name == "model_1":
         model_config = config.model_config(model_name+"_ptm")
         model_config.data.eval.num_ensemble = 1
@@ -488,13 +487,16 @@ def run_job(params = None):
   #Process templates
   print("PROCESSING TEMPLATES")
 
+  jobname = params.jobname
+
   other_cif_dir = Path(os.path.join(params.content_dir,params.template_paths))
   parent_dir = Path(os.path.join(params.content_dir,"manual_templates"))
-  cif_dir = Path(parent_dir,"mmcif")
-  fasta_dir = Path(parent_dir,"fasta")
-  hhDB_dir = Path(parent_dir,"hhDB")
+  cif_dir = Path(parent_dir,jobname,"mmcif")
+  fasta_dir = Path(parent_dir,jobname,"fasta")
+  hhDB_dir = Path(parent_dir,jobname,"hhDB")
   msa_dir = Path(hhDB_dir,"msa")
   clear_directories([fasta_dir,hhDB_dir,msa_dir])
+  print("ZZA",params.cif_dir)
   assert params.cif_dir == cif_dir
 
   if params.uploaded_templates_are_map_to_model and \
@@ -532,7 +534,7 @@ def run_job(params = None):
   assert len(params.maps_uploaded) == 1  # just one map
   map_file_name = params.maps_uploaded[0]
 
-  seq_file = "%s.seq" %(params.jobname)
+  seq_file = "%s.seq" %(jobname)
   ff = open(seq_file,'w')
   print(params.query_sequence, file = ff)
   ff.close()
@@ -577,7 +579,7 @@ def run_job(params = None):
 
     if params.carry_on and params.output_directory:
       expected_cycle_model_file_name = "%s_unrelaxed_model_1_%s.pdb" %(
-        params.jobname, params.cycle)
+        jobname, params.cycle)
       expected_cycle_model_file_name_in_output_dir = os.path.join(
         params.output_directory,expected_cycle_model_file_name)
     if params.carry_on and params.output_directory and os.path.isfile(
@@ -656,7 +658,6 @@ def run_job(params = None):
       final_model_file_name = rebuild_result.final_model_file_name
       cc = rebuild_result.cc
 
-    jobname = params.jobname
     try:
       runsh(
       "zip -FSr %s'.result.zip'  %s*.pdb %s*.j* %s*.png %s*.bibtex %s*.jsn" %(
