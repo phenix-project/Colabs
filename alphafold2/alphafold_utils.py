@@ -115,7 +115,7 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
       if any(str(m) in model_name for m in [3,4,5]): model_runner = model_runner_3
       model_runner.params = local_params
 
-
+      best_value = None
       for i in range(max(1,random_seed_iterations)):
         import random
         random.seed(random_seed)
@@ -131,13 +131,49 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
             prediction_result = model_runner.predict(processed_feature_dict)
         except Exception as e:
           print("Prediction failed...\n%s\n...skipping" %(str(e)))
-          return None
+          continue
 
         unrelaxed_protein = protein.from_prediction(
            processed_feature_dict,prediction_result)
         unrelaxed_pdb_lines.append(protein.to_pdb(unrelaxed_protein))
         plddts.append(prediction_result['plddt'])
         paes.append(prediction_result['predicted_aligned_error'])
+
+        # Try to estimate what plddt we could achieve and whether it is 
+        #  worth getting more tries
+        lddt_rank = np.mean(plddts,-1).argsort()[::-1]
+        from scitbx.array_family import flex
+        values = flex.double()
+        for n,r in enumerate(lddt_rank):
+          value = np.mean(plddts[r])
+          values.append(value)
+        mmm = values.min_max_mean()
+        if values.size() >= 5:
+          sd = values.standard_deviation_of_the_mean()
+        else:
+          sd = None
+        if (best_value is None) or mmm.max > best_value:
+          best_value = mmm.max
+          print("New maximum: %.2f  (%) " %(list(lddt_rank)[0], best_value))
+        if sd is not None: # estimate SD and see if we want to keep going
+           # Let's say params.big_improvement = 5 is worth getting in
+           #   random_seed_iterations tries.  If we have mean = a and current
+           # best of best_value -> z = (best_value - mean)/sd
+           # We want a pick that gives a Z-score of z + BI/sd. About how many
+           # tries will it take? p(Z) ~ exp - Z**2/2
+          good_z = (best_value + params.big_improvement - mmm.mean)/sd
+          p_good_z = math.exp(-0.5*min(good_z,20.)**2)
+          n_remaining = max(0,random_seed_iterations - cycle)
+          p_get_good_z_in_n = 1 - (1-p_good_z)**n_remaining
+        else:
+          p_get_good_z_in_n = None
+        if p_get_good_z_in_n is not None and p_get_good_z_in_n < 0.2:
+          # forget it
+          print("Ending randomization as it is unlikely we will improve by",
+          "%.2f more than current best value of %.2f (mean = %.2f, sd= %.2f)" %(
+           params.big_improvement,best_value,mmm.mean,sd))
+          break
+     
 
 
 
@@ -146,7 +182,7 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
   out = {}
   print("reranking models based on avg. predicted lDDT")
   for n,r in enumerate(lddt_rank):
-    print(f"model_{n+1} {np.mean(plddts[r])}")
+    print(f"model_{n+1} {r} {np.mean(plddts[r])}")
 
     unrelaxed_pdb_path = f'{prefix}_unrelaxed_model_{n+1}.pdb'
     with open(unrelaxed_pdb_path, 'w') as f: f.write(unrelaxed_pdb_lines[r])
