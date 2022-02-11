@@ -171,7 +171,7 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
           p_get_good_z_in_n = None
         if p_get_good_z_in_n is not None and p_get_good_z_in_n < 0.2:
           # forget it
-          print("Ending randomization as it is unlikely we will improve by",
+          print("Ending randomization as it is unlikely we will improve by\n",
           "%.2f more than current best value of %.2f (mean = %.2f, sd= %.2f)" %(
            big_improvement,best_value,mmm.mean,sd))
           break
