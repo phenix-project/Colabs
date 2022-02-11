@@ -164,12 +164,12 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
            # tries will it take? p(Z) ~ exp - Z**2/2
           good_z = (best_value + big_improvement - mmm.mean)/sd
           import math
-          p_good_z = math.exp(-0.5*min(good_z,20.)**2)
+          p_good_z = 0.5 * math.exp(-0.5*min(good_z,20.)**2)
           n_remaining = max(0,random_seed_iterations - i)
           p_get_good_z_in_n = 1 - (1-p_good_z)**n_remaining
         else:
           p_get_good_z_in_n = None
-        if p_get_good_z_in_n is not None and p_get_good_z_in_n < 0.2:
+        if p_get_good_z_in_n is not None and p_get_good_z_in_n < 0.02:
           # forget it
           print("Ending randomization as it is unlikely we will improve by\n",
           "%.2f more than current best value of %.2f (mean = %.2f, sd= %.2f)" %(
