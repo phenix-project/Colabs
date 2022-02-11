@@ -159,6 +159,8 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
         mmm = values.min_max_mean()
         if values.size() >= 5:
           sd = values.standard_deviation_of_the_sample()
+          if values.size() < 10:
+            sd = max(sd, mmm.max - mmm.mean) # use lower bound for small samples
         else:
           sd = None
         if (best_value is None) or mmm.max > best_value:
