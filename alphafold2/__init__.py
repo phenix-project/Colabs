@@ -1765,7 +1765,14 @@ NOTES:
     ph = model.get_hierarchy()
     from phenix.model_building.fragment_search import \
        get_ca_sites_from_hierarchy
-    return get_ca_sites_from_hierarchy(ph)
+    if self.info.debug:
+      return get_ca_sites_from_hierarchy(ph)
+    else: # usual
+      try:
+        return get_ca_sites_from_hierarchy(ph)
+      except Exception as e:
+        return None # could not get result
+
   def get_ca_rmsd_with_indel(self, model_x, model_y,
       close_distance = None, chain_type = 'PROTEIN', as_group_args = False):
     ''' Get rmsd between ca sites from x and y, taking closest in each
