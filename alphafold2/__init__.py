@@ -1787,7 +1787,10 @@ NOTES:
     rmsd_info = self.get_rmsd_with_indel(x, y, close_distance = close_distance)
     rmsd = rmsd_info.rmsd_value
     close_n  = rmsd_info.close_n
-    rms_n = min(x.size(), y.size())
+    if x and y:
+      rms_n = min(x.size(), y.size())
+    else:
+      rmsd_n = None
     if as_group_args:
       return group_args(
         group_args_type = 'rmsd and n',
