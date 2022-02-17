@@ -16,6 +16,7 @@ def get_helper_files():
     if os.path.isfile(file_name):
       os.remove(file_name)
     os.environ['file_name'] = file_name
+    print("Getting %s" %(file_name))
     result = os.system(
       "wget -qnc https://raw.githubusercontent.com/phenix-project/Colabs/main/alphafold2/$file_name")
 
