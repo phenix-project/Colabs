@@ -532,9 +532,16 @@ def set_up_input_files(params,
     return original_params
 
 def get_alphafold_with_density_map_params(params):
-  from phenix.programs.alphafold_with_density_map import master_phil_str
-  import iotbx.phil
-  full_params = iotbx.phil.parse(master_phil_str).extract()
+  try:
+    from phenix.programs.alphafold_with_density_map import master_phil_str
+    import iotbx.phil
+    full_params = iotbx.phil.parse(master_phil_str).extract()
+  except Exception as e:
+    # Here if no phenix...just make a group_args object
+    full_params = group_args(
+      group_args_type = 'dummy parameters',
+      )
+
   for key in params.keys():
     setattr(full_params,key,params[key])
   return full_params
@@ -545,4 +552,58 @@ def set_upload_dir(params):
       params['upload_dir'].mkdir(parents=True)
     print("Upload dir will be: %s" %(params['upload_dir']))
     return params
+
+class group_args(dda):
+  """
+  Class to build an arbitrary object from a list of keyword arguments.
+  Copied from cctbx_project/iotbx/__init__.py
+
+  Examples
+  --------
+  >>> from libtbx import group_args
+  >>> obj = group_args(a=1, b=2, c=3)
+  >>> print(obj.a, obj.b, obj.c)
+  1 2 3
+
+  Once stop_dynamic_attributes is called, adding new attributes won't be
+  possible, that is this:
+
+  obj.tmp=10
+
+  will fail.
+  """
+
+  def __init__(self, **keyword_arguments):
+    self.__dict__.update(keyword_arguments)
+
+  def __call__(self):
+    return self.__dict__
+
+  def get(self,kw):
+    return self.__dict__.get(kw)
+
+  def keys(self):
+    return self.__dict__.keys()
+
+  def __repr__(self):
+    outl = "group_args"
+    for attr in sorted(self.__dict__.keys()):
+      tmp=getattr(self, attr)
+      if str(tmp).find("ext.atom ")>-1:
+        outl += "\n  %-30s : %s" % (attr, tmp.quote())
+      else:
+        outl += "\n  %-30s : %s" % (attr, tmp)
+    return outl
+
+  def merge(self, other):
+    """ To merge other group_args into self.
+    Overwrites matching fields!!!"""
+    self.__dict__.update(other.__dict__)
+
+  def add(self,key=None,value=None):
+    self.__dict__[key]=value
+
+  def copy(self):
+    """ produce shallow copy of self by converting to dict and back"""
+    return group_args(**self().copy())
 
