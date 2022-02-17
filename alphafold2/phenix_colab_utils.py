@@ -253,7 +253,7 @@ def install_miniconda():
     runsh("wget -qnc https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh")
     runsh("bash Miniconda3-latest-Linux-x86_64.sh -bfp /usr/local 2>&1 1>/dev/null")
     runsh("rm Miniconda3-latest-Linux-x86_64.sh")
-    touch CONDA_READY
+    runsh("touch CONDA_READY")
 
 def install_condacolab():
   if os.path.isfile("CONDA_READY"):
