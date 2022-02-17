@@ -134,7 +134,9 @@ def get_input_output_dirs(params):
     input_directory = Path(input_directory)
 
   if create_output_dir:
-    if gdrive_dir and os.path.isdir(gdrive_dir):
+    if os.path.isdir(output_dir):
+      full_output_dir = output_dir
+    elif gdrive_dir and os.path.isdir(gdrive_dir):
       full_output_dir = os.path.join(gdrive_dir, output_dir)
     else:  # make it in content_dir
       full_output_dir = os.path.join(content_dir, output_dir)
