@@ -6,6 +6,20 @@ from pathlib import Path
 
 # Utilities for setting up and running Phenix in Colab
 
+def get_helper_files():
+  # Get the helper python files phenix_alphafold_utils and phenix_colab_utils
+  for file_name in [
+      'alphafold_with_density_map.py',
+      'alphafold_utils.py',
+      'run_alphafold_with_density_map.py',
+      'phenix_alphafold_utils.py']:
+    if os.path.isfile(file_name):
+      os.remove(file_name)
+    os.environ['file_name'] = file_name
+    result = os.system(
+      "wget -qnc https://raw.githubusercontent.com/phenix-project/Colabs/main/alphafold2/$file_name")
+
+
 def run_command(command, log = sys.stdout):
     "Run and get output to terminal"
     import shlex
