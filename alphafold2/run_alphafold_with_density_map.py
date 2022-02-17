@@ -526,8 +526,11 @@ def run_job(params = None):
   previous_final_model_name = params.manual_templates_uploaded[0] if \
       params.manual_templates_uploaded else None
 
-  assert len(params.maps_uploaded) == 1  # just one map
-  map_file_name = params.maps_uploaded[0]
+  if params.upload_map:
+    assert len(params.maps_uploaded) == 1  # just one map
+    map_file_name = params.maps_uploaded[0]
+  else:
+    map_file_name = None
 
   seq_file = "%s.seq" %(jobname)
   ff = open(seq_file,'w')
@@ -539,7 +542,7 @@ def run_job(params = None):
   rmsd_from_previous_cycle_list = []
   previous_cycle_model_file_name = None
 
-  for cycle in range(1, params.maximum_cycles + 1):
+  for cycle in range(1, max(1,params.maximum_cycles) + 1):
 
     # Decide if it is time to quit
     if change_is_small(params, rmsd_from_previous_cycle_list):
@@ -602,6 +605,9 @@ def run_job(params = None):
     cycle_model_file_name = Path(cycle_model_file_name)
     print("Current AlphaFold model is in %s" %(
         cycle_model_file_name.as_posix()))
+
+    if not map_file_name: # we are done (no map)
+      break
 
     if previous_cycle_model_file_name:
       rmsd_from_previous = get_rmsd(cycle_model_file_name.as_posix(),
@@ -704,6 +710,15 @@ def run_job(params = None):
     previous_final_model_name = final_model_file_name
 
   # All done with cycles here
+
+  # Get final zip file
+  try:
+      runsh(
+      "zip -FSr %s'.result.zip'  %s*.pdb %s*.j* %s*.png %s*.bibtex %s*.jsn" %(
+         jobname,jobname,jobname,jobname,jobname,jobname))
+      zip_file_name = f"{jobname}.result.zip"
+  except Exception as e:
+      zip_file_name = None
 
   filename = zip_file_name
   if filename and os.path.isfile(filename):
