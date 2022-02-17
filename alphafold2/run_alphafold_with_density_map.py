@@ -139,7 +139,7 @@ def run_one_af_cycle(params):
 
 
     print("\nIncluding templates:")
-    for hit in unique_template_hits
+    for hit in unique_template_hits:
       print("\t",hit.name.split()[0])
 
     if len(unique_template_hits) == 0:
