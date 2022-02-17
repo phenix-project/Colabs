@@ -168,8 +168,13 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
           sd = None
         if (best_value is None) or mmm.max > best_value:
           best_value = mmm.max
-          print("New maximum plDDT (try %s): %.2f " %(list(lddt_rank)[0]+1,
-             best_value))
+          nn = list(lddt_rank)[0]
+          unrelaxed_pdb_path = f'{prefix}_current_best_{nn+1}.pdb'
+          with open(unrelaxed_pdb_path, 'w') as f:
+            f.write(unrelaxed_pdb_lines[nn])
+          print("New maximum plDDT (try %s): %.2f, saved as %s" %(
+          nn + 1, best_value, unrelaxed_pdb_path))
+
         if sd is not None: # estimate SD and see if we want to keep going
            # Let's say big_improvement = 5 is worth getting in
            #   random_seed_iterations tries.  If we have mean = a and current
