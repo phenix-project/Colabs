@@ -75,6 +75,8 @@ def install_software(
   if content_dir is None:
     content_dir = os.getcwd()
 
+  os.chdir(content_dir)
+
   if bioconda:
     install_bioconda()
 
@@ -243,6 +245,15 @@ def get_last_bz2_file():
        "No Phenix downloaded...please check version and password?")
   bz2_files = sorted(bz2_files, key = lambda b: b, reverse = True)
   return bz2_files[0]
+
+def install_miniconda():
+    if os.path.isfile("CONDA_READY"):
+      return
+    runsh("Installing mini conda...")
+    runsh("wget -qnc https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh")
+    runsh("bash Miniconda3-latest-Linux-x86_64.sh -bfp /usr/local 2>&1 1>/dev/null")
+    runsh("rm Miniconda3-latest-Linux-x86_64.sh")
+    touch CONDA_READY
 
 def install_condacolab():
   if os.path.isfile("CONDA_READY"):
