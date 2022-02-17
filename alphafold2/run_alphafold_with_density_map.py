@@ -70,14 +70,6 @@ def run_jobs(params):
         working_params.jobname, working_params.query_sequence, str(e)),
         "****************************************","\n")
 
-
-  print("\nDOWNLOADING FILES NOW:\n")
-  for query_sequence, jobname in zip(params.query_sequences, params.jobnames):
-    filename = f"{jobname}.result.zip"
-    if os.path.isfile(filename):
-      print(filename)
-
-
 def run_one_af_cycle(params):
 
   from alphafold.data.templates import (_get_pdb_id_and_chain,
@@ -586,6 +578,7 @@ def run_job(params = None):
         jobname, params.cycle)
       expected_cycle_model_file_name_in_output_dir = os.path.join(
         params.output_directory,expected_cycle_model_file_name)
+
     if params.carry_on and params.output_directory and os.path.isfile(
          expected_cycle_model_file_name_in_output_dir):
       print("Reading in AF model from %s" %(
@@ -593,12 +586,14 @@ def run_job(params = None):
       from libtbx import group_args
       result = group_args(group_args_type = 'af model read in directly',
         cycle_model_file_name = expected_cycle_model_file_name_in_output_dir)
-    else:
+
+    else: # Get AlphaFold model here
       result = run_one_af_cycle(params)
 
     if (not result) or (not result.cycle_model_file_name) or (
          not os.path.isfile(result.cycle_model_file_name)):
-      print("Modeling failed cycle %s" %(cycle))
+      print("Modeling failed at cycle %s" %(cycle))
+      print("You might try checking the 'carry_on' box and rerunning to go on")
       return None
 
     cycle_model_file_name = result.cycle_model_file_name
@@ -703,31 +698,33 @@ def run_job(params = None):
        final_model_file_name_in_cif_dir, content_dir = params.content_dir)
     manual_cif_file_list = get_cif_file_list(
       include_templates_from_pdb = False,
-      manual_templates_uploaded = [final_model_file_name_as_cif_in_cif_dir.name],
+      manual_templates_uploaded = [
+        final_model_file_name_as_cif_in_cif_dir.name],
       cif_dir = cif_dir)
     previous_final_model_name = final_model_file_name
+
+  # All done with cycles here
 
   filename = zip_file_name
   if filename and os.path.isfile(filename):
     print("About to download %s" %(filename))
-
     try:
       print("Downloading zip file %s" %(filename))
       files.download(filename)
       print("Start of download successful (NOTE: if the download symbol does not go away it did not work. Download it manually using the folder icon to the left)")
-      from libtbx import group_args
-      return group_args(
-        grep_args_type = 'rebuilding result',
-        filename = filename,
-        cc = get_map_model_cc(map_file_name = map_file_name,
-          model_file_name = filename,
-          resolution = params.resolution))
-
     except Exception as e:
       print("Unable to download zip file %s" %(filename))
-      return None
+
+  if final_model_file_name:
+    from libtbx import group_args
+    return group_args(
+      group_args_type = 'rebuilding result',
+      filename = final_model_file_name,
+      cc = get_map_model_cc(map_file_name = map_file_name,
+        model_file_name = final_model_file_name,
+        resolution = params.resolution))
   else:
-    print("No .zip file %s created" %(filename))
+    print("No final model obtained")
     return None
 
 def same_file(f1,f2):
