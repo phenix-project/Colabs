@@ -544,6 +544,7 @@ def run_job(params = None):
   rmsd_from_previous_cycle_list = []
   previous_cycle_model_file_name = None
   final_model_file_name = None
+  cycle_model_file_name = None
 
   for cycle in range(1, max(1,params.maximum_cycles) + 1):
 
@@ -726,8 +727,11 @@ def run_job(params = None):
     print("About to download %s" %(filename))
     try:
       print("Downloading zip file %s" %(filename))
+      from google.colab import files
       files.download(filename)
-      print("Start of download successful (NOTE: if the download symbol does not go away it did not work. Download it manually using the folder icon to the left)")
+      print("Start of download successful (NOTE: if the download symbol does "+
+        "not go away it did not work. Download it manually using the folder "+
+        "icon to the left)")
     except Exception as e:
       print("Unable to download zip file %s" %(filename))
 
@@ -738,8 +742,13 @@ def run_job(params = None):
       cc = get_map_model_cc(map_file_name = map_file_name,
         model_file_name = final_model_file_name,
         resolution = params.resolution))
+  elif cycle_model_file_name:
+    return group_args(
+      group_args_type = 'alphafold result',
+      filename = cycle_model_file_name,
+      cc = None,)
   else:
-    print("No final model obtained")
+    print("No final model or alphafold model obtained")
     return None
 
 def same_file(f1,f2):
