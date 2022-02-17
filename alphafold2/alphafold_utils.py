@@ -577,4 +577,5 @@ class flex_double:
       sum = sum/sumn
       sum2 = sum2/sumn
       return max(0.,sum2 - sum*sum)**0.5
-
+  def size(self):
+    return len(self.values)
