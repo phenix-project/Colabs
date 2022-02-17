@@ -228,7 +228,7 @@ def run_one_af_cycle(params):
                        random_seed_iterations =
                          params.random_seed_iterations if params.cycle == 1 else
                          params.minimum_random_seed_iterations,
-                       big_improvement = params.big_improvement)
+                       big_improvement = params.get('big_improvement', 5),)
   if outs: # ok
     print("Done with prediction in",os.getcwd())
   else: # failed
