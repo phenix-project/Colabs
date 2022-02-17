@@ -553,7 +553,7 @@ def set_upload_dir(params):
     print("Upload dir will be: %s" %(params['upload_dir']))
     return params
 
-class group_args(dda):
+class group_args(self):
   """
   Class to build an arbitrary object from a list of keyword arguments.
   Copied from cctbx_project/iotbx/__init__.py
