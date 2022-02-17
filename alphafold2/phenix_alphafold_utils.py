@@ -416,7 +416,6 @@ def set_up_input_files(params,
   os.chdir(content_dir)
 
   # Clear out directories
-  from run_alphafold_with_density_map import get_parent_dir
   parent_dir = get_parent_dir(content_dir)
 
   # get input and output directories
