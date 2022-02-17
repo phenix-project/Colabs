@@ -485,7 +485,10 @@ def set_up_input_files(params,
     # save the sequence as a file with name jobname.fasta
     save_sequence(jobnames[i], query_sequences[i])
 
-  print("\nCurrent jobs, resolutions, sequences, templates, and maps:")
+  if params.get('upload_maps'):
+    print("\nCurrent jobs, resolutions, sequences, templates, and maps:")
+  else:
+    print("\nCurrent jobs,  sequences and templates:")
 
   for qs,jn,res in zip(query_sequences, jobnames, resolutions):
     template_list = []
