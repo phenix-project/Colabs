@@ -543,6 +543,7 @@ def run_job(params = None):
 
   rmsd_from_previous_cycle_list = []
   previous_cycle_model_file_name = None
+  final_model_file_name = None
 
   for cycle in range(1, max(1,params.maximum_cycles) + 1):
 
