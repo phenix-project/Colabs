@@ -149,6 +149,9 @@ def install_alphafold(version = None, content_dir = None,
 
 def run_fix_paths():
   #  Hacks to fix some paths
+  if not os.path.isdir("/usr/local/lib/python3.7/site-packages/phenix"):
+    return # nothing to do
+
 
   # Get path correct in pulchra.sh
   print("Fixing path in pulchra.sh...")
