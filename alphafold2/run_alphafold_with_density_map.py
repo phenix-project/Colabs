@@ -95,8 +95,19 @@ def run_one_af_cycle(params):
     for template_feature_name in TEMPLATE_FEATURES:
       template_features[template_feature_name] = []
 
+    # Select only one chain from any cif file
+    unique_template_hits = []
+    pdb_text_list = []
+
     for i,[hit,mmcif] in enumerate(sorted(params.template_hit_list,
           key=lambda xx: xx[0].sum_probs, reverse=True)):
+
+      pdb_text = hit.name.split()[0].split("_")[0]
+      if pdb_text in pdb_text_list:
+        continue # skip dups from same PDB entry
+      pdb_text_list.append(pdb_text)
+      unique_template_hits.append(hit)
+
       # modifications to alphafold/data/templates.py _process_single_hit
       hit_pdb_code, hit_chain_id = _get_pdb_id_and_chain(hit)
       mapping = _build_query_to_hit_index_mapping(
@@ -126,23 +137,14 @@ def run_one_af_cycle(params):
           template_features[name], axis=0).astype(TEMPLATE_FEATURES[name])
 
 
-    # Select only one chain from any cif file
-    unique_template_hits = []
-    pdb_text_list = []
-    for hit, mmcif in params.template_hit_list:
-      pdb_text = hit.name.split()[0].split("_")[0]
-      if not pdb_text in pdb_text_list:
-        pdb_text_list.append(pdb_text)
-        unique_template_hits.append(hit)
-    template_hits = unique_template_hits
 
     print("\nIncluding templates:")
-    for hit,mmcif in params.template_hit_list:
+    for hit in unique_template_hits
       print("\t",hit.name.split()[0])
-    if len(params.template_hit_list) == 0:
+
+    if len(unique_template_hits) == 0:
       print("No templates found...quitting")
       raise AssertionError("No templates found...quitting")
-
 
     for key,value in template_features.items():
       if np.all(value==0):
