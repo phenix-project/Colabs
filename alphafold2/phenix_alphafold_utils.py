@@ -532,6 +532,9 @@ def set_up_input_files(params,
     return original_params
 
 def get_alphafold_with_density_map_params(params):
+  if type(params) != type({}):
+    return params # already set
+
   try:
     from phenix.programs.alphafold_with_density_map import master_phil_str
     import iotbx.phil
@@ -541,6 +544,7 @@ def get_alphafold_with_density_map_params(params):
     full_params = group_args(
       group_args_type = 'dummy parameters',
       )
+
 
   for key in params.keys():
     setattr(full_params,key,params[key])
