@@ -462,7 +462,6 @@ def set_up_input_files(params,
         query_sequences.append(query_sequence)
         jobnames.append(jobname)
         resolutions.append(resolution)
-        from run_alphafold_with_density_map import get_cif_dir
         params['cif_dir'] = get_cif_dir(params['content_dir'], jobname)
         clear_directories([params['cif_dir']])
 
