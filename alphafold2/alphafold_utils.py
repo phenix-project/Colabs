@@ -563,18 +563,18 @@ class flex_double:
       max = max_value,
       mean = mean_value)
 
- def standard_deviation_of_the_sample(self):
-   sum = 0
-   sum2 = 0
-   sumn = 0
-   for x in self.values:
-     sum += x
-     sum2 += x*x
-     sumn += 1
-   if sumn < 2:
-     return None
-   else:
-     sum = sum/sumn
-     sum2 = sum2/sumn
-     return max(0.,sum2 - sum*sum)**0.5
+  def standard_deviation_of_the_sample(self):
+    sum = 0
+    sum2 = 0
+    sumn = 0
+    for x in self.values:
+      sum += x
+      sum2 += x*x
+      sumn += 1
+    if sumn < 2:
+      return None
+    else:
+      sum = sum/sumn
+      sum2 = sum2/sumn
+      return max(0.,sum2 - sum*sum)**0.5
 
