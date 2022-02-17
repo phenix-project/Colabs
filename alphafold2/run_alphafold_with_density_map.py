@@ -10,6 +10,11 @@ import numpy as np
 from phenix_alphafold_utils import clear_directories
 from phenix_colab_utils import runsh
 
+try:
+  from libtbx import group_args
+except Exception as e:  # we don't have phenix, use dummy version
+  from phenix_alphafold_utils import group_args
+
 from alphafold_utils import (mk_mock_template,
    predict_structure,
    show_pdb,
@@ -335,19 +340,16 @@ def run_one_af_cycle(params):
   #@markdown When modeling is complete .zip files with results will be downloaded automatically.
 
 
-  from libtbx import group_args
   return group_args(
     group_args_type = 'result for one cycle',
     cycle_model_file_name = cycle_model_file_name,
     )
 
 def get_rebuilt_file_names(params):
-  from libtbx import group_args
   af_model_file = os.path.abspath(
       params.cycle_model_file_name.as_posix())
   rebuilt_model_name = af_model_file.replace(".pdb","_rebuilt.pdb")
   rebuilt_model_stem = rebuilt_model_name.replace(".pdb","")
-  from libtbx import group_args
   return group_args(group_args_type = ' rebuilt file names',
     af_model_file = af_model_file,
     rebuilt_model_name = rebuilt_model_name,
@@ -397,7 +399,6 @@ def rebuild_model(params,
   if os.path.isfile(rebuilt_model_name):
     print("Rebuilding successful")
     from iotbx import data_manager
-    from libtbx import group_args
     return group_args(
       group_args_type = 'rebuilt model',
       final_model_file_name = rebuilt_model_name,
@@ -587,7 +588,6 @@ def run_job(params = None):
          expected_cycle_model_file_name_in_output_dir):
       print("Reading in AF model from %s" %(
         expected_cycle_model_file_name_in_output_dir))
-      from libtbx import group_args
       result = group_args(group_args_type = 'af model read in directly',
         cycle_model_file_name = expected_cycle_model_file_name_in_output_dir)
 
@@ -645,7 +645,6 @@ def run_job(params = None):
     if params.carry_on and params.output_directory and \
           os.path.isfile(final_model_file_name):
       print("Reading rebuilt model from %s" %(final_model_file_name))
-      from libtbx import group_args
       rebuild_result = group_args(group_args_type = 'rebuild result read in',
         final_model_file_name  = final_model_file_name,
         cc = get_map_model_cc(map_file_name = map_file_name,
@@ -732,7 +731,6 @@ def run_job(params = None):
       print("Unable to download zip file %s" %(filename))
 
   if final_model_file_name:
-    from libtbx import group_args
     return group_args(
       group_args_type = 'rebuilding result',
       filename = final_model_file_name,
