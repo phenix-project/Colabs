@@ -151,6 +151,11 @@ def install_alphafold(version = None, content_dir = None,
 
 def run_fix_paths():
   #  Hacks to fix some paths
+  import sys
+  for d in ['/usr/local/lib', '/usr/local/lib/python3.7/lib-dynload', '/usr/local/lib/python3.7/site-packages']:
+    if d not in sys.path:
+       sys.path.append(d)
+
   if not os.path.isdir("/usr/local/lib/python3.7/site-packages/phenix"):
     return # nothing to do
 
@@ -175,10 +180,6 @@ def run_fix_paths():
   runsh("tar xzvf tmp_phenix.tgz")
   os.chdir(here)
 
-  import sys
-  for d in ['/usr/local/lib', '/usr/local/lib/python3.7/lib-dynload', '/usr/local/lib/python3.7/site-packages']:
-    if d not in sys.path:
-       sys.path.append(d)
   print("Done with patches")
 
 
