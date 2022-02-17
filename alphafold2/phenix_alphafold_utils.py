@@ -502,7 +502,7 @@ def set_up_input_files(params,
             "run again\n\n")
       sys.stdout.flush()
       raise AssertionError("Sequence must be 20 residues or more")
-    if not map_list:
+    if not map_list and params.get('use_map',None):
       print("\n\nNeed a map for each sequence...\n\n",
             "Please be sure input_directory is set and run again\n\n")
       sys.stdout.flush()
