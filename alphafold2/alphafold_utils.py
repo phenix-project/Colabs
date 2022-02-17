@@ -148,11 +148,14 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
         plddts.append(prediction_result['plddt'])
         paes.append(prediction_result['predicted_aligned_error'])
 
-        # Try to estimate what plddt we could achieve and whether it is 
+        # Try to estimate what plddt we could achieve and whether it is
         #  worth getting more tries
         lddt_rank = np.mean(plddts,-1).argsort()[::-1]
-        from scitbx.array_family import flex
-        values = flex.double()
+        try:
+          from scitbx.array_family import flex
+          values = flex.double()
+        except Exception as e:
+          values = flex_double()  # something that we can use
         for n,r in enumerate(lddt_rank):
           value = np.mean(plddts[r])
           values.append(value)
@@ -193,7 +196,7 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
           "%.2f more than current best value of %.2f (mean = %.2f, sd= %.2f)" %(
            big_improvement,best_value,mmm.mean,sd))
           break
-     
+
 
 
 
@@ -437,7 +440,7 @@ def get_msa(params):
     msa_is_msa_object = False
   else:
     deletion_matrix = msa.deletion_matrix
-    msa_is_msa_object = True 
+    msa_is_msa_object = True
 
   print("Done with MSA and templates")
   return msa, deletion_matrix, template_paths, msa_is_msa_object
@@ -535,4 +538,43 @@ def get_template_hit_list(
           print("Template %s not included (failed to process)" %(filepath))
 
   return template_hit_list
+
+class flex_double:
+  #  just a holder that allows min_max_mean and standard_deviation_of_the_sample
+  def __init__(self):
+    self.values = []
+
+  def append(self,x):
+    self.values.append(x)
+
+  def min_max_mean(self):
+    from phenix_alphafold_utils import group_args
+    min_value = None
+    max_value = None
+    mean_value = 0.
+    for x in self.values:
+      if min_value is None or x < min_value: min_value = x
+      if max_value is None or x > max_value: max_value = x
+      mean_value += x
+    if len(self.values) > 0:
+      mean_value = mean_value/len(self.values)
+    return group_args(
+      min = min_value,
+      max = max_value,
+      mean = mean_value)
+
+ def standard_deviation_of_the_sample(self):
+   sum = 0
+   sum2 = 0
+   sumn = 0
+   for x in self.values:
+     sum += x
+     sum2 += x*x
+     sumn += 1
+   if sumn < 2:
+     return None
+   else:
+     sum = sum/sumn
+     sum2 = sum2/sumn
+     return max(0.,sum2 - sum*sum)**0.5
 
