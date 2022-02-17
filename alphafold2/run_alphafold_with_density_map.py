@@ -233,7 +233,7 @@ def run_one_af_cycle(params):
                            do_relax=False,
                            msa_is_msa_object = params.msa_is_msa_object,
                        random_seed = params.random_seed,
-                       random_seed_iterations = 
+                       random_seed_iterations =
                          params.random_seed_iterations if params.cycle == 1 else
                          params.minimum_random_seed_iterations,
                        big_improvement = params.big_improvement)
@@ -491,7 +491,9 @@ def run_job(params = None):
   jobname = params.jobname
 
   other_cif_dir = Path(os.path.join(params.content_dir,params.template_paths))
+  from phenix_alphafold_utils import get_parent_dir
   parent_dir = get_parent_dir(params.content_dir)
+  from phenix_alphafold_utils import get_cif_dir
   cif_dir = get_cif_dir(params.content_dir, jobname)
 
   fasta_dir = Path(parent_dir,jobname,"fasta")
@@ -562,7 +564,7 @@ def run_job(params = None):
       params.msa, params.deletion_matrix, params.template_paths, \
         params.msa_is_msa_object = get_msa(params)
 
-    working_cif_file_list = list(manual_cif_file_list) 
+    working_cif_file_list = list(manual_cif_file_list)
     if params.cycle == 1:
       working_cif_file_list +=  \
        list(pdb_cif_file_list)[:params.maximum_templates_from_pdb]
@@ -743,10 +745,5 @@ def change_is_small(params, rmsd_from_previous_cycle_list, n = 2):
   if x <= params.resolution * params.cycle_rmsd_to_resolution_ratio:
     return True
   else:
-    return False 
-def get_parent_dir(content_dir):
-  return Path(os.path.join(content_dir,"manual_templates"))
-def get_cif_dir(content_dir, jobname):
-  parent_dir = get_parent_dir(content_dir)
-  return Path(parent_dir,jobname,"mmcif")
+    return False
 

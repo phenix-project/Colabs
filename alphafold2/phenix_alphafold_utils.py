@@ -81,7 +81,7 @@ def get_input_output_dirs(params):
      of input_directory in default directory, or as a directory with this
      name in user's Google drive.
 
-     If output_dir is set or save_outputs_in_google_drive is set, 
+     If output_dir is set or save_outputs_in_google_drive is set,
      create an output_dir as
      well. Save in Google drive if input_directory is in Google drive
   """
@@ -141,7 +141,7 @@ def get_input_output_dirs(params):
     if not os.path.isdir(full_output_dir):
       os.mkdir(full_output_dir)
     print("Output files will be copied to %s " %(output_dir))
-    
+
     full_output_dir = Path(full_output_dir)
   else:
     full_output_dir = None
@@ -382,7 +382,17 @@ def get_jobnames_sequences_from_file(params):
   return params
 
 
-def set_up_input_files(params):
+def get_parent_dir(content_dir,
+   parent_dir_name = "manual_templates"):
+  return Path(os.path.join(content_dir,parent_dir_name))
+
+def get_cif_dir(content_dir, jobname,
+    cif_name = "mmcif"):
+  parent_dir = get_parent_dir(content_dir)
+  return Path(parent_dir,jobname,cif_name)
+
+def set_up_input_files(params,
+    convert_to_params = True):
 
   from pathlib import Path
   import os, sys
@@ -510,14 +520,26 @@ def set_up_input_files(params):
   params['cif_filename_dict'] = cif_filename_dict
   params['query_sequences'] = query_sequences
 
-  if params_is_dict: # convert to params
-    from phenix.programs.alphafold_with_density_map import master_phil_str
-    import iotbx.phil
-    original_params = iotbx.phil.parse(master_phil_str).extract()
+  if params_is_dict and not convert_to_params:
+    return params  # return dict version (does not require phenix)
 
+  elif params_is_dict: # set values in get_alphafold_with_density_map
+    # params and return
+    return get_alphafold_with_density_map_params(params)
+
+  else: # came in with params; set values and return
+
+    for key in params.keys():
+      setattr(original_params,key,params[key])
+    return original_params
+
+def get_alphafold_with_density_map_params(params):
+  from phenix.programs.alphafold_with_density_map import master_phil_str
+  import iotbx.phil
+  full_params = iotbx.phil.parse(master_phil_str).extract()
   for key in params.keys():
-    setattr(original_params,key,params[key])
-  return original_params
+    setattr(full_params,key,params[key])
+  return full_params
 
 def set_upload_dir(params):
     params['upload_dir'] = Path(parent_dir,"upload_dir")
