@@ -7,12 +7,13 @@ from pathlib import Path
 # Utilities for setting up and running Phenix in Colab
 
 def get_helper_files():
-  # Get the helper python files phenix_alphafold_utils and phenix_colab_utils
+  # Get the helper python files
   for file_name in [
       'alphafold_with_density_map.py',
       'alphafold_utils.py',
       'run_alphafold_with_density_map.py',
-      'phenix_alphafold_utils.py']:
+      'phenix_alphafold_utils.py',
+      'colabfold.py']:
     if os.path.isfile(file_name):
       os.remove(file_name)
     os.environ['file_name'] = file_name
@@ -64,7 +65,6 @@ def install_software(
     phenix_password = None,
   alphafold = True,
     alphafold_version = '0bab1bf84d9d887aba5cfb6d09af1e8c3ecbc408',
-  colabfold = True,
   biopython = True,
   mmseq2 = True,
   pdb_to_cif = True,
@@ -81,9 +81,8 @@ def install_software(
   if phenix:
     install_phenix(password = phenix_password, version = phenix_version)
 
-  if alphafold or colabfold or biopython or mmseq2:
+  if alphafold or biopython or mmseq2:
     install_alphafold(version = alphafold_version, content_dir = content_dir,
-      colabfold = colabfold,
       biopython = biopython,
       mmseq2 = mmseq2,
       alphafold = alphafold)
@@ -97,7 +96,6 @@ def install_software(
 
 
 def install_alphafold(version = None, content_dir = None,
-    colabfold = True,
     biopython = True,
     mmseq2 = True,
     alphafold = True,
@@ -113,11 +111,9 @@ def install_alphafold(version = None, content_dir = None,
     return
 
   # install dependencies
-  print( "Installing biopython and colabfold...")
+  print( "Installing biopython ...")
   if biopython:
     runsh("pip -q install biopython dm-haiku==0.0.5 ml-collections py3Dmol")
-  if colabfold:
-    runsh("wget -qnc https://raw.githubusercontent.com/sokrypton/ColabFold/96fe2446f454eba38ea34ca45d97dc3f393e24ed/beta/colabfold.py")
   # download model
   if alphafold and (not os.path.isdir("alphafold")):
     print("Installing AlphaFold...")
