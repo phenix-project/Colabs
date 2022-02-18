@@ -10,7 +10,7 @@ import hashlib
 from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 import shutil
-from phenix_colab_utils import exit
+from phenix_colab_utils import exit, run_pdb_to_cif
 
 # Local methods
 
@@ -222,7 +222,7 @@ def upload_templates(params):
         pdb_filepath = Path(cif_dir,filename)
         with pdb_filepath.open("w") as fh:
           fh.write(contents.decode("UTF-8"))
-        cif_filepath = pdb_to_cif(pdb_filepath)
+        cif_filepath = run_pdb_to_cif(pdb_filepath)
         manual_templates_uploaded.append(cif_filepath)
 
   if params.get('upload_maps'):
@@ -281,7 +281,7 @@ def get_templates_from_drive(params):
         pdb_filepath = Path(cif_dir,filename)
         with pdb_filepath.open("w") as fh:
           fh.write(contents.decode("UTF-8"))
-        cif_filepath = pdb_to_cif(pdb_filepath)
+        cif_filepath = run_pdb_to_cif(pdb_filepath)
         manual_templates_uploaded.append(cif_filepath)
 
   if params.get('upload_maps',None):
