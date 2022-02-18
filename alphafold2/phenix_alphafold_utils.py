@@ -218,7 +218,9 @@ def upload_templates(params):
 
       elif params.get('upload_manual_templates',None) and \
            str(filename).endswith(".pdb"):
-
+        cif_dir = params.get("cif_dir")
+        if not cif_dir or not os.path.isdir(cif_dir):
+          exit("Could not set up cif_dir in %s" %(cif_dir))
         pdb_filepath = Path(cif_dir,filename)
         with pdb_filepath.open("w") as fh:
           fh.write(contents.decode("UTF-8"))
