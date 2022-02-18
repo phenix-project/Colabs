@@ -232,7 +232,8 @@ def upload_templates(params):
     print("Maps uploaded: %s" %(maps_uploaded))
 
   print("Templates uploaded: %s" %(manual_templates_uploaded))
-  if (not upload_maps) and (not manual_templates_uploaded):
+  if (not params.get("upload_maps")) and (
+      not manual_templates_uploaded):
     print("\n*** WARNING: no templates uploaded...Please use only .cif files ***\n")
   return manual_templates_uploaded, maps_uploaded
 
