@@ -248,7 +248,8 @@ def get_templates_from_drive(params):
 
   jobname = params.get('jobname',None)
   cif_dir = params.get('cif_dir',None)
-  assert cif_dir is not None
+  if cif_dir is None:
+    exit("Need a cif directory...")
 
   filename_list = os.listdir(input_directory)
 
