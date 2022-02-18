@@ -6,6 +6,15 @@ from pathlib import Path
 
 # Utilities for setting up and running Phenix in Colab
 
+class StopExecution(Exception):
+    def _render_traceback_(self):
+        pass
+
+def exit(text = None):
+  if text is not None:
+    print(text)
+  raise StopExecution
+
 def get_helper_files():
   # Get the helper python files
   for file_name in [
