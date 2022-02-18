@@ -115,7 +115,7 @@ def install_alphafold(version = None, content_dir = None,
   os.chdir(content_dir)
 
   if not version and alphafold:
-    raise AssertionError("Need alphafold version for installation")
+    exit("Need alphafold version for installation")
 
   if os.path.isfile("AF2_READY"):
     print("AF2 is already installed")
@@ -198,7 +198,7 @@ def install_phenix(password = None, version = None):
     return
 
   if ((not version) or (not password)):
-    raise AssertionError("Need version and password for Phenix")
+    exit("Need version and password for Phenix")
 
   if (os.path.isfile("PHENIX_DOWNLOADED") or os.path.isfile("PHENIX_READY")):
     print("Phenix is already downloaded")
@@ -209,17 +209,17 @@ def install_phenix(password = None, version = None):
       # try with user as trusted
       runsh("wget -q --user trusted --password %s -r -l1 https://phenix-online.org/download/installers/%s/linux-64/ -A phenix*.tar.bz2" %(password, version))
     if not os.path.isdir("phenix-online.org"):
-      raise AssertionError("Unable to download...please check your Phenix version and password?")
+      exit("Unable to download...please check your Phenix version and password?")
 
     # Move files to working directory
     file_list = os.listdir(
        "phenix-online.org/download/installers/%s/linux-64/" %(version))
     if len(file_list)< 1:
-      raise AssertionError("Unable to download...please check your Phenix version and password?")
+      exit("Unable to download...please check your Phenix version and password?")
     file_name = file_list[0]
     print("Downloaded bz2 file: %s" %(file_name))
     if not file_name.endswith(".bz2"):
-      raise AssertionError("Downloaded file does not end with .bz2")
+      exit("Downloaded file does not end with .bz2")
 
     runsh("mv phenix-online.org/download/installers/%s/linux-64/%s ." %(
      version, file_name))
@@ -251,8 +251,7 @@ def get_last_bz2_file():
     if f.startswith("phenix") and f.endswith(".bz2"):
       bz2_files.append(f)
   if not bz2_files:
-    raise AssertionError(
-       "No Phenix downloaded...please check version and password?")
+    exit("No Phenix downloaded...please check version and password?")
   bz2_files = sorted(bz2_files, key = lambda b: b, reverse = True)
   return bz2_files[0]
 

@@ -10,6 +10,7 @@ import hashlib
 from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 import shutil
+from phenix_colab_utils import exit
 
 # Local methods
 
@@ -239,7 +240,7 @@ def get_templates_from_drive(params):
   input_directory = params.get('input_directory',None)
   print("Input directory:",input_directory)
   if input_directory is None:
-    raise AssertionError(
+    exit(
       "No Google drive folder available. Please specify input_directory")
 
   jobname = params.get('jobname',None)
@@ -451,11 +452,11 @@ def set_up_input_files(params,
     query_sequence = clean_query(query_sequence)
     if query_sequence and not jobname:
       print("Please enter a job name and rerun")
-      raise AssertionError("Please enter a job name and rerun")
+      exit("Please enter a job name and rerun")
 
     if jobname and not query_sequence:
       print("Please enter a query_sequence and rerun")
-      raise AssertionError("Please enter a query_sequence rerun")
+      exit("Please enter a query_sequence rerun")
 
     # Add sequence and jobname if new
     if (jobname and query_sequence) and (
@@ -506,16 +507,16 @@ def set_up_input_files(params,
             "Please enter a longer sequence and \n",
             "run again\n\n")
       sys.stdout.flush()
-      raise AssertionError("Sequence must be 20 residues or more")
+      exit("Sequence must be 20 residues or more")
     if not map_list and params.get('use_map',None):
       print("\n\nNeed a map for each sequence...\n\n",
             "Please be sure input_directory is set and run again\n\n")
       sys.stdout.flush()
-      raise AssertionError("Map file needed for job %s" %(jn))
+      exit("Map file needed for job %s" %(jn))
 
   if not query_sequences:
     print("Please supply a query sequence and run again")
-    raise AssertionError("Need a query sequence")
+    exit("Need a query sequence")
 
   params['jobnames'] = jobnames
   params['resolutions'] = resolutions
