@@ -401,6 +401,7 @@ def get_cif_dir(content_dir, jobname,
   return Path(parent_dir,jobname,cif_name)
 
 def set_up_input_files(params,
+    require_map = None,
     convert_to_params = True):
 
   from pathlib import Path
@@ -514,9 +515,10 @@ def set_up_input_files(params,
             "run again\n\n")
       sys.stdout.flush()
       exit("Sequence must be 20 residues or more")
-    if not map_list and params.get('use_map',None):
+    if not map_list and params.get('upload_maps',None):
       print("\n\nNeed a map for each sequence...\n\n",
-            "Please be sure input_directory is set and run again\n\n")
+        "Please be sure input_directory contains your map file or "+
+        "input_directory is not set and run again\n\n")
       sys.stdout.flush()
       exit("Map file needed for job %s" %(jn))
 
