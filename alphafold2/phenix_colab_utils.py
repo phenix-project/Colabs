@@ -311,15 +311,18 @@ def install_pdb_to_cif(content_dir = None):
     runsh("chmod +x %s" %(b))
     runsh('touch PDB_TO_CIF_READY')
     print("Ready with pdb_to_cif")
+    if not os.path.isfile(os.path.join(content_dir,
+        "maxit-v11.100-prod-src/bin/process_entry")):
+      exit("Unable to install pdb_to_cif")
 
 def run_pdb_to_cif(f, content_dir = None):
     assert content_dir is not None
 
     if not os.path.isfile(os.path.join(content_dir,
         "maxit-v11.100-prod-src/bin/process_entry")):
-      print("Sorry, pdb_to_cif is not available..."+
-        "install with phenix_colab_utils.install_pdb_to_cif")
-      return
+      print("Installing pdb_to_cif...")
+      install_pdb_to_cif(content_dir = content_dir)
+
     if hasattr(f,'as_posix'):
       f = f.as_posix()  # make it a string
     output_file = f.replace(".pdb",".cif")
