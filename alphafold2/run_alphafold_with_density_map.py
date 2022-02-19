@@ -319,7 +319,7 @@ def run_one_af_cycle(params):
     plt.ylim(0,100)
     plt.ylabel("Predicted lDDT")
     plt.xlabel("Positions")
-    plt.savefig(get_plddt_png_file(params))
+    plt.savefig(get_plddt_png_file_name(params))
     ##################################################################
     plt.show()
 
@@ -332,7 +332,7 @@ def run_one_af_cycle(params):
       plt.title(model_name)
       plt.imshow(value["pae"],label=model_name,cmap="bwr",vmin=0,vmax=30)
       plt.colorbar()
-    plt.savefig(get_pae_png_file(params))
+    plt.savefig(get_pae_png_file_name(params))
     plt.show()
     ##################################################################
     #@title Displaying 3D structure... {run: "auto"}
