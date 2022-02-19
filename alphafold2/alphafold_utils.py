@@ -426,8 +426,6 @@ def get_msa(params):
     a3m_lines = cf.run_mmseqs2(params.query_sequence,
      params.jobname, params.use_env)
 
-
-
   if (not params.use_msa):
     a3m_lines = ">query sequence \n%s" %(params.query_sequence)
     print("Not using any MSA information")

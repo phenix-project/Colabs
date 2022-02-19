@@ -26,10 +26,12 @@ def run_jobs(params):
 
   # RUN THE JOBS HERE
   os.chdir(params.content_dir)
-  print("Working directory: %s" %(os.getcwd()))
+  print("Overall working directory: %s" %(os.getcwd()))
 
+  result_list = []
   for query_sequence, jobname, resolution in zip(
     params.query_sequences, params.jobnames, params.resolutions):
+    os.chdir(params.content_dir)
     print("\n","****************************************","\n",
          "RUNNING JOB %s with sequence %s at resolution of %s\n" %(
       jobname, query_sequence, resolution),
@@ -40,6 +42,15 @@ def run_jobs(params):
     working_params.query_sequence = query_sequence
     working_params.jobname = jobname
     working_params.resolution =resolution
+
+    # We are going to work in a subdirectory
+    working_params.working_directory= os.path.join(params.content_dir,
+      jobname)
+    if not os.path.isdir(working_params.working_directory):
+      os.mkdir(working_params.working_directory)
+    os.chdir(working_params.working_directory)
+    print("Working directory for job %s: %s" %(
+       jobname, os.getcwd()))
 
     # User input of manual templates
     working_params.manual_templates_uploaded = \
@@ -74,6 +85,8 @@ def run_jobs(params):
         print("FAILED: JOB %s with sequence %s\n\n%s\n" %(
         working_params.jobname, working_params.query_sequence, str(e)),
         "****************************************","\n")
+    result_list.append(result)
+  return result_list
 
 def run_one_af_cycle(params):
 
@@ -84,7 +97,7 @@ def run_one_af_cycle(params):
                                     SingleHitResult,
                                     TEMPLATE_FEATURES)
 
-  os.chdir(params.content_dir)
+  os.chdir(params.working_directory)
   if params.template_hit_list:
     #process hits into template features
     from dataclasses import replace
@@ -243,19 +256,16 @@ def run_one_af_cycle(params):
     print("Prediction failed...probably ran out of memory...quitting")
     return None
 
-  os.chdir(params.content_dir)
+  os.chdir(params.working_directory)
   model_file_name = "%s_unrelaxed_model_1.pdb" %(params.jobname)
   if os.path.isfile(model_file_name):
     print("Model file is in %s" %(model_file_name))
     cycle_model_file_name = "%s_unrelaxed_model_1_%s.pdb" %(
         params.jobname, params.cycle)
-    if not same_file(model_file_name, cycle_model_file_name):
-      shutil.copyfile(model_file_name,cycle_model_file_name)
-    if params.output_directory is not None and (not
-        same_file (model_file_name,
-         os.path.join(params.output_directory, cycle_model_file_name))):
-      shutil.copyfile(model_file_name,os.path.join(
-        params.output_directory, cycle_model_file_name))
+    check_and_copy(model_file_name, cycle_model_file_name)
+    if params.output_directory is not None:
+      check_and_copy(model_file_name,
+         os.path.join(params.output_directory, cycle_model_file_name))
   else:
     print("No model file %s found for job %s" %(model_file_name,
       params.jobname))
@@ -267,6 +277,13 @@ def run_one_af_cycle(params):
     from alphafold_utils import plot_plddt_legend, plot_confidence, write_pae_file
   except Exception as e: # No matplotlib
     plt = None
+
+  for n,(model_name,value) in enumerate(outs.items()):
+    if n > 0: break # only do one
+
+    # Write pae file
+    pae_file = params.jobname+"_PAE_cycle_%s.jsn" %(params.cycle)
+    write_pae_file(value["pae"], pae_file)
 
   if plt and (not params.msa_is_msa_object):
     # gather MSA info # ZZZ This won't work with msa_is_msa_object
@@ -308,7 +325,6 @@ def run_one_af_cycle(params):
 
     print("Predicted Alignment Error")
     ##################################################################
-    pae_file_list = []
     plt.figure(figsize=(3*params.num_models,2), dpi=100)
     for n,(model_name,value) in enumerate(outs.items()):
       if n > 0: break # only do one
@@ -316,10 +332,6 @@ def run_one_af_cycle(params):
       plt.title(model_name)
       plt.imshow(value["pae"],label=model_name,cmap="bwr",vmin=0,vmax=30)
       plt.colorbar()
-      # Write pae file
-      pae_file = params.jobname+"_"+model_name+"_PAE.jsn"
-      write_pae_file(value["pae"], pae_file)
-      pae_file_list.append(pae_file)
     plt.savefig(params.jobname+"_PAE.png")
     plt.show()
     ##################################################################
@@ -467,7 +479,7 @@ def run_job(params = None):
   if params.random_seed is None:
     params.random_seed = 717217
 
-  os.chdir(params.content_dir)
+  os.chdir(params.working_directory)
 
   #standard values of parameters
   params.num_models = 1
@@ -580,20 +592,26 @@ def run_job(params = None):
       hhDB_dir = hhDB_dir,
       content_dir = params.content_dir)
 
-    os.chdir(params.content_dir)
-
-    if params.carry_on and params.output_directory:
-      expected_cycle_model_file_name = "%s_unrelaxed_model_1_%s.pdb" %(
+    os.chdir(params.working_directory)
+   
+    expected_cycle_model_file_name = "%s_unrelaxed_model_1_%s.pdb" %(
         jobname, params.cycle)
+    if params.carry_on and params.output_directory:
       expected_cycle_model_file_name_in_output_dir = os.path.join(
-        params.output_directory,expected_cycle_model_file_name)
+        params.output_directory,
+         expected_cycle_model_file_name)
+    else:
+      expected_cycle_model_file_name_in_output_dir = None
 
     if params.carry_on and params.output_directory and os.path.isfile(
          expected_cycle_model_file_name_in_output_dir):
-      print("Reading in AF model from %s" %(
+      print("Reading in AlphaFold model from %s" %(
         expected_cycle_model_file_name_in_output_dir))
       result = group_args(group_args_type = 'af model read in directly',
         cycle_model_file_name = expected_cycle_model_file_name_in_output_dir)
+      check_and_copy(expected_cycle_model_file_name_in_output_dir,
+        expected_cycle_model_file_name)
+      
 
     else: # Get AlphaFold model here
       result = run_one_af_cycle(params)
@@ -626,12 +644,9 @@ def run_job(params = None):
     if params.output_directory is not None:
       cycle_model_file_name_in_output_dir = Path(
         os.path.join(params.output_directory,cycle_model_file_name.name))
-      if not same_file(cycle_model_file_name,
-         cycle_model_file_name_in_output_dir):
-        shutil.copyfile(
-          cycle_model_file_name,
-          cycle_model_file_name_in_output_dir)
-        print("Copied AF model to %s" %(
+      check_and_copy(cycle_model_file_name,
+         cycle_model_file_name_in_output_dir)
+      print("Copied AlphaFold model to %s" %(
           cycle_model_file_name_in_output_dir))
 
 
@@ -654,6 +669,9 @@ def run_job(params = None):
         cc = get_map_model_cc(map_file_name = map_file_name,
           model_file_name = final_model_file_name,
           resolution = params.resolution),)
+      local_final_model_file_name = os.path.split(final_model_file_name)[-1]
+      check_and_copy(final_model_file_name, local_final_model_file_name)
+
     else: # usual
       rebuild_result = rebuild_model(params)
 
@@ -667,14 +685,6 @@ def run_job(params = None):
       final_model_file_name = rebuild_result.final_model_file_name
       cc = rebuild_result.cc
 
-    try:
-      runsh(
-      "zip -FSr %s'.result.zip'  %s*.pdb %s*.j* %s*.png %s*.bibtex %s*.jsn" %(
-         jobname,jobname,jobname,jobname,jobname,jobname))
-      zip_file_name = f"{jobname}.result.zip"
-    except Exception as e:
-      zip_file_name = None
-
     if not final_model_file_name:
       print("\nEnding cycles as no rebuilt model obtained")
       break
@@ -683,25 +693,49 @@ def run_job(params = None):
 
     final_model_file_name_in_cif_dir = Path(
         os.path.join(cif_dir,final_model_file_name.name))
-    if not same_file(final_model_file_name,
-      final_model_file_name_in_cif_dir):
-      shutil.copyfile(
-        final_model_file_name,
-        final_model_file_name_in_cif_dir)
+    check_and_copy(final_model_file_name, final_model_file_name_in_cif_dir)
 
     if params.output_directory is not None:
       final_model_file_name_in_output_dir = Path(
         os.path.join(params.output_directory,final_model_file_name.name))
-      if not same_file(final_model_file_name,
-          final_model_file_name_in_output_dir):
-        shutil.copyfile(
-          final_model_file_name,
+      if os.path.isfile(final_model_file_name):
+        check_and_copy(final_model_file_name,
           final_model_file_name_in_output_dir)
         print("Copied rebuilt model to %s" %(
           final_model_file_name_in_output_dir))
       else:
         print("Rebuilt model is %s" %(
           final_model_file_name_in_output_dir))
+
+    # Superpose AF model on rebuilt model
+    if os.path.isfile(expected_cycle_model_file_name) and \
+        os.path.isfile(final_model_file_name):
+      # Copy final (rebuilt) model to standard name
+      rebuilt_model_name = os.path.join(
+        params.working_directory, "%s_REBUILT_cycle_%s.pdb" %(
+        jobname, params.cycle))
+      check_and_copy(final_model_file_name, rebuilt_model_name)
+      print("Rebuilt model is in %s" %(rebuilt_model_name))
+
+
+      print("Superposing AF model %s on rebuilt model (%s)" %(
+         expected_cycle_model_file_name,final_model_file_name))
+      superposed_af_model_name = os.path.join(
+        params.working_directory, "%s_ALPHAFOLD_cycle_%s.pdb" %(jobname, params.cycle))
+
+      runsh("phenix.superpose_and_morph morph=False trim=False "+
+         "fixed_model=%s moving_model=%s superposed_model=%s > super.log" %(
+         final_model_file_name, expected_cycle_model_file_name,
+         superposed_af_model_name))
+      if os.path.isfile(superposed_af_model_name):
+        print("Current superposed AF model is in %s" %(
+          superposed_af_model_name))
+      if params.output_directory is not None:
+        superposed_af_model_name_in_output_dir = Path(
+          os.path.join(params.output_directory,superposed_af_model_name))
+        check_and_copy(superposed_af_model_name, 
+            superposed_af_model_name_in_output_dir)
+   
 
     from phenix_colab_utils import run_pdb_to_cif
     final_model_file_name_as_cif_in_cif_dir = run_pdb_to_cif(
@@ -718,8 +752,8 @@ def run_job(params = None):
   # Get final zip file
   try:
       runsh(
-      "zip -FSr %s'.result.zip'  %s*.pdb %s*.j* %s*.png %s*.bibtex %s*.jsn" %(
-         jobname,jobname,jobname,jobname,jobname,jobname))
+      "zip -FSr %s'.result.zip'  %s*ALPHAFOLD*.pdb  %s*REBUILT*.pdb %s*PAE*.jsn " %(
+         jobname,jobname,jobname,jobname,))
       zip_file_name = f"{jobname}.result.zip"
   except Exception as e:
       zip_file_name = None
@@ -738,6 +772,7 @@ def run_job(params = None):
       print("Unable to download zip file %s" %(filename))
 
   if final_model_file_name:
+    print("Returning final model")
     return group_args(
       group_args_type = 'rebuilding result',
       filename = final_model_file_name,
@@ -757,6 +792,10 @@ def same_file(f1,f2):
   if not f1 or not f2 or not os.path.isfile(f1) or not os.path.isfile(f2):
     return False
   return os.path.samefile(os.path.abspath(f1),os.path.abspath(f2))
+
+def check_and_copy(a,b):
+  if not same_file(a, b):
+     shutil.copyfile(a,b)
 
 def change_is_small(params, rmsd_from_previous_cycle_list, n = 2):
   if len(rmsd_from_previous_cycle_list) < n:

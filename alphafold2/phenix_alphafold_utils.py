@@ -72,7 +72,6 @@ def params_as_dict(params):
   p = {}
   for key in dir(params):
     if key.startswith("_"): continue
-    print (key)
     p[key] = getattr(params, key)
   return p
 
@@ -149,8 +148,8 @@ def get_input_output_dirs(params):
   else:
     full_output_dir = None
 
-  params['input_directory'] = input_directory
-  params['output_directory'] = full_output_dir
+  params['input_directory'] = os.path.abspath(input_directory)
+  params['output_directory'] = os.path.abspath(full_output_dir)
   print("Input directory: ",input_directory)
   print("Output directory: ",full_output_dir)
   return params
@@ -291,7 +290,7 @@ def get_templates_from_drive(params):
         manual_templates_uploaded.append(cif_filepath)
 
   if params.get('upload_maps',None):
-    print("Maps selected from Google drive: %s" %(maps_uploaded))
+    print("Maps available on Google drive: %s" %(len(maps_uploaded)))
 
   print("Templates uploaded: %s" %(manual_templates_uploaded))
   if (not params.get('upload_maps',None)) and (not manual_templates_uploaded):
