@@ -106,7 +106,8 @@ def get_input_output_dirs(params):
     print("Input files will be taken from %s" %(
         input_directory))
     have_input_directory = True
-  elif save_outputs_in_google_drive:
+
+  if save_outputs_in_google_drive:
     need_google_drive = True
 
   if need_google_drive:
@@ -134,9 +135,12 @@ def get_input_output_dirs(params):
     input_directory = Path(input_directory)
 
   if create_output_dir:
-    if os.path.isdir(output_dir):
+    # Check for case where output_dir exists but we really want it in gdrive
+    
+    if os.path.isdir(output_dir) and (not save_outputs_in_google_drive):
       full_output_dir = output_dir
-    elif gdrive_dir and os.path.isdir(gdrive_dir):
+    elif (save_outputs_in_google_drive) and \
+        gdrive_dir and os.path.isdir(gdrive_dir):
       full_output_dir = os.path.join(gdrive_dir, output_dir)
     else:  # make it in content_dir
       full_output_dir = os.path.join(content_dir, output_dir)
