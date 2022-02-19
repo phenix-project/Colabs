@@ -146,7 +146,7 @@ def get_input_output_dirs(params):
 
     full_output_dir = Path(full_output_dir)
   else:
-    full_output_dir = None
+    full_output_dir = Path(os.getcwd())
 
   params['input_directory'] = os.path.abspath(input_directory)
   params['output_directory'] = os.path.abspath(full_output_dir)
