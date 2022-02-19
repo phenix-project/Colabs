@@ -282,7 +282,7 @@ def run_one_af_cycle(params):
     if n > 0: break # only do one
 
     # Write pae file
-    pae_file = params.jobname+"_PAE_cycle_%s.jsn" %(params.cycle)
+    pae_file = get_pae_file_name(params)
     write_pae_file(value["pae"], pae_file)
 
   if plt and (not params.msa_is_msa_object):
@@ -319,7 +319,7 @@ def run_one_af_cycle(params):
     plt.ylim(0,100)
     plt.ylabel("Predicted lDDT")
     plt.xlabel("Positions")
-    plt.savefig(params.jobname+"_coverage_lDDT.png")
+    plt.savefig(get_plddt_png_file(params))
     ##################################################################
     plt.show()
 
@@ -332,7 +332,7 @@ def run_one_af_cycle(params):
       plt.title(model_name)
       plt.imshow(value["pae"],label=model_name,cmap="bwr",vmin=0,vmax=30)
       plt.colorbar()
-    plt.savefig(params.jobname+"_PAE.png")
+    plt.savefig(get_pae_png_file(params))
     plt.show()
     ##################################################################
     #@title Displaying 3D structure... {run: "auto"}
@@ -600,6 +600,7 @@ def run_job(params = None):
       expected_cycle_model_file_name_in_output_dir = os.path.join(
         params.output_directory,
          expected_cycle_model_file_name)
+
     else:
       expected_cycle_model_file_name_in_output_dir = None
 
@@ -611,16 +612,32 @@ def run_job(params = None):
         cycle_model_file_name = expected_cycle_model_file_name_in_output_dir)
       check_and_copy(expected_cycle_model_file_name_in_output_dir,
         expected_cycle_model_file_name)
+      check_and_copy(os.path.join(params.output_directory,
+         get_pae_file_name(params)),get_pae_file_name(params))
+      check_and_copy(os.path.join(params.output_directory,
+         get_pae_png_file_name(params)),get_pae_png_file_name(params))
+      check_and_copy(os.path.join( params.output_directory,
+         get_plddt_png_file_name(params)),get_plddt_png_file_name(params))
       
 
     else: # Get AlphaFold model here
       result = run_one_af_cycle(params)
+      check_and_copy(get_pae_file_name(params),
+         os.path.join(params.output_directory,
+         get_pae_file_name(params)))
+      check_and_copy(get_pae_png_file_name(params),
+         os.path.join(params.output_directory,
+         get_pae_png_file_name(params)))
+      check_and_copy(get_plddt_png_file_name(params),
+         os.path.join( params.output_directory,
+         get_plddt_png_file_name(params)))
 
     if (not result) or (not result.cycle_model_file_name) or (
          not os.path.isfile(result.cycle_model_file_name)):
       print("Modeling failed at cycle %s" %(cycle))
       print("You might try checking the 'carry_on' box and rerunning to go on")
       return None
+
 
     cycle_model_file_name = result.cycle_model_file_name
 
@@ -752,8 +769,8 @@ def run_job(params = None):
   # Get final zip file
   try:
       runsh(
-      "zip -FSr %s'.result.zip'  %s*ALPHAFOLD*.pdb  %s*REBUILT*.pdb %s*PAE*.jsn " %(
-         jobname,jobname,jobname,jobname,))
+      "zip -FSr %s'.result.zip'  %s*ALPHAFOLD*.pdb  %s*REBUILT*.pdb %s*PAE*.jsn  %s*PAE*.png %s*lDDT*.png" %(
+         jobname,jobname,jobname,jobname,jobname,jobname))
       zip_file_name = f"{jobname}.result.zip"
   except Exception as e:
       zip_file_name = None
@@ -794,6 +811,8 @@ def same_file(f1,f2):
   return os.path.samefile(os.path.abspath(f1),os.path.abspath(f2))
 
 def check_and_copy(a,b):
+  if (not a) or (not os.path.isfile(a)):
+    return # Nothing to do
   if not same_file(a, b):
      shutil.copyfile(a,b)
 
@@ -808,4 +827,10 @@ def change_is_small(params, rmsd_from_previous_cycle_list, n = 2):
     return True
   else:
     return False
+def get_pae_file_name(params):
+  return params.jobname+"_PAE_cycle_%s.jsn" %(params.cycle)
+def get_pae_png_file_name(params):
+  return params.jobname+"_PAE_cycle_%s.png" %(params.cycle)
+def get_plddt_png_file_name(params):
+  return params.jobname+"_plDDT_cycle_%s.png" %(params.cycle)
 
