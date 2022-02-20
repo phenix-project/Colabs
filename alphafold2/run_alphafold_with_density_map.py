@@ -400,11 +400,10 @@ def rebuild_model(params,
 
   # run phenix dock_and_rebuild here
   from phenix_colab_utils import run_command # run and get output to terminal
-  text = "phenix.dock_and_rebuild fragments_model_file=%s nproc=%s resolution=%s previous_model_file=%s model=%s full_map=%s output_model_prefix=%s >dock_and_rebuild_%s.log" %(
+  text = "phenix.dock_and_rebuild fragments_model_file=%s nproc=%s resolution=%s previous_model_file=%s model=%s full_map=%s output_model_prefix=%s " %(
      params.mtm_file_name,nproc,params.resolution,previous_model_file,
      af_model_file,map_file_name,
       rebuilt_model_stem,
-      params.cycle,
       )
   result = run_command(text)
 
@@ -593,7 +592,7 @@ def run_job(params = None,
       hhDB_dir = hhDB_dir,
       content_dir = params.content_dir)
 
-   
+
     expected_cycle_model_file_name = "%s_unrelaxed_model_1_%s.pdb" %(
         jobname, params.cycle)
     if params.carry_on and params.output_directory:
@@ -618,7 +617,7 @@ def run_job(params = None,
          get_pae_png_file_name(params)),get_pae_png_file_name(params))
       check_and_copy(os.path.join( params.output_directory,
          get_plddt_png_file_name(params)),get_plddt_png_file_name(params))
-      
+
 
     else: # Get AlphaFold model here
       if params.debug:
@@ -766,9 +765,9 @@ def run_job(params = None,
       if params.output_directory is not None:
         superposed_af_model_name_in_output_dir = Path(
           os.path.join(params.output_directory,superposed_af_model_name))
-        check_and_copy(superposed_af_model_name, 
+        check_and_copy(superposed_af_model_name,
             superposed_af_model_name_in_output_dir)
-   
+
 
     from phenix_colab_utils import run_pdb_to_cif
     final_model_file_name_as_cif_in_cif_dir = run_pdb_to_cif(
