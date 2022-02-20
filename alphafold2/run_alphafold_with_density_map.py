@@ -85,7 +85,9 @@ def run_jobs(params):
         print("FAILED: JOB %s with sequence %s\n\n%s\n" %(
         working_params.jobname, working_params.query_sequence, str(e)),
         "****************************************","\n")
-    result_list.append(result)
+        result = None
+    if result:
+      result_list.append(result)
   return result_list
 
 def run_one_af_cycle(params):
@@ -348,11 +350,6 @@ def run_one_af_cycle(params):
     if color == "lDDT": plot_plddt_legend().show()
     plot_confidence(params.homooligomer,
        params.query_sequence, outs, model_num).show()
-    #@title Packaging and downloading results...
-
-
-  #@markdown When modeling is complete .zip files with results will be downloaded automatically.
-
 
   return group_args(
     group_args_type = 'result for one cycle',
@@ -403,10 +400,11 @@ def rebuild_model(params,
 
   # run phenix dock_and_rebuild here
   from phenix_colab_utils import run_command # run and get output to terminal
-  text = "phenix.dock_and_rebuild fragments_model_file=%s nproc=%s resolution=%s previous_model_file=%s model=%s full_map=%s output_model_prefix=%s " %(
+  text = "phenix.dock_and_rebuild fragments_model_file=%s nproc=%s resolution=%s previous_model_file=%s model=%s full_map=%s output_model_prefix=%s >dock_and_rebuild_%s.log" %(
      params.mtm_file_name,nproc,params.resolution,previous_model_file,
      af_model_file,map_file_name,
       rebuilt_model_stem,
+      params.cycle,
       )
   result = run_command(text)
 
@@ -467,7 +465,8 @@ def get_map_to_model(map_file_name,
      nproc, seq_file, resolution, map_file_name, output_file_name) )
   return output_file_name
 
-def run_job(params = None):
+def run_job(params = None,
+   max_alphafold_attempts = 3):
 
   from Bio.SeqRecord import SeqRecord
   from Bio.Seq import Seq
@@ -560,6 +559,8 @@ def run_job(params = None):
   final_model_file_name = None
   cycle_model_file_name = None
 
+  os.chdir(params.working_directory)
+
   for cycle in range(1, max(1,params.maximum_cycles) + 1):
 
     # Decide if it is time to quit
@@ -592,7 +593,6 @@ def run_job(params = None):
       hhDB_dir = hhDB_dir,
       content_dir = params.content_dir)
 
-    os.chdir(params.working_directory)
    
     expected_cycle_model_file_name = "%s_unrelaxed_model_1_%s.pdb" %(
         jobname, params.cycle)
@@ -621,7 +621,23 @@ def run_job(params = None):
       
 
     else: # Get AlphaFold model here
-      result = run_one_af_cycle(params)
+      if params.debug:
+        result = run_one_af_cycle(params)
+      else:  # usual
+        from copy import deepcopy
+        template_hit_list = deepcopy(params.template_hit_list)
+        for attempt in range(max_alphafold_attempts):
+          try:
+            result = run_one_af_cycle(params)
+          except Exception as e:
+            result = None
+            print("AlphaFold modeling failed...trying again (#%s)" %(
+              attempt))
+            # get the hit list again
+            params.template_hit_list = deepcopy(template_hit_list)
+          if result:
+            break
+
       check_and_copy(get_pae_file_name(params),
          os.path.join(params.output_directory,
          get_pae_file_name(params)))
@@ -787,6 +803,8 @@ def run_job(params = None):
         "icon to the left)")
     except Exception as e:
       print("Unable to download zip file %s" %(filename))
+
+  os.chdir(params.content_dir)
 
   if final_model_file_name:
     print("Returning final model")
