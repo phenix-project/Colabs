@@ -332,3 +332,41 @@ def run_pdb_to_cif(f, content_dir = None):
     os.environ['RCSBROOT'] = p
     runsh("%s -input %s -input_format pdb -output %s -output_format cif" %(b,f,output_file))
     return Path(output_file)
+
+def get_map_name(demo_to_run):
+  for line in open("demo_maps.dat").readlines():
+    spl = line.split("_")
+    if spl and spl[0] == demo_to_run:
+      return line
+  return None
+
+def get_demo_info(demo_to_run):
+  for line in open("demo_sequences.dat").readlines():
+    spl = line.split()
+    if len(spl) >=3:
+      jobname = spl[0]
+      resolution = float(spl[1])
+      sequence = "".join(spl[2:])
+      if jobname.split("_")[0] == demo_to_run:
+        return jobname, sequence, resolution
+  return None, None, None
+
+def set_up_demo(demo_to_run):
+  os.chdir ("/content")
+  demo_to_run = demo_to_run.split()[0]
+  print("Running demo for %s" %(demo_to_run))
+  if not os.path.isdir("ColabInputs"):
+    os.mkdir("ColabInputs")
+  os.chdir("ColabInputs")
+  if (not os.path.isfile("demo_sequences.dat")):
+    runsh("wget https://phenix-online.org/phenix_data/terwilliger/colab_data/demo_sequences.dat")
+  if (not os.path.isfile("demo_maps.dat")):
+    runsh("wget https://phenix-online.org/phenix_data/terwilliger/colab_data/demo_maps.dat")
+  map_name = get_map_name(demo_to_run)
+  if (not os.path.isfile(map_name)):
+    runsh("wget https://phenix-online.org/phenix_data/terwilliger/colab_data/demo_maps/%s" %(map_name))
+  jobname, sequence, resolution = get_demo_info(demo_to_run)
+  os.chdir("/content")
+  if not jobname:
+    raise AssertionError("Unable to set up demo for %s" %(demo_to_run))
+  return jobname, sequence, resolution
