@@ -803,7 +803,12 @@ def run_job(params = None,
     except Exception as e:
       print("Unable to download zip file %s" %(filename))
 
+    check_and_copy(filename, os.path.join(params.content_dir,filename))
+
   os.chdir(params.content_dir)
+  if filename and os.path.isfile(filename):
+    print("\nZIP file with results for %s is in %s" %(
+      jobname, filename))
 
   if final_model_file_name:
     print("Returning final model")
