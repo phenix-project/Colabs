@@ -608,7 +608,8 @@ def run_job(params = None,
       print("Reading in AlphaFold model from %s" %(
         expected_cycle_model_file_name_in_output_dir))
       result = group_args(group_args_type = 'af model read in directly',
-        cycle_model_file_name = expected_cycle_model_file_name_in_output_dir)
+        cycle_model_file_name = expected_cycle_model_file_name)
+
       check_and_copy(expected_cycle_model_file_name_in_output_dir,
         expected_cycle_model_file_name)
       check_and_copy(os.path.join(params.output_directory,
@@ -681,7 +682,6 @@ def run_job(params = None,
       print("Copied AlphaFold model to %s" %(
           cycle_model_file_name_in_output_dir))
 
-
     print("\nGetting a new rebuilt model at a resolution of %.2f A" %(
         params.resolution))
     # Now get a new rebuilt model
@@ -690,19 +690,22 @@ def run_job(params = None,
 
     # Decide if we can just read it in...or really build it
     file_name_info = get_rebuilt_file_names(params)
+
     if params.carry_on and params.output_directory:
-       final_model_file_name = os.path.join(
+       final_model_file_name_in_output_dir = os.path.join(
          params.output_directory,file_name_info.rebuilt_model_name)
     if params.carry_on and params.output_directory and \
-          os.path.isfile(final_model_file_name):
-      print("Reading rebuilt model from %s" %(final_model_file_name))
+          os.path.isfile(final_model_file_name_in_output_dir):
+      print("Reading rebuilt model from %s" %(
+         final_model_file_name_in_output_dir))
+      final_model_file_name = file_name_info.rebuilt_model_name
       rebuild_result = group_args(group_args_type = 'rebuild result read in',
         final_model_file_name  = final_model_file_name,
         cc = get_map_model_cc(map_file_name = map_file_name,
           model_file_name = final_model_file_name,
           resolution = params.resolution),)
-      local_final_model_file_name = os.path.split(final_model_file_name)[-1]
-      check_and_copy(final_model_file_name, local_final_model_file_name)
+      check_and_copy(final_model_file_name_in_output_dir,
+         final_model_file_name)
 
     else: # usual
       rebuild_result = rebuild_model(params)
@@ -739,7 +742,8 @@ def run_job(params = None,
         print("Rebuilt model is %s" %(
           final_model_file_name_in_output_dir))
 
-    # Superpose AF model on rebuilt model
+    # Superpose AF model on rebuilt model and write rebuilt model to std name
+
     if os.path.isfile(expected_cycle_model_file_name) and \
         os.path.isfile(final_model_file_name):
       # Copy final (rebuilt) model to standard name
@@ -748,7 +752,6 @@ def run_job(params = None,
         jobname, params.cycle))
       check_and_copy(final_model_file_name, rebuilt_model_name)
       print("Rebuilt model is in %s" %(rebuilt_model_name))
-
 
       print("Superposing AF model %s on rebuilt model (%s)" %(
          expected_cycle_model_file_name,final_model_file_name))
@@ -767,7 +770,6 @@ def run_job(params = None,
           os.path.join(params.output_directory,superposed_af_model_name))
         check_and_copy(superposed_af_model_name,
             superposed_af_model_name_in_output_dir)
-
 
     from phenix_colab_utils import run_pdb_to_cif
     final_model_file_name_as_cif_in_cif_dir = run_pdb_to_cif(
@@ -800,10 +802,10 @@ def run_job(params = None,
       print("Start of download successful (NOTE: if the download symbol does "+
         "not go away it did not work. Download it manually using the folder "+
         "icon to the left)")
+      check_and_copy(filename, os.path.join(params.content_dir,filename))
     except Exception as e:
       print("Unable to download zip file %s" %(filename))
 
-    check_and_copy(filename, os.path.join(params.content_dir,filename))
 
   os.chdir(params.content_dir)
   if filename and os.path.isfile(filename):
