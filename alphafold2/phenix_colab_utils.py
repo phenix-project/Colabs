@@ -38,12 +38,13 @@ def run_command(command, log = sys.stdout):
     process = subprocess.run(shlex.split(command), stdout=subprocess.PIPE)
     print (process.stdout.decode("utf-8"), file = log)
 
-def runsh(text):
+def runsh(text, print_text = True):
   """ Utility to run a string as a shell script and toss output
   """
   import subprocess
   import shlex
-  print("RUNNING:",text)
+  if print_text:
+    print("RUNNING:",text)
   result = os.system(text)
   return result
 
@@ -204,10 +205,12 @@ def install_phenix(password = None, version = None):
     print("Phenix is already downloaded")
   else:
     print("Downloading Phenix...")
-    runsh("wget -q --user download --password %s -r -l1 https://phenix-online.org/download/installers/%s/linux-64/ -A phenix*.tar.bz2" %(password, version))
+    runsh("wget -q --user download --password %s -r -l1 https://phenix-online.org/download/installers/%s/linux-64/ -A phenix*.tar.bz2" %(password, version),
+      print_text = False)
     if not os.path.isdir("phenix-online.org"):
       # try with user as trusted
-      runsh("wget -q --user trusted --password %s -r -l1 https://phenix-online.org/download/installers/%s/linux-64/ -A phenix*.tar.bz2" %(password, version))
+      runsh("wget -q --user trusted --password %s -r -l1 https://phenix-online.org/download/installers/%s/linux-64/ -A phenix*.tar.bz2" %(password, version),
+        print_text = False)
     if not os.path.isdir("phenix-online.org"):
       exit("Unable to download...please check your Phenix version and password?")
 
