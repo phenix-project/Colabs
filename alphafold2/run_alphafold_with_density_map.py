@@ -701,13 +701,13 @@ def run_job(params = None,
          final_model_file_name_in_output_dir))
       final_model_file_name = os.path.split(
         file_name_info.rebuilt_model_name)[-1]
+      check_and_copy(final_model_file_name_in_output_dir,
+         final_model_file_name)
       rebuild_result = group_args(group_args_type = 'rebuild result read in',
         final_model_file_name  = final_model_file_name,
         cc = get_map_model_cc(map_file_name = map_file_name,
           model_file_name = final_model_file_name,
           resolution = params.resolution),)
-      check_and_copy(final_model_file_name_in_output_dir,
-         final_model_file_name)
 
     else: # usual
       rebuild_result = rebuild_model(params)
