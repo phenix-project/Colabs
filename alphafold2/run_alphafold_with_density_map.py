@@ -784,6 +784,7 @@ def run_job(params = None,
         final_model_file_name_as_cif_in_cif_dir.name],
       cif_dir = cif_dir)
     previous_final_model_name = final_model_file_name
+    final_model_file_name = os.path.abspath(final_model_file_name)
 
   # All done with cycles here
 
