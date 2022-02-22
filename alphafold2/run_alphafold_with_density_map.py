@@ -496,7 +496,8 @@ def run_job(params = None,
 
   jobname = params.jobname
 
-  other_cif_dir = Path(os.path.join(params.content_dir,params.template_paths))
+  other_cif_dir = Path(os.path.join(params.working_directory,
+     params.template_paths))
   from phenix_alphafold_utils import get_parent_dir
   parent_dir = get_parent_dir(params.content_dir)
   from phenix_alphafold_utils import get_cif_dir
