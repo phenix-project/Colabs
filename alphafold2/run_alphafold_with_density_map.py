@@ -820,7 +820,7 @@ def run_job(params = None,
     print("Returning final model")
     return group_args(
       group_args_type = 'rebuilding result',
-      filename = final_model_file_name,
+      filename = os.path.abspath(final_model_file_name),
       cc = get_map_model_cc(map_file_name = map_file_name,
         model_file_name = final_model_file_name,
         resolution = params.resolution))
