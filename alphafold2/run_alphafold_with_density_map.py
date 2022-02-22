@@ -591,6 +591,7 @@ def run_job(params = None,
       query_seq = query_seq,
       hhDB_dir = hhDB_dir,
       content_dir = params.content_dir)
+    os.chdir(params.working_directory) # REQUIRED
 
 
     expected_cycle_model_file_name = "%s_unrelaxed_model_1_%s.pdb" %(
@@ -665,7 +666,8 @@ def run_job(params = None,
     if not map_file_name: # we are done (no map)
       break
 
-    if previous_cycle_model_file_name:
+    if previous_cycle_model_file_name and \
+      os.path.isfile(previous_cycle_model_file_name):
       rmsd_from_previous = get_rmsd(cycle_model_file_name.as_posix(),
         previous_cycle_model_file_name.as_posix())
       if rmsd_from_previous is not None:
