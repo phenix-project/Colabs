@@ -480,7 +480,7 @@ def set_up_input_files(params,
 
         if upload_manual_templates or upload_maps:
           input_directory = params.get('input_directory', None)
-          if input_directory and input_directory != params.get'content_dir'):
+          if input_directory and input_directory != params.get('content_dir'):
             cif_filename_dict[jobname], map_filename_dict[jobname] = \
               get_templates_from_drive(params)
           else:
