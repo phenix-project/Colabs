@@ -693,7 +693,8 @@ def run_job(params = None,
 
     if params.carry_on and params.output_directory:
        final_model_file_name_in_output_dir = os.path.join(
-         params.output_directory,file_name_info.rebuilt_model_name)
+         params.output_directory,os.path.split(
+         file_name_info.rebuilt_model_name)[-1])
     if params.carry_on and params.output_directory and \
           os.path.isfile(final_model_file_name_in_output_dir):
       print("Reading rebuilt model from %s" %(
