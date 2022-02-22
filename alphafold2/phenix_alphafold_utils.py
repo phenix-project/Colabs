@@ -136,7 +136,7 @@ def get_input_output_dirs(params):
 
   if create_output_dir:
     # Check for case where output_dir exists but we really want it in gdrive
-    
+
     if os.path.isdir(output_dir) and (not save_outputs_in_google_drive):
       full_output_dir = output_dir
     elif (save_outputs_in_google_drive) and \
@@ -328,8 +328,8 @@ def get_jobnames_sequences_from_file(params):
   uploaded_job_file = files.upload()
   if params.get('upload_manual_templates',None) or params.get(
     'upload_maps', None):
-
-    if params.get('input_directory',None):
+    input_directory = params.get('input_directory',None)
+    if input_directory and input_directory != params.get('content_dir'):
       uploaded_template_files, uploaded_maps = \
         get_templates_from_drive(params)
     else:
@@ -479,7 +479,8 @@ def set_up_input_files(params,
         clear_directories([params['cif_dir']])
 
         if upload_manual_templates or upload_maps:
-          if params.get('input_directory', None):
+          input_directory = params.get('input_directory', None)
+          if input_directory and input_directory != params.get'content_dir'):
             cif_filename_dict[jobname], map_filename_dict[jobname] = \
               get_templates_from_drive(params)
           else:
