@@ -699,7 +699,8 @@ def run_job(params = None,
           os.path.isfile(final_model_file_name_in_output_dir):
       print("Reading rebuilt model from %s" %(
          final_model_file_name_in_output_dir))
-      final_model_file_name = file_name_info.rebuilt_model_name
+      final_model_file_name = os.path.split(
+        file_name_info.rebuilt_model_name)[-1]
       rebuild_result = group_args(group_args_type = 'rebuild result read in',
         final_model_file_name  = final_model_file_name,
         cc = get_map_model_cc(map_file_name = map_file_name,
