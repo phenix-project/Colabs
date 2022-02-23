@@ -540,8 +540,9 @@ def run_job(params = None,
       SeqIO.write([query_seq], fh, "fasta")
   shutil.copyfile(query_seq_path,Path(msa_dir,"query.fasta"))
 
-  previous_final_model_name = params.manual_templates_uploaded[0] if \
-      params.manual_templates_uploaded else None
+  # Removed 2022-02-23 because usually a manual template is not placed in map
+  # previous_final_model_name = params.manual_templates_uploaded[0] if \
+  #    params.manual_templates_uploaded else None
 
   if params.upload_maps:
     assert len(params.maps_uploaded) == 1  # just one map

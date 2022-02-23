@@ -569,7 +569,8 @@ def get_alphafold_with_density_map_params(params):
   return full_params
 
 def set_upload_dir(params):
-    params['upload_dir'] = Path(parent_dir,"upload_dir")
+    params['upload_dir'] = Path(params.get('working_directory',os.getcwd()),
+       "upload_dir")
     if not os.path.isdir(params['upload_dir']):
       params['upload_dir'].mkdir(parents=True)
     print("Upload dir will be: %s" %(params['upload_dir']))
