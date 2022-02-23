@@ -430,6 +430,9 @@ def set_up_input_files(params,
   # Set working directory
   os.chdir(content_dir)
 
+  # Make sure params has cif_dir in it, even if None
+  params['cif_dir'] = params.get('cif_dir',None)
+
   # Clear out directories
   parent_dir = get_parent_dir(content_dir)
 
