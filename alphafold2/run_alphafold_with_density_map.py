@@ -170,6 +170,7 @@ def run_one_af_cycle(params):
        params.query_sequence * params.homooligomer)
 
   print("\nPREDICTING STRUCTURE")
+  print("\nMaximum randomization tries: %s " %(params.random_seed_iterations))
 
   from alphafold.model import data
   from alphafold.model import config
@@ -265,6 +266,7 @@ def run_one_af_cycle(params):
     cycle_model_file_name = "%s_unrelaxed_model_1_%s.pdb" %(
         params.jobname, params.cycle)
     check_and_copy(model_file_name, cycle_model_file_name)
+    check_and_copy(model_file_name, get_af_file_name(params))
     if params.output_directory is not None:
       check_and_copy(model_file_name,
          os.path.join(params.output_directory, cycle_model_file_name))
@@ -620,6 +622,8 @@ def run_job(params = None,
          get_pae_png_file_name(params)),get_pae_png_file_name(params))
       check_and_copy(os.path.join( params.output_directory,
          get_plddt_png_file_name(params)),get_plddt_png_file_name(params))
+      check_and_copy(os.path.join( params.output_directory,
+         get_af_file_name(params)),get_af_file_name(params))
 
 
     else: # Get AlphaFold model here
@@ -649,6 +653,9 @@ def run_job(params = None,
       check_and_copy(get_plddt_png_file_name(params),
          os.path.join( params.output_directory,
          get_plddt_png_file_name(params)))
+      check_and_copy(get_af_file_name(params),
+         os.path.join( params.output_directory,
+         get_af_file_name(params)))
 
     if (not result) or (not result.cycle_model_file_name) or (
          not os.path.isfile(result.cycle_model_file_name)):
@@ -664,7 +671,11 @@ def run_job(params = None,
     print("Current AlphaFold model is in %s" %(
         cycle_model_file_name.as_posix()))
 
-    if not map_file_name: # we are done (no map)
+    if not map_file_name: # we are done (no map).  Just copy AF model
+      superposed_af_model_name = os.path.join(
+        params.working_directory, get_af_file_name(params))
+      check_and_copy(cycle_model_file_name,
+         cycle_model_file_name_in_output_dir)
       break
 
     if previous_cycle_model_file_name and \
@@ -761,7 +772,7 @@ def run_job(params = None,
       print("Superposing AF model %s on rebuilt model (%s)" %(
          expected_cycle_model_file_name,final_model_file_name))
       superposed_af_model_name = os.path.join(
-        params.working_directory, "%s_ALPHAFOLD_cycle_%s.pdb" %(jobname, params.cycle))
+        params.working_directory, get_af_file_name(params))
 
       runsh("phenix.superpose_and_morph morph=False trim=False "+
          "fixed_model=%s moving_model=%s superposed_model=%s > super.log" %(
@@ -863,4 +874,5 @@ def get_pae_png_file_name(params):
   return params.jobname+"_PAE_cycle_%s.png" %(params.cycle)
 def get_plddt_png_file_name(params):
   return params.jobname+"_plDDT_cycle_%s.png" %(params.cycle)
-
+def get_af_file_name(params)
+  return params.jobname+"_ALPHAFOLD_cycle_%s.pdb" %(params.cycle)
