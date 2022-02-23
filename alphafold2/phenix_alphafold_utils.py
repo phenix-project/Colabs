@@ -101,11 +101,13 @@ def get_input_output_dirs(params):
   need_google_drive = False
   gdrive_dir = None
 
-  if os.path.isdir(input_directory):
+  if input_directory and os.path.isdir(input_directory):
     input_directory = Path(input_directory)
     print("Input files will be taken from %s" %(
         input_directory))
     have_input_directory = True
+  elif input_directory:
+    need_google_drive = True
 
   if save_outputs_in_google_drive:
     need_google_drive = True
