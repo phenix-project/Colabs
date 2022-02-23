@@ -509,6 +509,8 @@ def run_job(params = None,
   hhDB_dir = Path(parent_dir,jobname,"hhDB")
   msa_dir = Path(hhDB_dir,"msa")
   clear_directories([fasta_dir,hhDB_dir,msa_dir])
+  if not params.cif_dir:
+    params.cif_dir = cif_dir
   assert params.cif_dir == cif_dir
 
   if params.uploaded_templates_are_map_to_model and \
