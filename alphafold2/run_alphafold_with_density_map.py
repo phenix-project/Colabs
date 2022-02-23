@@ -874,5 +874,5 @@ def get_pae_png_file_name(params):
   return params.jobname+"_PAE_cycle_%s.png" %(params.cycle)
 def get_plddt_png_file_name(params):
   return params.jobname+"_plDDT_cycle_%s.png" %(params.cycle)
-def get_af_file_name(params)
+def get_af_file_name(params):
   return params.jobname+"_ALPHAFOLD_cycle_%s.pdb" %(params.cycle)
