@@ -672,10 +672,6 @@ def run_job(params = None,
         cycle_model_file_name.as_posix()))
 
     if not map_file_name: # we are done (no map).  Just copy AF model
-      superposed_af_model_name = os.path.join(
-        params.working_directory, get_af_file_name(params))
-      check_and_copy(cycle_model_file_name,
-         cycle_model_file_name_in_output_dir)
       break
 
     if previous_cycle_model_file_name and \
