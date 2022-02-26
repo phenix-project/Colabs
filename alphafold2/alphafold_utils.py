@@ -126,6 +126,7 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
       model_runner.params = local_params
 
       best_value = None
+      print("\nMaximum randomization tries: %s " %(random_seed_iterations))
       for i in range(max(1,random_seed_iterations)):
         import random
         random.seed(random_seed)

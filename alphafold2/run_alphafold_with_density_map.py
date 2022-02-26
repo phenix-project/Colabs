@@ -170,7 +170,6 @@ def run_one_af_cycle(params):
        params.query_sequence * params.homooligomer)
 
   print("\nPREDICTING STRUCTURE")
-  print("\nMaximum randomization tries: %s " %(params.random_seed_iterations))
 
   from alphafold.model import data
   from alphafold.model import config
