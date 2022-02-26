@@ -276,7 +276,7 @@ def install_condacolab():
   import condacolab
   condacolab.install()
   runsh("touch CONDA_READY")
-  print("Done...please ignore the crash messege...")
+  print("Done...please ignore the crash message...")
 
 def install_bioconda():
   # set up bioconda and mount drive to patch in pdb_to_cif
