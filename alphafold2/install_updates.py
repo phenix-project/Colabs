@@ -45,8 +45,10 @@ def install_updates():
     os.mkdir("updates")
   here = os.getcwd()
   os.chdir("updates")
+  print("Unpacking in %s" %(os.getcwd())
   os.system("tar xzvf ../updates.tgz")
   file_list = os.listdir(".")
+  print("Files unpacked: %s" %(" ".join(file_list)))
   os.chdir(here)
 
   # Copy files where they go
