@@ -16,27 +16,29 @@ def exit(text = None):
   raise StopExecution
 
 def get_helper_files(install_custom_updates = False):
-  # Get the helper python files
+  # Get updates first and do not overwrite them if so
+  if install_custom_updates:
+    file_name_list = ['updates.tgz', 'install_updates.py']
+    for file_name in file_name_list:
+      get_file(file_name, overwrite = True)
+    from install_updates import install_updates
+    install_updates()
+
+  # Get the helper python files, but do not overwrite any already there
   file_name_list = [
-      'alphafold_with_density_map.py',
       'alphafold_utils.py',
       'run_alphafold_with_density_map.py',
       'phenix_alphafold_utils.py',
       'colabfold.py']
-  if install_custom_updates:
-    file_name_list.append('updates.tgz')
-    file_name_list.append('install_updates.py')
   for file_name in file_name_list:
-    if os.path.isfile(file_name):
-      os.remove(file_name)
-    os.environ['file_name'] = file_name
-    print("Getting %s" %(file_name))
-    result = os.system(
-      "wget -qnc https://raw.githubusercontent.com/phenix-project/Colabs/main/alphafold2/$file_name")
+    get_file(file_name)
 
-  if install_custom_updates:
-    from install_updates import install_updates
-    install_updates()
+def get_file(file_name, overwrite = False):
+    if (overwrite) or (not os.path.isfile(file_name)):
+      os.environ['file_name'] = file_name
+      print("Getting %s" %(file_name))
+      result = os.system(
+      "wget -qnc https://raw.githubusercontent.com/phenix-project/Colabs/main/alphafold2/$file_name")
 
 
 def run_command(command, log = sys.stdout):
