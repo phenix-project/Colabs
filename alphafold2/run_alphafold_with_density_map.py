@@ -66,7 +66,7 @@ def run_jobs(params):
       assert len(working_params.maps_uploaded) == 1
 
     working_params.msas_uploaded = working_params.msa_filename_dict.get(
-      working_params.jobname,[])
+      working_params.jobname,[]) if hasattr(working_params,'msa_filename_dict') else []
     if working_params.msas_uploaded:
       print("Using uploaded MSA %s for this run" %(
           working_params.msas_uploaded))
