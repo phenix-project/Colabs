@@ -11,7 +11,7 @@ from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 import shutil
 from string import ascii_uppercase
-from phenix_colab_utils import runsh
+from phenix_colab_utils import runsh, exit
 from alphafold.data import templates
 
 try:
@@ -126,13 +126,13 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
       model_runner.params = local_params
 
       best_value = None
-      print("\nMaximum randomization tries: %s " %(random_seed_iterations))
       for i in range(max(1,random_seed_iterations)):
         import random
         random.seed(random_seed)
         random_seed = random.randint(0,1000000)
         processed_feature_dict = model_runner.process_features(feature_dict,
            random_seed=random_seed)
+        print("Running prediction ",i+1,"of",random_seed_iterations,"...")
         try:
           if msa_is_msa_object:
             prediction_result = model_runner.predict(processed_feature_dict,
@@ -418,16 +418,42 @@ def get_msa(params):
   from alphafold.data import pipeline
   template_paths = None # initialize
 
-  #@title Get MSA and templates
-  print("Getting MSA and templates...")
-  if params.use_templates:
-    a3m_lines, template_paths = cf.run_mmseqs2(params.query_sequence,
-     params.jobname, params.use_env, use_templates=True)
-  elif use_msa:
-    a3m_lines = cf.run_mmseqs2(params.query_sequence,
-     params.jobname, params.use_env)
+  # Do we already have an msa file:
+  if params.upload_msa_file and params.use_msa:
+    assert len(params.msas_uploaded) == 1  # just one msa
+    msa_file_name = params.msas_uploaded[0]
+  else:
+    msa_file_name = None
 
-  if (not params.use_msa):
+  #@title Get MSA and templates
+
+  if msa_file_name:
+    template_paths = None
+    print("Reading MSA from %s" %(msa_file_name))
+    a3m_lines = open(msa_file_name).read()
+  else:
+    a3m_lines = None
+
+
+  if params.include_templates_from_pdb:
+    if params.template_search_method == 'mmseqs2':
+      print("Getting templates from PDB using mmseqs2 server...")
+      new_a3m_lines, template_paths = cf.run_mmseqs2(params.query_sequence,
+        params.jobname, params.use_env, use_templates=True)
+      if not a3m_lines: 
+        a3m_lines = new_a3m_lines
+        print("Using MSA from mmseqs2")
+    else:
+      print("Getting templates using structure_search")
+      template_paths = get_templates_with_structure_search(params)
+    print("Templates are in %s" %(template_paths))
+
+  elif params.use_msa and not a3m_lines:
+    print("Getting MSA from mmseqs2 server")
+    a3m_lines = cf.run_mmseqs2(params.query_sequence,
+       params.jobname, params.use_env)
+
+  if (not params.use_msa) or not a3m_lines:
     a3m_lines = ">query sequence \n%s" %(params.query_sequence)
     print("Not using any MSA information")
 
@@ -449,6 +475,9 @@ def get_msa(params):
   print("Done with MSA and templates")
   return msa, deletion_matrix, template_paths, msa_is_msa_object
 
+def get_templates_with_structure_search(params):
+  # Run structure_search
+  pass
 def get_cif_file_list(
     include_templates_from_pdb = None,
     manual_templates_uploaded = None,

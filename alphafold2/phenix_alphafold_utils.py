@@ -119,8 +119,13 @@ def get_input_output_dirs(params):
       try:
         from google.colab import drive
       except Exception as e:
-        raise Exception("Sorry, cannot find the Google drive directory %s" %(
-           gdrive_dir))
+        if input_directory:
+          raise Exception("Sorry, cannot find the directory "+
+          "%s and cannot mount Google drive directory %s" %(input_directory,
+            gdrive_dir))
+        else: 
+          raise Exception("Sorry, cannot find the Google drive directory %s" %(
+            gdrive_dir))
       drive.mount(gdrive_path)
       if not os.path.isdir(gdrive_dir):
         raise Exception("Sorry, cannot find the Google drive directory %s" %(
@@ -195,6 +200,7 @@ def save_sequence(jobname, query_sequence):
 def upload_templates(params):
   manual_templates_uploaded = []
   maps_uploaded = []
+  msas_uploaded = []
   from google.colab import files
   upload_dir = params.get("upload_dir")
   assert upload_dir is not None and os.path.isdir(upload_dir)
@@ -207,15 +213,21 @@ def upload_templates(params):
            (str(filename).lower().endswith(".ccp4") or
            str(filename).lower().endswith(".map") or
            str(filename).lower().endswith(".mrc")):
-
         filepath = Path(upload_dir,filename)
         ff = open(filepath, 'wb')
         ff.write(contents)
         maps_uploaded.append(filepath)
 
+      elif params.get('use_msa',None) and \
+          params.get('upload_msa_file',None) and \
+           str(filename).endswith(".a3m"):
+        filepath = Path(upload_dir,filename)
+        with filepath.open("w") as fh:
+          fh.write(contents.decode("UTF-8"))
+          msas_uploaded.append(filepath)
+
       elif params.get('upload_manual_templates',None) and \
            str(filename).endswith(".cif"):
-
         filepath = Path(upload_dir,filename)
         with filepath.open("w") as fh:
           fh.write(contents.decode("UTF-8"))
@@ -233,18 +245,24 @@ def upload_templates(params):
            content_dir = params.get("content_dir"))
         manual_templates_uploaded.append(cif_filepath)
 
+  
+  if params.get('upload_msa_file'):
+    print("MSA files uploaded: %s" %(msas_uploaded))
+
   if params.get('upload_maps'):
     print("Maps uploaded: %s" %(maps_uploaded))
 
   print("Templates uploaded: %s" %(manual_templates_uploaded))
   if (not params.get("upload_maps")) and (
       not manual_templates_uploaded):
-    print("\n*** WARNING: no templates uploaded...Please use only .cif files ***\n")
-  return manual_templates_uploaded, maps_uploaded
+    print(
+      "\n*** WARNING: no templates uploaded...Please use only .cif files ***\n")
+  return manual_templates_uploaded, maps_uploaded, msas_uploaded
 
 def get_templates_from_drive(params):
   manual_templates_uploaded = []
   maps_uploaded = []
+  msas_uploaded = []
 
   input_directory = params.get('input_directory',None)
   print("Input directory:",input_directory)
@@ -252,7 +270,7 @@ def get_templates_from_drive(params):
     exit(
       "No Google drive folder available. Please specify input_directory")
 
-  jobname = params.get('jobname',None)
+  jobname = params.get('jobname',None) # if None we are going to take everything
   cif_dir = params.get('cif_dir',None)
   if cif_dir is None:
     exit("Need a cif directory...")
@@ -261,6 +279,9 @@ def get_templates_from_drive(params):
 
   for filename in filename_list:
       sys.stdout.flush()
+      useful_files = select_matching_template_files([Path(filename)], jobname)
+      if not useful_files: # skip this one
+        continue
       full_file_name = os.path.join(input_directory, filename)
       if not os.path.isfile(full_file_name):
         continue
@@ -269,12 +290,18 @@ def get_templates_from_drive(params):
            (str(filename).lower().endswith(".ccp4") or
            str(filename).lower().endswith(".map") or
            str(filename).lower().endswith(".mrc")):
-
         filepath = Path(cif_dir,filename)
-
         ff = open(filepath, 'wb')
         ff.write(contents)
         maps_uploaded.append(filepath)
+
+      elif params.get('use_msa',None) and \
+            params.get('upload_msa_file',None) and \
+           str(filename).lower().endswith(".a3m"):
+        filepath = Path(cif_dir,filename)
+        ff = open(filepath, 'wb')
+        ff.write(contents)
+        msas_uploaded.append(filepath)
 
       elif params.get('upload_manual_templates',None) and \
            str(filename).endswith(".cif"):
@@ -295,20 +322,27 @@ def get_templates_from_drive(params):
            content_dir = params.get("content_dir"))
         manual_templates_uploaded.append(cif_filepath)
 
-  if params.get('upload_maps',None):
-    print("Maps available on Google drive: %s" %(len(maps_uploaded)))
-
-  print("Templates uploaded: %s" %(manual_templates_uploaded))
-  if (not params.get('upload_maps',None)) and (not manual_templates_uploaded):
-    print("\n*** WARNING: no templates uploaded...***\n")
   if manual_templates_uploaded:
     manual_templates_uploaded = select_matching_template_files(
       manual_templates_uploaded, jobname)
   if maps_uploaded:
     maps_uploaded = select_matching_template_files(
       maps_uploaded, jobname)
+  if msas_uploaded:
+    msas_uploaded = select_matching_template_files(
+      msas_uploaded, jobname)
 
-  return manual_templates_uploaded, maps_uploaded
+  if params.get('upload_maps',None):
+    print("Maps taken from Google drive: %s" %(len(maps_uploaded)))
+
+  if params.get('upload_msa_file',None):
+    print("MSA files taken from Google drive: %s" %(len(msas_uploaded)))
+
+  print("Templates taken from Google drive: %s" %(manual_templates_uploaded))
+  if (not params.get('upload_maps',None)) and (not manual_templates_uploaded):
+    print("\n*** WARNING: no templates uploaded...***\n")
+
+  return manual_templates_uploaded, maps_uploaded, msas_uploaded
 
 def select_matching_template_files(uploaded_template_files,
     jobname):
@@ -329,23 +363,27 @@ def get_jobnames_sequences_from_file(params):
      " and one sequence on each line")
   uploaded_job_file = files.upload()
   if params.get('upload_manual_templates',None) or params.get(
-    'upload_maps', None):
+      'upload_maps', None) or params.get('upload_msa_file', None):
     input_directory = params.get('input_directory',None)
     if input_directory and input_directory != params.get('content_dir'):
-      uploaded_template_files, uploaded_maps = \
+      uploaded_template_files, uploaded_maps, uploaded_msa_files= \
         get_templates_from_drive(params)
     else:
       print("\nUpload your templates now, all at once. " +\
            "NOTE: template file names must start with your job names")
-      uploaded_template_files, uploaded_maps = upload_templates(params)
+      uploaded_template_files, uploaded_maps, uploaded_msa_files = \
+        upload_templates(params)
     print("Total of %s template files uploaded: %s" %(
           len(uploaded_template_files), uploaded_template_files))
     print("Total of %s map files uploaded: %s" %(
           len(uploaded_maps), uploaded_maps))
+    print("Total of %s MSA files uploaded: %s" %(
+          len(uploaded_msa_files), uploaded_msa_files))
 
   else:
     uploaded_template_files = []
     uploaded_maps = []
+    uploaded_msa_files = []
 
   s = StringIO()
   query_sequences = []
@@ -353,6 +391,7 @@ def get_jobnames_sequences_from_file(params):
   resolutions = []
   cif_filename_dict = {}
   map_filename_dict = {}
+  msa_filename_dict = {}
   for filename,contents in uploaded_job_file.items():
     print(contents.decode("UTF-8"), file = s)
     text = s.getvalue()
@@ -387,9 +426,15 @@ def get_jobnames_sequences_from_file(params):
                 select_matching_template_files(
                     uploaded_maps,
                      jobname)
+          if uploaded_msa_files:
+              msa_filename_dict[jobname] = \
+                select_matching_template_files(
+                    uploaded_msa_files,
+                     jobname)
 
   params['jobnames'] = jobnames
   params['resolutions'] = resolutions
+  params['msa_filename_dict'] = msa_filename_dict
   params['map_filename_dict'] = map_filename_dict
   params['cif_filename_dict'] = cif_filename_dict
   params['query_sequences'] = query_sequences
@@ -445,6 +490,7 @@ def set_up_input_files(params,
   resolutions = []
   cif_filename_dict = {}
   map_filename_dict = {}
+  msa_filename_dict = {}
   dirs_to_clear = []
 
   if params.get(
@@ -453,6 +499,7 @@ def set_up_input_files(params,
     params = get_jobnames_sequences_from_file(params)
     jobnames = params['jobnames']
     resolutions = params['resolutions']
+    msa_filename_dict = params['msa_filename_dict']
     map_filename_dict = params['map_filename_dict']
     cif_filename_dict = params['cif_filename_dict']
     query_sequences = params['query_sequences']
@@ -486,8 +533,8 @@ def set_up_input_files(params,
         if upload_manual_templates or upload_maps:
           input_directory = params.get('input_directory', None)
           if input_directory and input_directory != params.get('content_dir'):
-            cif_filename_dict[jobname], map_filename_dict[jobname] = \
-              get_templates_from_drive(params)
+            cif_filename_dict[jobname], map_filename_dict[jobname],\
+              msa_filename_dict[jobname] = get_templates_from_drive(params)
           else:
             params['upload_dir'] = params['cif_dir']
             print("\nPlease upload %s for %s" %(
@@ -496,8 +543,8 @@ def set_up_input_files(params,
               else "map",
               jobname))
             sys.stdout.flush()
-            cif_filename_dict[jobname], map_filename_dict[jobname] = \
-              upload_templates(params)
+            cif_filename_dict[jobname], map_filename_dict[jobname], \
+              msa_filename_dict[jobname] = upload_templates(params)
 
   # Save sequence
   for i in range(len(query_sequences)):
@@ -505,9 +552,9 @@ def set_up_input_files(params,
     save_sequence(jobnames[i], query_sequences[i])
 
   if params.get('upload_maps'):
-    print("\nCurrent jobs, resolutions, sequences, templates, and maps:")
+    print("\nCurrent jobs, resolutions, sequences, templates, maps and msas:")
   else:
-    print("\nCurrent jobs,  sequences and templates:")
+    print("\nCurrent jobs,  sequences templates and msas:")
 
   for qs,jn,res in zip(query_sequences, jobnames, resolutions):
     template_list = []
@@ -516,7 +563,10 @@ def set_up_input_files(params,
     map_list = []
     for t in map_filename_dict.get(jn,[]):
       map_list.append(os.path.split(str(t))[-1])
-    print(jn, res, qs, template_list, map_list)
+    msa_list = []
+    for t in msa_filename_dict.get(jn,[]):
+      msa_list.append(os.path.split(str(t))[-1])
+    print(jn, res, qs, template_list, map_list, msa_list)
 
     if len(qs) < 20:
       print("\n\nMinimum sequence length is 20 residues...\n\n",
@@ -530,6 +580,15 @@ def set_up_input_files(params,
         "input_directory is not set and run again\n\n")
       sys.stdout.flush()
       exit("Map file needed for job %s" %(jn))
+    if not msa_list and params.get('upload_msa_file',None) and \
+          params.get('use_msa',None):
+      print("\n\nNeed an msa for each sequence...\n\n",
+        "Please be sure input_directory contains your msa file or "+
+        "input_directory is not set or upload_msa_file is not set "+
+        "and run again\n\n")
+      sys.stdout.flush()
+      exit("MSA file needed for job %s" %(jn))
+
 
   if not query_sequences:
     print("Please supply a query sequence and run again")
@@ -538,6 +597,7 @@ def set_up_input_files(params,
   params['jobnames'] = jobnames
   params['resolutions'] = resolutions
   params['map_filename_dict'] = map_filename_dict
+  params['msa_filename_dict'] = msa_filename_dict
   params['cif_filename_dict'] = cif_filename_dict
   params['query_sequences'] = query_sequences
 

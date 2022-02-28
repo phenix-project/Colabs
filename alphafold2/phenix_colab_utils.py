@@ -15,20 +15,28 @@ def exit(text = None):
     print(text)
   raise StopExecution
 
-def get_helper_files():
+def get_helper_files(install_custom_updates = False):
   # Get the helper python files
-  for file_name in [
+  file_name_list = [
       'alphafold_with_density_map.py',
       'alphafold_utils.py',
       'run_alphafold_with_density_map.py',
       'phenix_alphafold_utils.py',
-      'colabfold.py']:
+      'colabfold.py']
+  if install_custom_updates:
+    file_name_list.append('updates.tgz')
+    file_name_list.append('install_updates.py')
+  for file_name in file_name_list:
     if os.path.isfile(file_name):
       os.remove(file_name)
     os.environ['file_name'] = file_name
     print("Getting %s" %(file_name))
     result = os.system(
       "wget -qnc https://raw.githubusercontent.com/phenix-project/Colabs/main/alphafold2/$file_name")
+
+  if install_custom_updates:
+    from install_updates import install_updates
+    install_updates()
 
 
 def run_command(command, log = sys.stdout):
