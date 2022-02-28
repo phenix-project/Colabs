@@ -630,7 +630,10 @@ def get_alphafold_with_density_map_params(params):
 
 
   for key in params.keys():
-    setattr(full_params,key,params[key])
+    try:
+      setattr(full_params,key,params[key])
+    except Exception as e:
+      print("Note: not setting parameter %s" %(key))
   return full_params
 
 def set_upload_dir(params):
