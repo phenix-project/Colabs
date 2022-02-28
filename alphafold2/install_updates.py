@@ -99,13 +99,13 @@ def install_updates(skip_download = None):
    } 
   for file_name in file_list:
     full_file = os.path.join("updates",file_name)
-    if not os.path.isfile(file_name):
-      print("Missing the file %s" %(file_name))
+    if not os.path.isfile(full_file):
+      print("Missing the file %s" %(full_file))
       continue
     
     for dd in [".", file_directory_dict.get(file_name,default_directory)]:
-      if check_and_copy(file_name, os.path.join(dd, file_name)):
-        print("Copied %s to %s" %(file_name, os.path.join(dd, file_name)))
+      if check_and_copy(full_file, os.path.join(dd, file_name)):
+        print("Copied %s to %s" %(full_file, os.path.join(dd, file_name)))
   print("Done with updates")
     
 
