@@ -33,7 +33,10 @@ def check_and_copy(a,b):
   if (not a) or (not os.path.isfile(a)):
     return # Nothing to do
   if not same_file(a, b):
-     shutil.copyfile(a,b)
+    try:
+      shutil.copyfile(a,b)
+    except Exception as e:
+      print("Unable to copy %s to %s" %(a,b))
 
 def install_updates():
   print("Installing updates")
