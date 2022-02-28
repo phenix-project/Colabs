@@ -15,10 +15,11 @@ def exit(text = None):
     print(text)
   raise StopExecution
 
-def get_helper_files(install_custom_updates = False):
+def get_helper_files(custom_update = None):
   # Get updates first and do not overwrite them if so
-  if install_custom_updates:
-    file_name_list = ['updates.tgz', 'install_updates.py']
+  if custom_update is not None:
+    file_name_list = ['install_updates.py']
+    file_name_list.append(custom_update)
     for file_name in file_name_list:
       get_file(file_name, overwrite = True)
     from install_updates import install_updates

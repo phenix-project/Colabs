@@ -14,7 +14,7 @@ import os, sys, shutil
   and you put code install_updates() below that says where those files go. You
   check these to files in to github here.
 
- 2. End user (or you) checks the box "install_custom_updates" in the
+ 2. End user (or you) sets the box "custom_updates" to "Latest" in the
 AlphaFoldWithDensityMap Colab notebook.
 
  3. On running cell 1 of that notebook, the install_updates.py and install.tgz
@@ -67,7 +67,7 @@ def check_and_copy(a,b):
     except Exception as e:
       return None
 
-def install_updates(skip_download = None):
+def install_updates(custom_update = None, skip_download = None):
 
   if not skip_download:
     print("Installing updates")
@@ -93,10 +93,14 @@ def install_updates(skip_download = None):
   # Copy files where they go
 
   default_directory = "/usr/local/lib/python3.7/site-packages/Colab/alphafold2"
+
+  # Just add files here and where they go...any that are not used are ignored
+
   file_directory_dict = {
     'alphafold_with_density_map.py':
        '/usr/local/lib/python3.7/site-packages/phenix/programs',
    } 
+
   for file_name in file_list:
     full_file = os.path.join("updates",file_name)
     if not os.path.isfile(full_file):
