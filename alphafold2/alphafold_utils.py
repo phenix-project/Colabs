@@ -436,7 +436,8 @@ def get_msa(params):
 
 
   if params.include_templates_from_pdb:
-    if params.template_search_method == 'mmseqs2':
+    if not hasattr(params, 'template_search_method') or \
+        params.template_search_method == 'mmseqs2':
       print("Getting templates from PDB using mmseqs2 server...")
       new_a3m_lines, template_paths = cf.run_mmseqs2(params.query_sequence,
         params.jobname, params.use_env, use_templates=True)
