@@ -47,6 +47,8 @@ AlphaFoldWithDensityMap Colab notebook.
    git push
 
   E.  Now a user or you can check the install_updates box and get these updates
+    without affecting anyone else and without checking the edited files in 
+    (except for install_updates.py and updates.tgz).
   
 """
 
@@ -98,7 +100,7 @@ def install_updates(skip_download = None):
   for file_name in file_list:
     full_file = os.path.join("updates",file_name)
     if not os.path.isfile(file_name):
-      print("Missing the file %s" %(key))
+      print("Missing the file %s" %(file_name))
       continue
     
     for dd in [".", file_directory_dict.get(file_name,default_directory)]:
