@@ -31,12 +31,13 @@ def same_file(f1,f2):
 
 def check_and_copy(a,b):
   if (not a) or (not os.path.isfile(a)):
-    return # Nothing to do
+    return None # Nothing to do
   if not same_file(a, b):
     try:
       shutil.copyfile(a,b)
+      return True
     except Exception as e:
-      print("Unable to copy %s to %s" %(a,b))
+      return None
 
 def install_updates():
   print("Installing updates")
@@ -68,8 +69,8 @@ def install_updates():
       continue
     
     for dd in [".", file_directory_dict.get(file_name,default_directory)]:
-      check_and_copy(file_name, os.path.join(dd, file_name))
-      print("Copied %s to %s" %(file_name, os.path.join(dd, file_name)))
+      if check_and_copy(file_name, os.path.join(dd, file_name)):
+        print("Copied %s to %s" %(file_name, os.path.join(dd, file_name)))
   print("Done with updates")
     
 
