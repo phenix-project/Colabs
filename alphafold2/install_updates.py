@@ -41,19 +41,30 @@ def install_updates():
     print("No updates.tgz file ... skipping")
     return
 
-  os.system("tar xzvf updates.tgz")
+  if not os.path.isdir("updates"):
+    os.mkdir("updates")
+  here = os.getcwd()
+  os.chdir("updates")
+  os.system("tar xzvf ../updates.tgz")
+  file_list = os.listdir(".")
+  os.chdir(here)
 
   # Copy files where they go
 
-  file_dict = {
-    'alphafold_with_density_map.py':'.',
+  default_directory = "/usr/local/lib/python3.7/site-packages/Colab/alphafold2"
+  file_directory_dict = {
+    'alphafold_with_density_map.py':
+       '/usr/local/lib/python3.7/site-packages/phenix/programs',
    } 
-  for key in list(file_dict.keys()):
-    if not os.path.isfile(key):
+  for file_name in file_list:
+    full_file = os.path.join("updates",file_name)
+    if not os.path.isfile(file_name):
       print("Missing the file %s" %(key))
-    else:
-      check_and_copy(key,os.path.join(file_dict[key],key))
-      print("Copied %s to %s" %(key,os.path.join(file_dict[key],key)))
+      continue
+    
+    for dd in [".", file_directory_dict.get(file_name,default_directory)]:
+      check_and_copy(file_name, os.path.join(dd, file_name))
+      print("Copied %s to %s" %(file_name, os.path.join(dd, file_name)))
   print("Done with updates")
     
 
