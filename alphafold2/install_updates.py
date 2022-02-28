@@ -33,8 +33,16 @@ def install_updates():
   os.system("tar xzvf updates.tgz")
 
   # Copy files where they go
-  
-  shutil.copyfile('alphafold_with_density.py','alphafold_with_density.py')
+
+  file_dict = {
+    'alphafold_with_density_map.py':'.',
+   } 
+  for key in list(file_dict.keys()):
+    if not os.path.isfile(key):
+      print("Missing the file %s" %(key))
+    else:
+      shutil.copyfile(key,os.path.join(file_dict[key],key))
+      print("Copied %s to %s" %(key,os.path.join(file_dict[key],key)))
   print("Done with updates")
     
 
