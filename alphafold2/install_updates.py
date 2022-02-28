@@ -25,11 +25,12 @@ import os, sys, shutil
 
   A. you edit the files: alphafold_utils.py phenix_colab_utils.py install_updates.py 
    phenix_alphafold_utils.py run_alphafold_with_density_map.py
-   alphafold_with_density_map.py
+   alphafold_with_density_map.py __init__.py structure_search.py
 
-  B. each of these except for  alphafold_with_density_map.py goes in
-     modules/Colabs/alphafold2/, and that one goes 
-     in modules/phenix/phenix/programs
+  B. each of these except for  three go in
+     modules/Colabs/alphafold2/, and alphafold_with_density_map.py goes in
+     modules/phenix/phenix/programs, __init__.py in modules/phenix/phenix/model_building,
+     and structure_search in modules/phenix/phenix/command_line
 
   C.  You edit install_updates() below to specify where to put the file
     alphafold_with_density_map.py
@@ -37,18 +38,19 @@ import os, sys, shutil
   D.  Then you run these commands in Colabs/alphafold2:
 
    mkdir updates
-   cp -p alphafold_utils.py phenix_colab_utils.py install_updates.py phenix_alphafold_utils.py run_alphafold_with_density_map.py ../../phenix/phenix/programs/alphafold_with_density_map.py updates/
+   cp -p alphafold_utils.py phenix_colab_utils.py install_updates.py phenix_alphafold_utils.py run_alphafold_with_density_map.py ../../phenix/phenix/programs/alphafold_with_density_map.py modules/phenix/phenix/model_building/__init__.py modules/phenix/phenix/command_line/structure_search.py updates/
    cd updates
    tar czvf - * > ../updates.tgz
    cd ..
    rm -rf updates
-   git add install_updates.py updates.tgz
+   mv updates.tgz Latest.tgz
+   git add install_updates.py Latest.tgz
    git commit -m "update install updates"
    git push
 
-  E.  Now a user or you can check the install_updates box and get these updates
+  E.  Now a user or you can select update = Latest and get these updates
     without affecting anyone else and without checking the edited files in 
-    (except for install_updates.py and updates.tgz).
+    (except for install_updates.py and Latest.tgz).
   
 """
 
@@ -100,6 +102,8 @@ def install_updates(custom_update = None, skip_download = None):
   file_directory_dict = {
     'alphafold_with_density_map.py':
        '/usr/local/lib/python3.7/site-packages/phenix/programs',
+    '__init__.py': '/usr/local/lib/python3.7/site-packages/phenix/model_building',
+    'structure_search.py': '/usr/local/lib/python3.7/site-packages/phenix/command_line/',
    } 
 
   for file_name in file_list:
