@@ -37,7 +37,7 @@ AlphaFoldWithDensityMap Colab notebook.
   D.  Then you run these commands in Colabs/alphafold2:
 
    mkdir updates
-   cp -p alphafold_utils.py install_updates.py phenix_alphafold_utils.py run_alphafold_with_density_map.py ../../phenix/phenix/programs/alphafold_with_density_map.py .
+   cp -p alphafold_utils.py install_updates.py phenix_alphafold_utils.py run_alphafold_with_density_map.py ../../phenix/phenix/programs/alphafold_with_density_map.py updates/
    cd updates
    tar czvf - * > ../updates.tgz
    cd ..
