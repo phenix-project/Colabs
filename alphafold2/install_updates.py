@@ -81,7 +81,7 @@ def install_updates(custom_update = None, skip_download = None):
     here = os.getcwd()
     os.chdir("updates")
     print("Unpacking in %s" %(os.getcwd()))
-    os.system("tar xzvf %s" %(file_name))
+    os.system("tar xzvf ../%s" %(file_name))
     file_list = os.listdir(".")
     print("Files unpacked: %s" %(" ".join(file_list)))
     os.chdir(here)
