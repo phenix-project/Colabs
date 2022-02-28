@@ -10,14 +10,14 @@ import os, sys, shutil
   passing updates to users without affecting other users
 
  Use:
- 1. You package up any python files you want to update into the file updates.tgz
-  and you put code install_updates() below that says where those files go. You
-  check these to files in to github here.
+ 1. You package up any python files you want to update into the file Latest.tgz
+  or Standard.tgz and you put code install_updates() below that says where 
+  those files go. You check these files in to github here.
 
- 2. End user (or you) sets the box "custom_updates" to "Latest" in the
-AlphaFoldWithDensityMap Colab notebook.
+ 2. End user (or you) sets the box "custom_updates" to "Latest"  or "Standard" in the
+  AlphaFoldWithDensityMap Colab notebook.
 
- 3. On running cell 1 of that notebook, the install_updates.py and install.tgz
+ 3. On running cell 1 of that notebook, the install_updates.py and Latest.tgz/Standard.tgz
  files from this github are downloaded and the install_updates() method
  of install_updates.py is run.
 
@@ -69,10 +69,11 @@ def check_and_copy(a,b):
 
 def install_updates(custom_update = None, skip_download = None):
 
-  if not skip_download:
+  if custom_update and not skip_download:
     print("Installing updates")
-    if not os.path.isfile("updates.tgz"):
-      print("No updates.tgz file ... skipping")
+    file_name = "%s.tgz" %(custom_update)
+    if not os.path.isfile(file_name):
+      print("No %s file ... skipping" %(file_name))
       return
 
     if not os.path.isdir("updates"):
@@ -80,7 +81,7 @@ def install_updates(custom_update = None, skip_download = None):
     here = os.getcwd()
     os.chdir("updates")
     print("Unpacking in %s" %(os.getcwd()))
-    os.system("tar xzvf ../updates.tgz")
+    os.system("tar xzvf %s" %(file_name))
     file_list = os.listdir(".")
     print("Files unpacked: %s" %(" ".join(file_list)))
     os.chdir(here)
