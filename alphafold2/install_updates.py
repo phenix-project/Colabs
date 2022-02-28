@@ -21,6 +21,32 @@ AlphaFoldWithDensityMap Colab notebook.
  files from this github are downloaded and the install_updates() method
  of install_updates.py is run.
 
+ For example:
+
+  A. you edit the files: alphafold_utils.py install_updates.py 
+   phenix_alphafold_utils.py run_alphafold_with_density_map.py
+   alphafold_with_density_map.py
+
+  B. each of these except for  alphafold_with_density_map.py goes in
+     modules/Colabs/alphafold2/, and that one goes 
+     in modules/phenix/phenix/programs
+
+  C.  You edit install_updates() below to specify where to put the file
+    alphafold_with_density_map.py
+
+  D.  Then you run these commands in Colabs/alphafold2:
+
+   mkdir updates
+   cp -p alphafold_utils.py install_updates.py phenix_alphafold_utils.py run_alphafold_with_density_map.py ../../phenix/phenix/programs/alphafold_with_density_map.py .
+   cd updates
+   tar czvf - * > ../updates.tgz
+   cd ..
+   rm -rf updates
+   git add install_updates.py updates.tgz
+   git commit -m "update install updates"
+   git push
+
+  E.  Now a user or you can check the install_updates box and get these updates
   
 """
 
