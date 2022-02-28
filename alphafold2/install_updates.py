@@ -39,21 +39,28 @@ def check_and_copy(a,b):
     except Exception as e:
       return None
 
-def install_updates():
-  print("Installing updates")
-  if not os.path.isfile("updates.tgz"):
-    print("No updates.tgz file ... skipping")
-    return
+def install_updates(skip_download = None):
 
-  if not os.path.isdir("updates"):
-    os.mkdir("updates")
-  here = os.getcwd()
-  os.chdir("updates")
-  print("Unpacking in %s" %(os.getcwd()))
-  os.system("tar xzvf ../updates.tgz")
-  file_list = os.listdir(".")
-  print("Files unpacked: %s" %(" ".join(file_list)))
-  os.chdir(here)
+  if not skip_download:
+    print("Installing updates")
+    if not os.path.isfile("updates.tgz"):
+      print("No updates.tgz file ... skipping")
+      return
+
+    if not os.path.isdir("updates"):
+      os.mkdir("updates")
+    here = os.getcwd()
+    os.chdir("updates")
+    print("Unpacking in %s" %(os.getcwd()))
+    os.system("tar xzvf ../updates.tgz")
+    file_list = os.listdir(".")
+    print("Files unpacked: %s" %(" ".join(file_list)))
+    os.chdir(here)
+  else:
+    if not os.path.isdir("updates"):
+      print("No updates...skipping")
+      return
+    file_list = os.listdir("updates")
 
   # Copy files where they go
 
