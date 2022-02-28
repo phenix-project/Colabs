@@ -38,7 +38,7 @@ import os, sys, shutil
   D.  Then you run these commands in Colabs/alphafold2:
 
    mkdir updates
-   cp -p alphafold_utils.py phenix_colab_utils.py install_updates.py phenix_alphafold_utils.py run_alphafold_with_density_map.py ../../phenix/phenix/programs/alphafold_with_density_map.py modules/phenix/phenix/model_building/__init__.py modules/phenix/phenix/command_line/structure_search.py updates/
+   cp -p alphafold_utils.py phenix_colab_utils.py install_updates.py phenix_alphafold_utils.py run_alphafold_with_density_map.py ../../phenix/phenix/programs/alphafold_with_density_map.py ../../phenix/phenix/model_building/__init__.py ../../phenix/phenix/command_line/structure_search.py updates/
    cd updates
    tar czvf - * > ../updates.tgz
    cd ..
