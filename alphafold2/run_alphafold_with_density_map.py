@@ -65,13 +65,6 @@ def run_jobs(params):
           working_params.maps_uploaded))
       assert len(working_params.maps_uploaded) == 1
 
-    working_params.msas_uploaded = working_params.msa_filename_dict.get(
-      working_params.jobname,[])
-    if working_params.msas_uploaded:
-      print("Using uploaded MSA %s for this run" %(
-          working_params.msas_uploaded))
-      assert len(working_params.msas_uploaded) == 1
-
     if working_params.debug:
       result = run_job(params = working_params)
     else: # usual
@@ -79,10 +72,9 @@ def run_jobs(params):
         result = run_job(params = working_params)
         if result and result.filename:
           filename = result.filename
-          print(
-           "FINISHED JOB (%s) %s with sequence %s and map-model CC of %.2f\n" %(
-           filename, working_params.jobname, working_params.query_sequence,
-           result.cc if result.cc is not None else 0.0),
+          print("FINISHED JOB (%s) %s with sequence %s and map-model CC of %.2f\n" %(
+          filename, working_params.jobname, working_params.query_sequence,
+          result.cc if result.cc is not None else 0.0),
           "****************************************","\n")
         else:
           print("NO RESULT FOR JOB %s with sequence %s\n" %(
@@ -496,11 +488,7 @@ def run_job(params = None,
   params.use_templates = True
 
 
-
   #Get the MSA
-  if params.upload_msa_file and (not params.use_msa):
-    exit("You cannot specify both upload_msa_file and use_msa=False")
-
   params.msa, params.deletion_matrix, params.template_paths, \
     params.msa_is_msa_object = get_msa(params)
 
@@ -509,11 +497,8 @@ def run_job(params = None,
 
   jobname = params.jobname
 
-  if params.template_paths:
-    other_cif_dir = Path(os.path.join(params.working_directory,
+  other_cif_dir = Path(os.path.join(params.working_directory,
      params.template_paths))
-  else:
-    other_cif_dir = None
   from phenix_alphafold_utils import get_parent_dir
   parent_dir = get_parent_dir(params.content_dir)
   from phenix_alphafold_utils import get_cif_dir
@@ -624,17 +609,7 @@ def run_job(params = None,
     else:
       expected_cycle_model_file_name_in_output_dir = None
 
-    # Copy in starting alphafold model, if any, on first cycle
-    if params.cycle == 1 and params.starting_alphafold_model and \
-        os.path.isfile( params.starting_alphafold_model):
-      print("Using %s as starting Alphafold model" %(
-        params.starting_alphafold_model))
-      check_and_copy(params.starting_alphafold_model,
-        expected_cycle_model_file_name)
-      result = group_args(group_args_type = 'af model read in directly',
-        cycle_model_file_name = expected_cycle_model_file_name)
-
-    elif params.carry_on and params.output_directory and os.path.isfile(
+    if params.carry_on and params.output_directory and os.path.isfile(
          expected_cycle_model_file_name_in_output_dir):
       print("Reading in AlphaFold model from %s" %(
         expected_cycle_model_file_name_in_output_dir))
