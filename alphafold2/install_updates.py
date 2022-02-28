@@ -24,6 +24,17 @@ AlphaFoldWithDensityMap Colab notebook.
   
 """
 
+def same_file(f1,f2):
+  if not f1 or not f2 or not os.path.isfile(f1) or not os.path.isfile(f2):
+    return False
+  return os.path.samefile(os.path.abspath(f1),os.path.abspath(f2))
+
+def check_and_copy(a,b):
+  if (not a) or (not os.path.isfile(a)):
+    return # Nothing to do
+  if not same_file(a, b):
+     shutil.copyfile(a,b)
+
 def install_updates():
   print("Installing updates")
   if not os.path.isfile("updates.tgz"):
@@ -41,7 +52,7 @@ def install_updates():
     if not os.path.isfile(key):
       print("Missing the file %s" %(key))
     else:
-      shutil.copyfile(key,os.path.join(file_dict[key],key))
+      check_and_copy(key,os.path.join(file_dict[key],key))
       print("Copied %s to %s" %(key,os.path.join(file_dict[key],key)))
   print("Done with updates")
     
