@@ -23,7 +23,7 @@ def get_helper_files(custom_update = None):
     for file_name in file_name_list:
       get_file(file_name, overwrite = True)
     from install_updates import install_updates
-    install_updates()
+    install_updates(custom_update = custom_update)
 
   # Get the helper python files, but do not overwrite any already there
   file_name_list = [
