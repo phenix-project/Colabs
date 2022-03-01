@@ -486,8 +486,12 @@ def get_templates_with_structure_search(params):
     sequence_list = [params.query_sequence],) # ZZ need to set nproc
   if model_info and model_info.model_list:
     # convert to cif and write them into our directory
+    template_paths = params.template_paths if params.template_paths else \
+       "TEMPLATES_FROM_PDB"
     other_cif_dir = Path(os.path.join(params.working_directory,
-        params.template_paths))
+        template_paths))
+    if not os.path.isdir(other_cif_dir):
+      other_cif_dir.mkdir(parents=True)
     i = 0
     from phenix_colab_utils import run_pdb_to_cif
     for m in model_info.model_list:
@@ -499,7 +503,7 @@ def get_templates_with_structure_search(params):
       print(m.model_as_pdb(), file = f)
       f.close()
       cif_filename = run_pdb_to_cif(file_name,
-           content_dir = params.get("content_dir"))
+           content_dir = params.content_dir)
       os.remove(file_name)
     return other_cif_dir  
        
