@@ -12,7 +12,8 @@ import os, sys, shutil
  Use:
  1. You package up any python files you want to update into the file Latest.tgz
   or Standard.tgz and you put code install_updates() below that says where 
-  those files go. You check these files in to github here.
+  those files go. You check these files in to github here. ALWAYS include
+   install_updates.py.
 
  2. End user (or you) sets the box "custom_updates" to "Latest"  or "Standard" in the
   AlphaFoldWithDensityMap Colab notebook.
@@ -36,6 +37,7 @@ import os, sys, shutil
     alphafold_with_density_map.py
 
   D.  Then you run these commands in Colabs/alphafold2:
+   # NOTE: Always include install_updates.py
 
    mkdir updates
    cp -p alphafold_utils.py phenix_colab_utils.py install_updates.py phenix_alphafold_utils.py run_alphafold_with_density_map.py ../../phenix/phenix/programs/alphafold_with_density_map.py ../../phenix/phenix/model_building/__init__.py ../../phenix/phenix/command_line/structure_search.py updates/
@@ -103,6 +105,7 @@ def install_updates(custom_update = None, skip_download = None):
     'alphafold_with_density_map.py':
        '/usr/local/lib/python3.7/site-packages/phenix/programs',
     '__init__.py': '/usr/local/lib/python3.7/site-packages/phenix/model_building',
+    'morph_info.py': '/usr/local/lib/python3.7/site-packages/phenix/model_building',
     'structure_search.py': '/usr/local/lib/python3.7/site-packages/phenix/command_line/',
    } 
 
