@@ -478,7 +478,32 @@ def get_msa(params):
 
 def get_templates_with_structure_search(params):
   # Run structure_search
-  pass
+  from cctbx.development.create_models_or_maps import generate_model
+  m = generate_model()
+  build = m.as_map_model_manager().model_building()
+  model_info = build.structure_search(
+    number_of_models_per_input_model = params.maximum_templates_from_pdb,
+    sequence_list = [params.query_sequence],) # ZZ need to set nproc
+  if model_info and model_info.model_list:
+    # convert to cif and write them into our directory
+    other_cif_dir = Path(os.path.join(params.working_directory,
+        params.template_paths))
+    i = 0
+    from phenix_colab_utils import run_pdb_to_cif
+    for m in model_info.model_list:
+      i += 1
+      pdb_id = m.info().pdb_id if m.info() and m.info().get('pdb_id') \
+          else 'model_%s' %(i)
+      file_name = os.path.join(other_cif_dir,"%s.pdb" %(pdb_id))
+      f = open(file_name, 'w')
+      print(m.model_as_pdb(), file = f)
+      f.close()
+      cif_filename = run_pdb_to_cif(file_name,
+           content_dir = params.get("content_dir"))
+      os.remove(file_name)
+    return other_cif_dir  
+       
+ 
 def get_cif_file_list(
     include_templates_from_pdb = None,
     manual_templates_uploaded = None,
