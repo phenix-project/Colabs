@@ -441,7 +441,7 @@ def get_msa(params):
       print("Getting templates from PDB using mmseqs2 server...")
       new_a3m_lines, template_paths = cf.run_mmseqs2(params.query_sequence,
         params.jobname, params.use_env, use_templates=True)
-      if not a3m_lines: 
+      if not a3m_lines:
         a3m_lines = new_a3m_lines
         print("Using MSA from mmseqs2")
     else:
@@ -505,9 +505,9 @@ def get_templates_with_structure_search(params):
       cif_filename = run_pdb_to_cif(file_name,
            content_dir = params.content_dir)
       os.remove(file_name)
-    return other_cif_dir  
-       
- 
+    return other_cif_dir
+
+
 def get_cif_file_list(
     include_templates_from_pdb = None,
     manual_templates_uploaded = None,
