@@ -40,7 +40,7 @@ import os, sys, shutil
    # NOTE: Always include install_updates.py
 
    mkdir updates
-   cp -p alphafold_utils.py phenix_colab_utils.py install_updates.py phenix_alphafold_utils.py run_alphafold_with_density_map.py ../../phenix/phenix/programs/alphafold_with_density_map.py ../../phenix/phenix/model_building/__init__.py ../../phenix/phenix/command_line/structure_search.py updates/
+   cp -p install_updates.py alphafold_utils.py phenix_colab_utils.py phenix_alphafold_utils.py run_alphafold_with_density_map.py ../../phenix/phenix/programs/alphafold_with_density_map.py ../../phenix/phenix/model_building/__init__.py ../../phenix/phenix/command_line/structure_search.py updates/
    cd updates
    tar czvf - * > ../updates.tgz
    cd ..
