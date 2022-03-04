@@ -123,7 +123,7 @@ def get_input_output_dirs(params):
           raise Exception("Sorry, cannot find the directory "+
           "%s and cannot mount Google drive directory %s" %(input_directory,
             gdrive_dir))
-        else: 
+        else:
           raise Exception("Sorry, cannot find the Google drive directory %s" %(
             gdrive_dir))
       drive.mount(gdrive_path)
@@ -208,7 +208,6 @@ def upload_templates(params):
     uploaded = files.upload()
     for filename,contents in uploaded.items():
       sys.stdout.flush()
-
       if params.get('upload_maps',None) and \
            (str(filename).lower().endswith(".ccp4") or
            str(filename).lower().endswith(".map") or
@@ -228,7 +227,7 @@ def upload_templates(params):
 
       elif params.get('upload_manual_templates',None) and \
            str(filename).endswith(".cif"):
-        filepath = Path(upload_dir,filename)
+        filepath = Path(upload_dir,make_four_char_name(filename))
         with filepath.open("w") as fh:
           fh.write(contents.decode("UTF-8"))
           manual_templates_uploaded.append(filepath)
@@ -238,14 +237,14 @@ def upload_templates(params):
         cif_dir = params.get("cif_dir")
         if not cif_dir or not os.path.isdir(cif_dir):
           exit("Could not set up cif_dir in %s" %(cif_dir))
-        pdb_filepath = Path(cif_dir,filename)
+        pdb_filepath = Path(cif_dir,make_four_char_name(filename))
         with pdb_filepath.open("w") as fh:
           fh.write(contents.decode("UTF-8"))
         cif_filepath = run_pdb_to_cif(pdb_filepath,
            content_dir = params.get("content_dir"))
         manual_templates_uploaded.append(cif_filepath)
 
-  
+
   if params.get('upload_msa_file'):
     print("MSA files uploaded: %s" %(msas_uploaded))
 
@@ -258,6 +257,20 @@ def upload_templates(params):
     print(
       "\n*** WARNING: no templates uploaded...Please use only .cif files ***\n")
   return manual_templates_uploaded, maps_uploaded, msas_uploaded
+
+def make_four_char_name(filename):
+  filename = str(filename)
+  assert filename.endswith(".cif") or filename.endswith(".pdb")
+  if len(filename) < 8:  # need to add characters
+    filename = (8-len(filename)) * "x" + filename
+
+  if filename.find("_") > -1 and filename.find("_") < 4:
+    filename = "x" * (3 - filename.find("_")) + filename
+  if filename.find("_") == 4: # ok
+    return filename
+  if len(filename) > 8:
+    filename = filename[:4] + "_" + filename[4:]
+  return filename
 
 def get_templates_from_drive(params):
   manual_templates_uploaded = []
