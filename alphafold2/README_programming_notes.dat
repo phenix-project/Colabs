@@ -1,0 +1,196 @@
+       PROGRAMMING NOTES ON ALPHAFOLD PREDICTION USING
+     AlphaFold2.ipynb AND AlphaFoldWithDensityMap.ipynb.
+
+                     TT.  2022-03-04
+
+Acknowledgements:
+
+These notebooks and the associated Python files are based on the very nice
+ColabFold Google Colab notebooks (Mirdita, M.,  Ovchinnikov, S., Steinegger, M.(2021). ColabFold - Making protein folding accessible to all *bioRxiv*, 2021.08.15.456425).  Any errors in our code and in the use of their code 
+are our responsibility.
+
+NOTE:  The line numbers may change as these files are updated. These notes
+are in progress.
+
+I. Notes on uploading and processing of manual templates and on prediction
+
+A. Upload of manual templates
+
+The upload of files is controlled by "upload_manual_templates" in AlphaFold2.ipynb.  Step 3 sets up files: 
+from phenix_alphafold_utils import set_up_input_files
+params = set_up_input_files(params, convert_to_params = False)
+
+Then in phenix_alphafold_utils.py set_up_input_files does the work:
+
+phenix_alphafold_utils.py line 546:
+
+cif_filename_dict[jobname], map_filename_dict[jobname], \
+  msa_filename_dict[jobname] = upload_templates(params)
+
+Then in phenix_alphafold_utils.py line 209, the Colab utility "files.upload()" 
+  puts up a button, the user selects files on their machine, and the
+  uploaded object contains "items", one for each uploaded file:
+    uploaded = files.upload()
+
+Then the uploaded files are written in the local (cloud) working directory
+  defined by the variable upload_dir. In phenix_alphafold_utils.py line 210:
+
+    for filename,contents in uploaded.items():
+     ... (other cases)...
+      elif params.get('upload_manual_templates',None) and \
+           str(filename).endswith(".cif"):
+        filepath = Path(upload_dir,filename)
+        with filepath.open("w") as fh:
+          fh.write(contents.decode("UTF-8"))
+          manual_templates_uploaded.append(filepath)
+
+The full path to the uploaded templates is then returned back to
+phenix_alphafold_utils.py line 546:
+
+cif_filename_dict[jobname], map_filename_dict[jobname], \
+  msa_filename_dict[jobname] = upload_templates(params)
+
+So now cif_filename_dict[jobname] is a list of uploaded .cif templates.
+
+If the user supplies PDB files, they are converted to .cif and the cif names
+are returned.
+
+
+B.  Use of templates in prediction.
+
+The manual templates are added to any list of templates from the PDB and 
+all are then used in the same way as inputs to AlphaFold.
+
+The manual templates to be used are listed in 
+run_alphafold_with_density_map.py line 56:
+
+    # User input of manual templates
+    working_params.manual_templates_uploaded = \
+        working_params.cif_filename_dict.get(working_params.jobname,[])
+    if working_params.manual_templates_uploaded:
+      print("Using uploaded templates %s for this run" %(
+          working_params.manual_templates_uploaded))
+
+The final templates from PDB and manual templare are listed in
+  run_alphafold_with_density_map.py on line 600:
+
+    working_cif_file_list = list(manual_cif_file_list)
+    if params.cycle == 1:
+      working_cif_file_list +=  \
+       list(pdb_cif_file_list)[:params.maximum_templates_from_pdb]
+
+    print("Templates used in this cycle: %s" %(
+        " ".join([w.as_posix() for w in working_cif_file_list])))
+
+The coordinates and sequences of the templates are processed to give 
+inputs in the form that AlphaFold needs ("hits") in 
+run_alphafold_with_density_map.py at line 608:
+
+    params.template_hit_list = get_template_hit_list(
+      cif_files = working_cif_file_list,
+      fasta_dir = fasta_dir,
+      query_seq = query_seq,
+      hhDB_dir = hhDB_dir,
+      content_dir = params.content_dir)
+
+where the method get_template_hit_list is in alphafold_utils.py line 544.
+
+Then AlphaFold prediction occurs in run_alphafold_with_density_map.py 
+at line 664:
+
+            result = run_one_af_cycle(params)
+
+where the method run_one_af_cycle is at line 101 in 
+run_alphafold_with_density_map.py.
+
+In run_one_af_cycle at run_alphafold_with_density_map.py lines 134-160 the 
+template information is converted to the features used by AlphaFold:
+
+    for i,[hit,mmcif] in enumerate(sorted(params.template_hit_list,
+          key=lambda xx: xx[0].sum_probs, reverse=True)):
+
+      pdb_text = hit.name.split()[0].split("_")[0]
+      if pdb_text in pdb_text_list:
+        continue # skip dups from same PDB entry
+      pdb_text_list.append(pdb_text)
+      unique_template_hits.append(hit)
+
+      # modifications to alphafold/data/templates.py _process_single_hit
+      hit_pdb_code, hit_chain_id = _get_pdb_id_and_chain(hit)
+      mapping = _build_query_to_hit_index_mapping(
+      hit.query, hit.hit_sequence, hit.indices_hit, hit.indices_query,
+      params.query_sequence)
+      template_sequence = hit.hit_sequence.replace('-', '')
+
+      try:
+        features, realign_warning = _extract_template_features(
+          mmcif_object=mmcif,
+          pdb_id=hit_pdb_code,
+          mapping=mapping,
+          template_sequence=template_sequence,
+          query_sequence=params.query_sequence,
+          template_chain_id=hit_chain_id,
+          kalign_binary_path="kalign")
+      except Exception as e:
+        continue
+      features['template_sum_probs'] = [hit.sum_probs]
+      single_hit_result = SingleHitResult(
+        features=features, error=None, warning=None)
+      for k in template_features:
+        template_features[k].append(features[k])
+
+    for name in template_features:
+      template_features[name] = np.stack(
+          template_features[name], axis=0).astype(TEMPLATE_FEATURES[name])
+
+These template features are then converted to a feature dictionary for
+prediction at run_alphafold_with_density_map.py line 228:
+
+    feature_dict = {
+      **pipeline.make_sequence_features(
+                  sequence=params.query_sequence*params.homooligomer,
+                   description="none",
+                   num_res=len(params.query_sequence)*params.homooligomer),
+      **pipeline.make_msa_features(msas),
+      **template_features
+     }
+
+At line 255 the main call to predict the structure is carried out using
+this feature_dict:
+
+  outs = predict_structure(params.jobname, feature_dict,
+    .... )
+
+Where the predict_structure method is in alphfold_utils.py at line 85:
+
+def predict_structure(prefix, feature_dict, Ls, model_params,
+  use_model,
+  model_runner_1,
+  model_runner_3,
+  do_relax=False,
+  random_seed=0,
+  msa_is_msa_object = None,
+  random_seed_iterations = 5,
+  big_improvement = 5,
+  confidence_dict = None,):
+
+The feature dict is processed again, this time with a random component, 
+in alphafold_utils.py at line 133:
+
+        processed_feature_dict = model_runner.process_features(feature_dict,
+           random_seed=random_seed)
+
+The actual prediction is done in alphafold_utils.py at line 138:
+
+            prediction_result = model_runner.predict(processed_feature_dict,
+              random_seed = random_seed)
+
+
+The PDB-formatted model (unrelaxed_pdb_lines, plain text) from a 
+prediction result is created in alphafold_utils.py line 146:
+
+        unrelaxed_protein = protein.from_prediction(
+           processed_feature_dict,prediction_result)
+        unrelaxed_pdb_lines.append(protein.to_pdb(unrelaxed_protein))
+
+
