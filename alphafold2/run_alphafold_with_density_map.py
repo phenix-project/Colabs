@@ -267,7 +267,9 @@ def run_one_af_cycle(params):
     return None
 
   os.chdir(params.working_directory)
-  model_file_name = "%s_unrelaxed_model_1.pdb" %(params.jobname)
+  from phenix_colab_utils import make_four_char_name
+  model_file_name = "%s_unrelaxed_model_1.pdb" %(make_four_char_name(
+    params.jobname))
   if os.path.isfile(model_file_name):
     print("Model file is in %s" %(model_file_name))
     cycle_model_file_name = "%s_unrelaxed_model_1_%s.pdb" %(

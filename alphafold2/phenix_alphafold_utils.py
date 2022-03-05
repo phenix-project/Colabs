@@ -10,7 +10,7 @@ import hashlib
 from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 import shutil
-from phenix_colab_utils import exit, run_pdb_to_cif
+from phenix_colab_utils import exit, run_pdb_to_cif, make_four_char_name
 
 # Local methods
 
@@ -258,20 +258,6 @@ def upload_templates(params):
       "\n*** WARNING: no templates uploaded...Please use only .cif files ***\n")
   return manual_templates_uploaded, maps_uploaded, msas_uploaded
 
-def make_four_char_name(filename):
-  filename = str(filename)
-  assert filename.endswith(".cif") or filename.endswith(".pdb")
-  if len(filename) < 8:  # need to add characters
-    filename = (8-len(filename)) * "x" + filename
-
-  if filename.find("_") > -1 and filename.find("_") < 4:
-    filename = "x" * (3 - filename.find("_")) + filename
-  if filename.find("_") == 4: # ok
-    return filename
-  if len(filename) > 8:
-    filename = filename[:4] + "_" + filename[4:]
-  return filename
-
 def get_templates_from_drive(params):
   manual_templates_uploaded = []
   maps_uploaded = []
@@ -319,7 +305,7 @@ def get_templates_from_drive(params):
       elif params.get('upload_manual_templates',None) and \
            str(filename).endswith(".cif"):
 
-        filepath = Path(cif_dir,filename)
+        filepath = Path(cif_dir,make_four_char_name(filename))
 
         with filepath.open("w") as fh:
           fh.write(contents.decode("UTF-8"))
@@ -328,7 +314,7 @@ def get_templates_from_drive(params):
       elif params.get('upload_manual_templates',None) and \
            str(filename).endswith(".pdb"):
 
-        pdb_filepath = Path(cif_dir,filename)
+        pdb_filepath = Path(cif_dir,make_four_char_name(filename))
         with pdb_filepath.open("w") as fh:
           fh.write(contents.decode("UTF-8"))
         cif_filepath = run_pdb_to_cif(pdb_filepath,

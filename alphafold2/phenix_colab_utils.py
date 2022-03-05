@@ -384,3 +384,19 @@ def set_up_demo(demo_to_run):
   if not jobname:
     raise AssertionError("Unable to set up demo for %s" %(demo_to_run))
   return jobname, sequence, resolution
+
+def make_four_char_name(filename):
+  filename = str(filename)
+  if filename.endswith(".cif") or filename.endswith(".pdb"):
+    if len(filename) < 8:  # need to add characters
+      filename = (8-len(filename)) * "x" + filename
+
+    if filename.find("_") > -1 and filename.find("_") < 4:
+      filename = "x" * (3 - filename.find("_")) + filename
+    if filename.find("_") == 4: # ok
+      return filename
+    if len(filename) > 8:
+      filename = filename[:4] + "_" + filename[4:]
+    return filename
+  else:  # a jobname.  
+    return make_four_char_name(filename+".cif")[:-4]
