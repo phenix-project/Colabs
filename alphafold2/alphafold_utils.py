@@ -484,7 +484,6 @@ def get_templates_with_structure_search(params):
   model_info = build.structure_search(
     number_of_models_per_input_model = params.maximum_templates_from_pdb,
     sequence_list = [params.query_sequence],
-    use_pdb100aa = True,
     nproc = params.nproc if hasattr(params, 'nproc') else 4,
     )
   if model_info and model_info.model_list:
