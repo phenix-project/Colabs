@@ -378,8 +378,7 @@ def get_rebuilt_file_names(params):
     rebuilt_model_stem = rebuilt_model_stem)
 
 
-def rebuild_model(params,
-        nproc = 4):
+def rebuild_model(params,):
 
   assert len(params.maps_uploaded) == 1  # just one map
   map_file_name = params.maps_uploaded[0]
@@ -412,7 +411,9 @@ def rebuild_model(params,
   # run phenix dock_and_rebuild here
   from phenix_colab_utils import run_command # run and get output to terminal
   text = "phenix.dock_and_rebuild fragments_model_file=%s nproc=%s resolution=%s previous_model_file=%s model=%s full_map=%s output_model_prefix=%s " %(
-     params.mtm_file_name,nproc,params.resolution,previous_model_file,
+     params.mtm_file_name,
+     params.nproc if hasattr(params, 'nproc') else 4,
+     params.resolution,previous_model_file,
      af_model_file,map_file_name,
       rebuilt_model_stem,
       )
