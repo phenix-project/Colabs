@@ -499,7 +499,8 @@ def get_templates_with_structure_search(params):
     from phenix_colab_utils import run_pdb_to_cif
     for m in model_info.model_list:
       i += 1
-      pdb_id = m.info().pdb_id if m.info() and m.info().get('pdb_id') \
+      pdb_id = "%s_%s" %(m.info().pdb_id,m.info().chain_id) if \
+          m.info() and m.info().get('pdb_id') and m.info().get('chain_id')\
           else 'model_%s' %(i)
       file_name = os.path.join(other_cif_dir,"%s.pdb" %(pdb_id))
       f = open(file_name, 'w')
