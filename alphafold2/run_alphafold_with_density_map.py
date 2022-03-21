@@ -7,6 +7,11 @@ import shutil
 from pathlib import Path
 import numpy as np
 
+#  Make sure we can import phenix_alphafold_utils and phenix_colab_utils
+local_path = os.path.split(os.path.abspath(__file__))[0]
+if not local_path in sys.path:
+  sys.path.append(local_path)
+
 from phenix_alphafold_utils import clear_directories
 from phenix_colab_utils import runsh
 

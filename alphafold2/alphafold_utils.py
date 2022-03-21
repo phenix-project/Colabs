@@ -12,7 +12,11 @@ from io import StringIO
 import shutil
 from string import ascii_uppercase
 from phenix_colab_utils import runsh, exit
-from alphafold.data import templates
+try:
+  from alphafold.data import templates
+except Exception as e:
+  print("Sorry, AlphaFold is not available...")
+  raise AssertionError(e)
 
 try:
   import matplotlib.pyplot as plt
