@@ -871,7 +871,7 @@ def run_job(params = None,
   elif cycle_model_file_name:
     return group_args(
       group_args_type = 'alphafold result',
-      filename = os.path.abspath(cycle_model_file_name),
+      filename = cycle_model_file_name,
       cc = None,)
   else:
     print("No final model or alphafold model obtained")
