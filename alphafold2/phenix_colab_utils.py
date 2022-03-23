@@ -85,7 +85,7 @@ def install_software(
     phenix_version = None,
     phenix_password = None,
   alphafold = True,
-    alphafold_version = '0bab1bf84d9d887aba5cfb6d09af1e8c3ecbc408',
+    alphafold_version = '',
   biopython = True,
   mmseq2 = True,
   pdb_to_cif = True,
@@ -398,5 +398,5 @@ def make_four_char_name(filename):
     if len(filename) > 8:
       filename = filename[:4] + "_" + filename[4:]
     return filename
-  else:  # a jobname.  
+  else:  # a jobname.
     return make_four_char_name(filename+".cif")[:-4]
