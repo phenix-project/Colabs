@@ -126,9 +126,6 @@ def install_alphafold(version = None, content_dir = None,
   assert content_dir is not None
   os.chdir(content_dir)
 
-  if not version and alphafold:
-    exit("Need alphafold version for installation")
-
   if os.path.isfile("AF2_READY"):
     print("AF2 is already installed")
     return
