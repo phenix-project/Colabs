@@ -917,7 +917,8 @@ def change_is_small(params, rmsd_from_previous_cycle_list, n = 2):
   for x in rmsd_from_previous_cycle_list[-n:]:
     if x > biggest_recent_rmsd:
       biggest_recent_rmsd = x
-  if x <= params.resolution * params.cycle_rmsd_to_resolution_ratio:
+  if biggest_recent_rmsd  <= \
+      params.resolution * params.cycle_rmsd_to_resolution_ratio:
     return True
   else:
     return False
