@@ -482,7 +482,6 @@ def set_up_input_files(params,
 
   # get input and output directories
   params = get_input_output_dirs(params)
-
   # Initialize
   query_sequences = []
   jobnames = []
@@ -520,6 +519,7 @@ def set_up_input_files(params,
       exit("Please enter a query_sequence rerun")
 
     # Add sequence and jobname if new
+  
     if (jobname and query_sequence) and (
          not query_sequence in query_sequences) and (
          not jobname in jobnames):
@@ -529,7 +529,8 @@ def set_up_input_files(params,
         params['cif_dir'] = get_cif_dir(params['content_dir'], jobname)
         clear_directories([params['cif_dir']])
 
-        if upload_manual_templates or upload_maps:
+        if upload_manual_templates or upload_maps \
+           or params.get('upload_msa_file',None):
           input_directory = params.get('input_directory', None)
           if input_directory and input_directory != params.get('content_dir'):
             cif_filename_dict[jobname], map_filename_dict[jobname],\
@@ -554,7 +555,6 @@ def set_up_input_files(params,
     print("\nCurrent jobs, resolutions, sequences, templates, maps and msas:")
   else:
     print("\nCurrent jobs,  sequences templates and msas:")
-
   for qs,jn,res in zip(query_sequences, jobnames, resolutions):
     template_list = []
     for t in cif_filename_dict.get(jn,[]):
