@@ -31,12 +31,14 @@ def run_jobs(params):
 
   # RUN THE JOBS HERE
   os.chdir(params.content_dir)
+  print("Working in AF content_dir: %s" %(os.getcwd()))
   print("Overall working directory: %s" %(os.getcwd()))
 
   result_list = []
   for query_sequence, jobname, resolution in zip(
     params.query_sequences, params.jobnames, params.resolutions):
     os.chdir(params.content_dir)
+    print("Working in AF content_dir: %s" %(os.getcwd()))
     print("\n","****************************************","\n",
          "RUNNING JOB %s with sequence %s at resolution of %s\n" %(
       jobname, query_sequence, resolution),
@@ -54,6 +56,7 @@ def run_jobs(params):
     if not os.path.isdir(working_params.working_directory):
       os.mkdir(working_params.working_directory)
     os.chdir(working_params.working_directory)
+    print("Working in AF working_directory: %s" %(os.getcwd()))
     print("Working directory for job %s: %s" %(
        jobname, os.getcwd()))
 
@@ -113,6 +116,7 @@ def run_one_af_cycle(params):
                                     TEMPLATE_FEATURES)
 
   os.chdir(params.working_directory)
+  print("Working in AF working_directory: %s" %(os.getcwd()))
   if params.template_hit_list:
     #process hits into template features
     from dataclasses import replace
@@ -272,6 +276,7 @@ def run_one_af_cycle(params):
     return None
 
   os.chdir(params.working_directory)
+  print("Working in AF working_directory: %s" %(os.getcwd()))
   from phenix_colab_utils import make_four_char_name
   model_file_name = "%s_unrelaxed_model_1.pdb" %(make_four_char_name(
     params.jobname))
@@ -495,6 +500,7 @@ def run_job(params = None,
     params.random_seed = 717217
 
   os.chdir(params.working_directory)
+  print("Working in AF working_directory: %s" %(os.getcwd()))
 
   #standard values of parameters
   params.num_models = 1
@@ -587,6 +593,7 @@ def run_job(params = None,
   cycle_model_file_name = None
 
   os.chdir(params.working_directory)
+  print("Working in AF working_directory: %s" %(os.getcwd()))
 
   for cycle in range(1, max(1,params.maximum_cycles) + 1):
 
@@ -620,6 +627,7 @@ def run_job(params = None,
       hhDB_dir = hhDB_dir,
       content_dir = params.content_dir)
     os.chdir(params.working_directory) # REQUIRED
+    print("Working in AF working_directory: %s" %(os.getcwd()))
 
 
     expected_cycle_model_file_name = "%s_unrelaxed_model_1_%s.pdb" %(
@@ -831,31 +839,45 @@ def run_job(params = None,
 
   # All done with cycles here
 
-  # Get final zip file
+  # If we are in google colab, zip and download
+  can_download = False
   try:
-      runsh(
-      "zip -FSr %s'.result.zip'  %s*ALPHAFOLD*.pdb  %s*REBUILT*.pdb %s*PAE*.jsn  %s*PAE*.png %s*lDDT*.png" %(
-         jobname,jobname,jobname,jobname,jobname,jobname))
-      zip_file_name = f"{jobname}.result.zip"
+    from google.colab import files
+    can_download = True
   except Exception as e:
-      zip_file_name = None
+    can_download = False 
 
-  filename = zip_file_name
-  if filename and os.path.isfile(filename):
-    print("About to download %s" %(filename))
+  if can_download:
+    # Get final zip file and download it if possible
     try:
-      print("Downloading zip file %s" %(filename))
-      from google.colab import files
-      files.download(filename)
-      print("Start of download successful (NOTE: if the download symbol does "+
-        "not go away it did not work. Download it manually using the folder "+
-        "icon to the left)")
-      check_and_copy(filename, os.path.join(params.content_dir,filename))
+        runsh(
+        "zip -FSr %s'.result.zip'  %s*ALPHAFOLD*.pdb  %s*REBUILT*.pdb %s*PAE*.jsn  %s*PAE*.png %s*lDDT*.png" %(
+           jobname,jobname,jobname,jobname,jobname,jobname))
+        zip_file_name = f"{jobname}.result.zip"
     except Exception as e:
-      print("Unable to download zip file %s" %(filename))
+        zip_file_name = None
 
+    filename = zip_file_name
+    if filename and os.path.isfile(filename):
+      print("About to download %s" %(filename))
+      try:
+        print("Downloading zip file %s" %(filename))
+        from google.colab import files
+        files.download(filename)
+        print(
+          "Start of download successful (NOTE: if the download symbol does "+
+          "not go away it did not work. Download it manually using the folder "+
+          "icon to the left)")
+        check_and_copy(filename, os.path.join(params.content_dir,filename))
+      except Exception as e:
+        print("Unable to download zip file %s" %(filename))
+
+  else:
+    filename = None
 
   os.chdir(params.content_dir)
+  print("Working in AF content_dir: %s" %(os.getcwd()))
+
   if filename and os.path.isfile(filename):
     print("\nZIP file with results for %s is in %s" %(
       jobname, filename))

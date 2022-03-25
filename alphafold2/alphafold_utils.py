@@ -286,9 +286,11 @@ def hh_process_seq(
   # make hhsuite DB
   with redirect_stdout(StringIO()) as out:
     os.chdir(msa_dir)
+    print("Working in msa_dir: %s" %(os.getcwd()))
     import subprocess
     runsh("ffindex_build -s ../DB_msa.ffdata ../DB_msa.ffindex .")
     os.chdir(hhDB_dir)
+    print("Working in hhDB_dir: %s" %(os.getcwd()))
     runsh(" ffindex_apply DB_msa.ffdata DB_msa.ffindex  -i DB_a3m.ffindex -d DB_a3m.ffdata  -- hhconsensus -M 50 -maxres 65535 -i stdin -oa3m stdout -v 0")
     runsh(" rm DB_msa.ffdata DB_msa.ffindex")
     runsh(" ffindex_apply DB_a3m.ffdata DB_a3m.ffindex -i DB_hhm.ffindex -d DB_hhm.ffdata -- hhmake -i stdin -o stdout -v 0")
@@ -302,6 +304,7 @@ def hh_process_seq(
     runsh(" mv DB_a3m_ordered.ffindex DB_a3m.ffindex")
     runsh(" mv DB_a3m_ordered.ffdata DB_a3m.ffdata")
     os.chdir(content_dir)
+    print("Working in content_dir: %s" %(os.getcwd()))
 
   # run hhsearch
   db_dir = hhDB_dir.as_posix()+"/"+db_prefix
