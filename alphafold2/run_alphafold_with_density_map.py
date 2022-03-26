@@ -269,8 +269,10 @@ def run_one_af_cycle(params):
                          params.minimum_random_seed_iterations,
                        big_improvement = params.big_improvement if
                         hasattr(params, 'big_improvement') else 5,)
-  if outs: # ok
+  if outs and outs['unrelaxed_file_name_list']: # ok
     print("Done with prediction in",os.getcwd())
+    print("Model list: %s" %(" ".join(outs['unrelaxed_file_name_list'])))
+      
   else: # failed
     print("Prediction failed...probably ran out of memory...quitting")
     return None
@@ -278,8 +280,9 @@ def run_one_af_cycle(params):
   os.chdir(params.working_directory)
   print("Working in AF working_directory: %s" %(os.getcwd()))
   from phenix_colab_utils import make_four_char_name
-  model_file_name = "%s_unrelaxed_model_1.pdb" %(make_four_char_name(
-    params.jobname))
+  model_file_name = outs['unrelaxed_file_name_list'][0]
+  del outs['unrelaxed_file_name_list']
+ 
   if os.path.isfile(model_file_name):
     print("Model file is in %s" %(model_file_name))
     cycle_model_file_name = "%s_unrelaxed_model_1_%s.pdb" %(
