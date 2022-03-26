@@ -31,14 +31,12 @@ def run_jobs(params):
 
   # RUN THE JOBS HERE
   os.chdir(params.content_dir)
-  print("Working in AF content_dir: %s" %(os.getcwd()))
   print("Overall working directory: %s" %(os.getcwd()))
 
   result_list = []
   for query_sequence, jobname, resolution in zip(
     params.query_sequences, params.jobnames, params.resolutions):
     os.chdir(params.content_dir)
-    print("Working in AF content_dir: %s" %(os.getcwd()))
     print("\n","****************************************","\n",
          "RUNNING JOB %s with sequence %s at resolution of %s\n" %(
       jobname, query_sequence, resolution),
@@ -56,7 +54,6 @@ def run_jobs(params):
     if not os.path.isdir(working_params.working_directory):
       os.mkdir(working_params.working_directory)
     os.chdir(working_params.working_directory)
-    print("Working in AF working_directory: %s" %(os.getcwd()))
     print("Working directory for job %s: %s" %(
        jobname, os.getcwd()))
 
@@ -116,7 +113,6 @@ def run_one_af_cycle(params):
                                     TEMPLATE_FEATURES)
 
   os.chdir(params.working_directory)
-  print("Working in AF working_directory: %s" %(os.getcwd()))
   if params.template_hit_list:
     #process hits into template features
     from dataclasses import replace
@@ -278,7 +274,6 @@ def run_one_af_cycle(params):
     return None
 
   os.chdir(params.working_directory)
-  print("Working in AF working_directory: %s" %(os.getcwd()))
   from phenix_colab_utils import make_four_char_name
   model_file_name = outs['unrelaxed_file_name_list'][0]
   del outs['unrelaxed_file_name_list']
@@ -503,7 +498,6 @@ def run_job(params = None,
     params.random_seed = 717217
 
   os.chdir(params.working_directory)
-  print("Working in AF working_directory: %s" %(os.getcwd()))
 
   #standard values of parameters
   params.num_models = 1
@@ -596,7 +590,6 @@ def run_job(params = None,
   cycle_model_file_name = None
 
   os.chdir(params.working_directory)
-  print("Working in AF working_directory: %s" %(os.getcwd()))
 
   for cycle in range(1, max(1,params.maximum_cycles) + 1):
 
@@ -630,7 +623,6 @@ def run_job(params = None,
       hhDB_dir = hhDB_dir,
       content_dir = params.content_dir)
     os.chdir(params.working_directory) # REQUIRED
-    print("Working in AF working_directory: %s" %(os.getcwd()))
 
 
     expected_cycle_model_file_name = "%s_unrelaxed_model_1_%s.pdb" %(
@@ -879,7 +871,6 @@ def run_job(params = None,
     filename = None
 
   os.chdir(params.content_dir)
-  print("Working in AF content_dir: %s" %(os.getcwd()))
 
   if filename and os.path.isfile(filename):
     print("\nZIP file with results for %s is in %s" %(
