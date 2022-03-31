@@ -905,17 +905,9 @@ def check_and_copy(a,b):
      shutil.copyfile(a,b)
 
 def change_is_small(params, rmsd_from_previous_cycle_list, n = 2):
-  if len(rmsd_from_previous_cycle_list) < n:
-    return False
-  biggest_recent_rmsd = 0
-  for x in rmsd_from_previous_cycle_list[-n:]:
-    if x > biggest_recent_rmsd:
-      biggest_recent_rmsd = x
-  if biggest_recent_rmsd  <= \
-      params.resolution * params.cycle_rmsd_to_resolution_ratio:
-    return True
-  else:
-    return False
+  from phenix.model_building.predict_and_build import change_is_small as cis
+  return cis(params, rmsd_from_previous_cycle_list, n = n)
+
 def get_pae_file_name(params):
   return params.jobname+"_PAE_cycle_%s.jsn" %(params.cycle)
 def get_pae_png_file_name(params):
