@@ -160,6 +160,13 @@ def run_one_af_cycle(params):
       for k in template_features:
         template_features[k].append(features[k])
 
+    if hasattr(params, 'release_date') and params.release_date is not None:
+      release_date_list = template_features['template_release_date']
+      print("Existing release date list:",str(release_date_list))
+      template_features['template_release_date'] = len(release_date_list
+        ) * [str(params.release_date).encode()]
+      print("New release date_list:",template_features['template_release_date'])
+
     for name in template_features:
       template_features[name] = np.stack(
           template_features[name], axis=0).astype(TEMPLATE_FEATURES[name])
