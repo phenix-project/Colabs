@@ -275,7 +275,7 @@ def run_one_af_cycle(params):
   if outs and outs['unrelaxed_file_name_list']: # ok
     print("Done with prediction in",os.getcwd())
     print("Model list: %s" %(" ".join(outs['unrelaxed_file_name_list'])))
-      
+
   else: # failed
     print("Prediction failed...probably ran out of memory...quitting")
     return None
@@ -284,7 +284,7 @@ def run_one_af_cycle(params):
   from phenix_colab_utils import make_four_char_name
   model_file_name = outs['unrelaxed_file_name_list'][0]
   del outs['unrelaxed_file_name_list']
- 
+
   if os.path.isfile(model_file_name):
     print("Model file is in %s" %(model_file_name))
     cycle_model_file_name = "%s_unrelaxed_model_1_%s.pdb" %(
@@ -847,7 +847,7 @@ def run_job(params = None,
     from google.colab import files
     can_download = True
   except Exception as e:
-    can_download = False 
+    can_download = False
 
   if can_download:
     # Get final zip file and download it if possible
@@ -912,8 +912,11 @@ def check_and_copy(a,b):
      shutil.copyfile(a,b)
 
 def change_is_small(params, rmsd_from_previous_cycle_list, n = 2):
-  from phenix.model_building.predict_and_build import change_is_small as cis
-  return cis(params, rmsd_from_previous_cycle_list, n = n)
+  try:
+    from phenix.model_building.predict_and_build import change_is_small as cis
+    return cis(params, rmsd_from_previous_cycle_list, n = n)
+  except Exception as e:
+    return False  # was no phenix available
 
 def get_pae_file_name(params):
   return params.jobname+"_PAE_cycle_%s.jsn" %(params.cycle)
