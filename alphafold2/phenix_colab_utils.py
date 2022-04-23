@@ -309,17 +309,17 @@ def import_tensorflow():
 def install_pdb_to_cif(content_dir = None):
   if not content_dir:
     content_dir = "/content"
-  if os.path.isfile('PDB_TO_CIF_READY'):
+  if os.path.isdir(os.path.join(content_dir,"maxit-v11.100-prod-src")):
     print("pdb_to_cif is already downloaded")
   else:
     print("Downloading pdb_to_cif...")
-    runsh('wget https://phenix-online.org/phenix_data/terwilliger/colab_data/maxit-v11.100-prod-src.tgz')
+    runsh('wget ' +
+     'https://phenix-online.org/phenix_data/terwilliger/colab_data/maxit-v11.100-prod-src.tgz > maxit.log')
     runsh('tar xzf maxit-v11.100-prod-src.tgz')
     runsh('rm -f maxit-v11.100-prod-src.tgz')
     p = os.path.join(content_dir,"maxit-v11.100-prod-src")
     b = os.path.join(p, "bin","process_entry")
     runsh("chmod +x %s" %(b))
-    runsh('touch PDB_TO_CIF_READY')
     print("Ready with pdb_to_cif")
     if not os.path.isfile(os.path.join(content_dir,
         "maxit-v11.100-prod-src/bin/process_entry")):
@@ -327,7 +327,6 @@ def install_pdb_to_cif(content_dir = None):
 
 def run_pdb_to_cif(f, content_dir = None):
     assert content_dir is not None
-
     if not os.path.isfile(os.path.join(content_dir,
         "maxit-v11.100-prod-src/bin/process_entry")):
       print("Installing pdb_to_cif...")

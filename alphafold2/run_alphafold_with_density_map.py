@@ -830,7 +830,9 @@ def run_job(params = None,
 
     from phenix_colab_utils import run_pdb_to_cif
     final_model_file_name_as_cif_in_cif_dir = run_pdb_to_cif(
-       final_model_file_name_in_cif_dir, content_dir = params.content_dir)
+       final_model_file_name_in_cif_dir, content_dir = params.maxit_path if
+       (hasattr(params, 'maxit_path') and params.maxit_path) else 
+       params.content_dir)
     manual_cif_file_list = get_cif_file_list(
       include_templates_from_pdb = False,
       manual_templates_uploaded = [

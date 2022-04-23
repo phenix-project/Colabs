@@ -241,7 +241,8 @@ def upload_templates(params):
         with pdb_filepath.open("w") as fh:
           fh.write(contents.decode("UTF-8"))
         cif_filepath = run_pdb_to_cif(pdb_filepath,
-           content_dir = params.get("content_dir"))
+           content_dir = params.get("maxit_path") if 
+           params.get("maxit_path") else params.get("content_dir"))
         manual_templates_uploaded.append(cif_filepath)
 
 
@@ -318,7 +319,8 @@ def get_templates_from_drive(params):
         with pdb_filepath.open("w") as fh:
           fh.write(contents.decode("UTF-8"))
         cif_filepath = run_pdb_to_cif(pdb_filepath,
-           content_dir = params.get("content_dir"))
+           content_dir = params.get("maxit_path") if 
+           params.get("maxit_path") else params.get("content_dir"))
         manual_templates_uploaded.append(cif_filepath)
 
   if manual_templates_uploaded:
