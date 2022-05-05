@@ -1,6 +1,13 @@
 from __future__ import division
 from __future__ import print_function
 
+################################################################################
+#  Routines to run alphafold
+#  Some of these are adapted from ColabFold:
+#  https://github.com/sokrypton/ColabFold/
+################################################################################
+
+
 import os, sys
 import shutil
 
@@ -139,8 +146,8 @@ def run_one_af_cycle(params):
       # modifications to alphafold/data/templates.py _process_single_hit
       hit_pdb_code, hit_chain_id = _get_pdb_id_and_chain(hit)
       mapping = _build_query_to_hit_index_mapping(
-      hit.query, hit.hit_sequence, hit.indices_hit, hit.indices_query,
-      params.query_sequence)
+        hit.query, hit.hit_sequence, hit.indices_hit, hit.indices_query,
+        params.query_sequence)
       template_sequence = hit.hit_sequence.replace('-', '')
 
       try:
