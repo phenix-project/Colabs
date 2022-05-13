@@ -213,11 +213,11 @@ def install_phenix(password = None, version = None):
     print("Phenix is already downloaded")
   else:
     print("Downloading Phenix...")
-    runsh("wget -q --user download --password %s -r -l1 https://phenix-online.org/download/installers/%s/linux-64/ -A phenix*.tar.bz2" %(password, version),
+    runsh("wget -q --user download --password %s -r -l1 https://phenix-online.org/download/installers/%s/linux-64/ -A phenix*.tar.bz2 --no-check-certificate" %(password, version),
       print_text = False)
     if not os.path.isdir("phenix-online.org"):
       # try with user as trusted
-      runsh("wget -q --user trusted --password %s -r -l1 https://phenix-online.org/download/installers/%s/linux-64/ -A phenix*.tar.bz2" %(password, version),
+      runsh("wget -q --user trusted --password %s -r -l1 https://phenix-online.org/download/installers/%s/linux-64/ -A phenix*.tar.bz2 --no-check-certificate" %(password, version),
         print_text = False)
     if not os.path.isdir("phenix-online.org"):
       exit("Unable to download...please check your Phenix version and password?")
@@ -314,7 +314,7 @@ def install_pdb_to_cif(content_dir = None):
   else:
     print("Downloading pdb_to_cif...")
     runsh('wget ' +
-     'https://phenix-online.org/phenix_data/terwilliger/colab_data/maxit-v11.100-prod-src.tgz > maxit.log')
+     'https://phenix-online.org/phenix_data/terwilliger/colab_data/maxit-v11.100-prod-src.tgz --no-check-certificate > maxit.log')
     runsh('tar xzf maxit-v11.100-prod-src.tgz')
     runsh('rm -f maxit-v11.100-prod-src.tgz')
     p = os.path.join(content_dir,"maxit-v11.100-prod-src")
@@ -369,12 +369,12 @@ def set_up_demo(demo_to_run):
     os.mkdir("ColabInputs")
   os.chdir("ColabInputs")
   if (not os.path.isfile("demo_sequences.dat")):
-    runsh("wget https://phenix-online.org/phenix_data/terwilliger/colab_data/demo_sequences.dat")
+    runsh("wget https://phenix-online.org/phenix_data/terwilliger/colab_data/demo_sequences.dat --no-check-certificate")
   if (not os.path.isfile("demo_maps.dat")):
-    runsh("wget https://phenix-online.org/phenix_data/terwilliger/colab_data/demo_maps.dat")
+    runsh("wget https://phenix-online.org/phenix_data/terwilliger/colab_data/demo_maps.dat --no-check-certificate")
   map_name = get_map_name(demo_to_run)
   if (not os.path.isfile(map_name)):
-    runsh("wget https://phenix-online.org/phenix_data/terwilliger/colab_data/demo_maps/%s" %(map_name))
+    runsh("wget https://phenix-online.org/phenix_data/terwilliger/colab_data/demo_maps/%s --no-check-certificate" %(map_name))
   jobname, sequence, resolution = get_demo_info(demo_to_run)
   os.chdir("/content")
   if not jobname:
