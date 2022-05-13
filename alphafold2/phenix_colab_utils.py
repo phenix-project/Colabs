@@ -374,7 +374,7 @@ def set_up_demo(demo_to_run):
     runsh("wget https://phenix-online.org/phenix_data/terwilliger/colab_data/demo_maps.dat --no-check-certificate")
   map_name = get_map_name(demo_to_run)
   if (not os.path.isfile(map_name)):
-    runsh("wget https://phenix-online.org/phenix_data/terwilliger/colab_data/demo_maps/%s --no-check-certificate" %(map_name))
+    runsh("wget --no-check-certificate https://phenix-online.org/phenix_data/terwilliger/colab_data/demo_maps/%s" %(map_name))
   jobname, sequence, resolution = get_demo_info(demo_to_run)
   os.chdir("/content")
   if not jobname:
