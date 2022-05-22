@@ -278,7 +278,10 @@ def run_one_af_cycle(params):
                          params.random_seed_iterations if params.cycle == 1 else
                          params.minimum_random_seed_iterations,
                        big_improvement = params.big_improvement if
-                        hasattr(params, 'big_improvement') else 5,)
+                        hasattr(params, 'big_improvement') else 5,
+                       good_enough_plddt = params.good_enough_plddt if
+                        hasattr(params, 'good_enough_plddt') else 90,
+                        )
   if outs and outs['unrelaxed_file_name_list']: # ok
     print("Done with prediction in",os.getcwd())
     print("Model list: %s" %(" ".join(outs['unrelaxed_file_name_list'])))

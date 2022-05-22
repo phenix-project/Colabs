@@ -98,7 +98,9 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
   msa_is_msa_object = None,
   random_seed_iterations = 5,
   big_improvement = 5,
-  confidence_dict = None,):
+  good_enough_plddt = 90,
+  confidence_dict = None,
+  log = sys.stdout):
 
   """Predicts structure using AlphaFold for the given sequence."""
   import numpy as np
@@ -128,7 +130,7 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
   from alphafold.common import protein
   for model_name, local_params in model_params.items():
     if model_name in use_model:
-      print(f"running {model_name}")
+      print(f"running {model_name}", file = log)
       # swap params to avoid recompiling
       # note: models 1,2 have diff number of params compared to models 3,4,5
       if any(str(m) in model_name for m in [1,2]): model_runner = model_runner_1
@@ -142,7 +144,8 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
         random_seed = random.randint(0,1000000)
         processed_feature_dict = model_runner.process_features(feature_dict,
            random_seed=random_seed)
-        print("Running prediction ",i+1,"of",random_seed_iterations,"...")
+        print("Running prediction ",i+1,"of",random_seed_iterations,"...",
+          file = log)
         try:
           if msa_is_msa_object:
             prediction_result = model_runner.predict(processed_feature_dict,
@@ -150,7 +153,7 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
           else:
             prediction_result = model_runner.predict(processed_feature_dict)
         except Exception as e:
-          print("Prediction failed...\n%s\n...skipping" %(str(e)))
+          print("Prediction failed...\n%s\n...skipping" %(str(e)), file = log)
           continue
 
         unrelaxed_protein = protein.from_prediction(
@@ -184,7 +187,12 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
           with open(unrelaxed_pdb_path, 'w') as f:
             f.write(unrelaxed_pdb_lines[nn])
           print("New maximum plDDT (try %s): %.2f, saved as %s" %(
-          nn + 1, best_value, unrelaxed_pdb_path))
+          nn + 1, best_value, unrelaxed_pdb_path), file = log)
+
+        if good_enough_plddt is not None and best_value >= good_enough_plddt:
+          print("Ending randomization as good enough plddt (%.2f) obtained" %(
+            best_value), file = log)
+          break
 
         if sd is not None: # estimate SD and see if we want to keep going
            # Let's say big_improvement = 5 is worth getting in
@@ -210,7 +218,7 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
           # forget it
           print("Ending randomization as it is unlikely we will improve by\n",
           "%.2f more than current best value of %.2f (mean = %.2f, sd= %.2f)" %(
-           big_improvement,best_value,mmm.mean,sd))
+           big_improvement,best_value,mmm.mean,sd), file = log)
           break
 
 
@@ -219,11 +227,11 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
   # rerank models based on predicted lddt
   lddt_rank = np.mean(plddts,-1).argsort()[::-1]
   out = {}
-  print("reranking models based on avg. predicted lDDT")
+  print("reranking models based on avg. predicted lDDT", file = log)
   unrelaxed_file_name_list = []
   out['unrelaxed_file_name_list'] = unrelaxed_file_name_list
   for n,r in enumerate(lddt_rank):
-    print(f"model_{n+1} {r} {np.mean(plddts[r])}")
+    print(f"model_{n+1} {r} {np.mean(plddts[r])}", file = log)
 
     unrelaxed_pdb_path = f'{prefix}_unrelaxed_model_{n+1}.pdb'
     unrelaxed_file_name_list.append(os.path.abspath(unrelaxed_pdb_path))
@@ -246,7 +254,8 @@ def hh_process_seq(
   template_seq = None,
   content_dir = None,
   hhDB_dir = None,
-  db_prefix="DB"):
+  db_prefix="DB",
+  log = sys.stdout):
   """
   This is a hack to get hhsuite output strings to pass on
   to the AlphaFold template featurizer.
@@ -286,15 +295,15 @@ def hh_process_seq(
   template_seq_path = Path(msa_dir,"template.fasta")
   with template_seq_path.open("w") as fh:
     SeqIO.write([template_seq], fh, "fasta")
-  print("MSA DIR",msa_dir)
+  print("MSA DIR",msa_dir, file = log)
   # make hhsuite DB
   with redirect_stdout(StringIO()) as out:
     os.chdir(msa_dir)
-    print("Working in msa_dir: %s" %(os.getcwd()))
+    print("Working in msa_dir: %s" %(os.getcwd()), file = log)
     import subprocess
     runsh("ffindex_build -s ../DB_msa.ffdata ../DB_msa.ffindex .")
     os.chdir(hhDB_dir)
-    print("Working in hhDB_dir: %s" %(os.getcwd()))
+    print("Working in hhDB_dir: %s" %(os.getcwd()), file = log)
     runsh(" ffindex_apply DB_msa.ffdata DB_msa.ffindex  -i DB_a3m.ffindex -d DB_a3m.ffdata  -- hhconsensus -M 50 -maxres 65535 -i stdin -oa3m stdout -v 0")
     runsh(" rm DB_msa.ffdata DB_msa.ffindex")
     runsh(" ffindex_apply DB_a3m.ffdata DB_a3m.ffindex -i DB_hhm.ffindex -d DB_hhm.ffdata -- hhmake -i stdin -o stdout -v 0")
@@ -308,7 +317,7 @@ def hh_process_seq(
     runsh(" mv DB_a3m_ordered.ffindex DB_a3m.ffindex")
     runsh(" mv DB_a3m_ordered.ffdata DB_a3m.ffdata")
     os.chdir(content_dir)
-    print("Working in content_dir: %s" %(os.getcwd()))
+    print("Working in content_dir: %s" %(os.getcwd()), file = log)
 
   # run hhsearch
   db_dir = hhDB_dir.as_posix()+"/"+db_prefix
@@ -402,7 +411,8 @@ def show_pdb(jobname, model_num=1, show_sidechains=False, show_mainchains=False,
   view.zoomTo()
   return view
 
-def write_pae_file(pae_matrix, file_name):
+def write_pae_file(pae_matrix, file_name,
+    log = sys.stdout):
   shape=tuple(pae_matrix.shape)
   n,n = shape
   # Write out array to text file as json
@@ -427,10 +437,11 @@ def write_pae_file(pae_matrix, file_name):
   f = open(file_name, 'w')
   print(text, file = f)
   f.close()
-  print("Wrote pae file to %s" %(file_name))
+  print("Wrote pae file to %s" %(file_name), file = log)
 
 
-def get_msa(params):
+def get_msa(params,
+    log = sys.stdout):
   import colabfold as cf
   from alphafold.data import pipeline
   template_paths = None # initialize
@@ -446,7 +457,7 @@ def get_msa(params):
 
   if msa_file_name:
     template_paths = None
-    print("Reading MSA from %s" %(msa_file_name))
+    print("Reading MSA from %s" %(msa_file_name), file = log)
     a3m_lines = open(msa_file_name).read()
   else:
     a3m_lines = None
@@ -455,25 +466,25 @@ def get_msa(params):
   if params.include_templates_from_pdb:
     if not hasattr(params, 'template_search_method') or \
         params.template_search_method == 'mmseqs2':
-      print("Getting templates from PDB using mmseqs2 server...")
+      print("Getting templates from PDB using mmseqs2 server...", file = log)
       new_a3m_lines, template_paths = cf.run_mmseqs2(params.query_sequence,
         params.jobname, params.use_env, use_templates=True)
       if not a3m_lines:
         a3m_lines = new_a3m_lines
-        print("Using MSA from mmseqs2")
+        print("Using MSA from mmseqs2", file = log)
     else:
-      print("Getting templates using structure_search")
+      print("Getting templates using structure_search", file = log)
       template_paths = get_templates_with_structure_search(params)
-    print("Templates are in %s" %(template_paths))
+    print("Templates are in %s" %(template_paths), file = log)
 
   elif params.use_msa and not a3m_lines:
-    print("Getting MSA from mmseqs2 server")
+    print("Getting MSA from mmseqs2 server", file = log)
     a3m_lines = cf.run_mmseqs2(params.query_sequence,
        params.jobname, params.use_env)
 
   if (not params.use_msa) or not a3m_lines:
     a3m_lines = ">query sequence \n%s" %(params.query_sequence)
-    print("Not using any MSA information")
+    print("Not using any MSA information", file = log)
 
   # File for a3m
   a3m_file = f"{params.jobname}.a3m"
@@ -490,7 +501,7 @@ def get_msa(params):
     deletion_matrix = msa.deletion_matrix
     msa_is_msa_object = True
 
-  print("Done with MSA and templates")
+  print("Done with MSA and templates", file = log)
   return msa, deletion_matrix, template_paths, msa_is_msa_object
 
 def get_templates_with_structure_search(params):
@@ -567,7 +578,8 @@ def get_template_hit_list(
     fasta_dir = None,
     query_seq = None,
     hhDB_dir = None,
-    content_dir = None):
+    content_dir = None,
+    log = sys.stdout):
   assert content_dir is not None
   from alphafold.data import mmcif_parsing
   from Bio.SeqRecord import SeqRecord
@@ -576,13 +588,13 @@ def get_template_hit_list(
   template_hit_list = []
   for i,filepath in enumerate(cif_files):
     if not str(filepath).endswith(".cif"): continue
-    print("CIF file included:",i+1,str(filepath))
+    print("CIF file included:",i+1,str(filepath), file = log)
     with filepath.open("r") as fh:
       filestr = fh.read()
       mmcif_obj = mmcif_parsing.parse(file_id=filepath.stem,mmcif_string=filestr)
       mmcif = mmcif_obj.mmcif_object
       if not mmcif:
-        print("...No CIF object obtained...skipping...")
+        print("...No CIF object obtained...skipping...", file = log)
         continue
 
       for chain_id,template_sequence in mmcif.chain_to_seqres.items():
@@ -613,13 +625,14 @@ def get_template_hit_list(
            content_dir = content_dir)
 
         except Exception as e:
-          print("Failed to process %s" %(filepath),e)
+          print("Failed to process %s" %(filepath),e, file = log)
           hit = None
         if hit is not None:
           template_hit_list.append([hit,mmcif])
-          print("Template %s included" %(filepath))
+          print("Template %s included" %(filepath), file = log)
         else:
-          print("Template %s not included (failed to process)" %(filepath))
+          print("Template %s not included (failed to process)" %(filepath),
+            file = log)
 
   return template_hit_list
 
