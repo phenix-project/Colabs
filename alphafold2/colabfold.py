@@ -6,7 +6,6 @@
 ############################################
 # imports
 ############################################
-import jax
 import requests
 import hashlib
 import tarfile
@@ -51,15 +50,18 @@ aatypes = set('ACDEFGHIKLMNPQRSTVWY')
 ###########################################
 def rm(x):
   '''remove data from device'''
+  import jax
   jax.tree_util.tree_map(lambda y: y.device_buffer.delete(), x)
 
 def to(x,device="cpu"):
   '''move data to device'''
+  import jax
   d = jax.devices(device)[0]
   return jax.tree_util.tree_map(lambda y:jax.device_put(y,d), x)
 
 def clear_mem(device="gpu"):
   '''remove all data from device'''
+  import jax
   backend = jax.lib.xla_bridge.get_backend(device)
   for buf in backend.live_buffers(): buf.delete()
     
