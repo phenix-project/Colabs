@@ -307,12 +307,16 @@ def import_tensorflow():
     return tf
 
 def install_pdb_to_cif(content_dir = None):
+  print("ZZ LOCal pdb r",os.getcwd(),content_dir)
   if not content_dir:
     content_dir = "/content"
   if os.path.isdir(os.path.join(content_dir,"maxit-v11.100-prod-src")):
     print("pdb_to_cif is already downloaded")
   else:
-    print("Downloading pdb_to_cif...")
+    dir_sav = os.getcwd()
+    print("Working directory is ",os.getcwd())
+    os.chdir(content_dir)
+    print("Downloading pdb_to_cif in %s..." %(os.getcwd()))
     runsh('wget ' +
      'https://phenix-online.org/phenix_data/terwilliger/colab_data/maxit-v11.100-prod-src.tgz --no-check-certificate > maxit.log')
     runsh('tar xzf maxit-v11.100-prod-src.tgz')
@@ -324,7 +328,8 @@ def install_pdb_to_cif(content_dir = None):
     if not os.path.isfile(os.path.join(content_dir,
         "maxit-v11.100-prod-src/bin/process_entry")):
       exit("Unable to install pdb_to_cif")
-
+    os.chdir(dir_sav)
+    print("Restored working directory to ",os.getcwd())
 def run_pdb_to_cif(f, content_dir = None):
     assert content_dir is not None
     if not os.path.isfile(os.path.join(content_dir,
