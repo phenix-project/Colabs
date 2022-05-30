@@ -307,7 +307,6 @@ def import_tensorflow():
     return tf
 
 def install_pdb_to_cif(content_dir = None):
-  print("ZZ LOCal pdb r",os.getcwd(),content_dir)
   if not content_dir:
     content_dir = "/content"
   if os.path.isdir(os.path.join(content_dir,"maxit-v11.100-prod-src")):
