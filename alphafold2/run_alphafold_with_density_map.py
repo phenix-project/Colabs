@@ -653,11 +653,12 @@ def run_job(params = None,
       expected_cycle_model_file_name_in_output_dir = None
 
     # Copy in starting alphafold model, if any, on first cycle
-    if params.cycle == 1 and params.starting_alphafold_model and \
-        os.path.isfile( params.starting_alphafold_model):
+    starting_alphafold_model = getattr(params,'starting_alphafold_model', None)
+    if params.cycle == 1 and starting_alphafold_model and \
+        os.path.isfile( starting_alphafold_model):
       print("Using %s as starting Alphafold model" %(
-        params.starting_alphafold_model))
-      check_and_copy(params.starting_alphafold_model,
+        starting_alphafold_model))
+      check_and_copy(starting_alphafold_model,
         expected_cycle_model_file_name)
       result = group_args(group_args_type = 'af model read in directly',
         cycle_model_file_name = expected_cycle_model_file_name)
@@ -841,7 +842,7 @@ def run_job(params = None,
     from phenix_colab_utils import run_pdb_to_cif
     final_model_file_name_as_cif_in_cif_dir = run_pdb_to_cif(
        final_model_file_name_in_cif_dir, content_dir = params.maxit_path if
-       (hasattr(params, 'maxit_path') and params.maxit_path) else 
+       (hasattr(params, 'maxit_path') and params.maxit_path) else
        params.content_dir)
     manual_cif_file_list = get_cif_file_list(
       include_templates_from_pdb = False,
