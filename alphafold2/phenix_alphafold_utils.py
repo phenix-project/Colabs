@@ -241,7 +241,7 @@ def upload_templates(params):
         with pdb_filepath.open("w") as fh:
           fh.write(contents.decode("UTF-8"))
         cif_filepath = run_pdb_to_cif(pdb_filepath,
-           content_dir = params.get("maxit_path") if 
+           content_dir = params.get("maxit_path") if
            params.get("maxit_path") else params.get("content_dir"))
         manual_templates_uploaded.append(cif_filepath)
 
@@ -319,7 +319,7 @@ def get_templates_from_drive(params):
         with pdb_filepath.open("w") as fh:
           fh.write(contents.decode("UTF-8"))
         cif_filepath = run_pdb_to_cif(pdb_filepath,
-           content_dir = params.get("maxit_path") if 
+           content_dir = params.get("maxit_path") if
            params.get("maxit_path") else params.get("content_dir"))
         manual_templates_uploaded.append(cif_filepath)
 
@@ -356,13 +356,31 @@ def select_matching_template_files(uploaded_template_files,
       matching_files.append(file_name)
   return matching_files
 
+class job_file:
+  def __init__(self, file_name):
+    self.file_name = file_name
+    if os.path.isfile(file_name):
+      self.contents = open(file_name).read().encode("UTF-8")
+    else:
+      self.contents = ""
+  def items(self):
+    return [(self.file_name,self.contents),]
+
+
 def get_jobnames_sequences_from_file(params):
 
   from io import StringIO
-  from google.colab import files
-  print("Upload file with one jobname, a space, resolution, space,"+
-     " and one sequence on each line")
-  uploaded_job_file = files.upload()
+  print("Ready...",
+       params.get('file_with_jobname_resolution_sequence_lines',None))
+  if params.get('file_with_jobname_resolution_sequence_lines',None):
+    uploaded_job_file = job_file(
+       params.get('file_with_jobname_resolution_sequence_lines',None))
+  else:  #usual
+    from google.colab import files
+    print("Upload file with one jobname, a space, resolution, space,"+
+      " and one sequence on each line")
+    uploaded_job_file = files.upload()
+
   if params.get('upload_manual_templates',None) or params.get(
       'upload_maps', None) or params.get('upload_msa_file', None):
     input_directory = params.get('input_directory',None)
@@ -494,7 +512,8 @@ def set_up_input_files(params,
   dirs_to_clear = []
 
   if params.get(
-     'upload_file_with_jobname_resolution_sequence_lines',None):
+     'upload_file_with_jobname_resolution_sequence_lines',None) or \
+       params.get('file_with_jobname_resolution_sequence_lines',None):
     params = set_upload_dir(params)
     params = get_jobnames_sequences_from_file(params)
     jobnames = params['jobnames']
@@ -521,7 +540,7 @@ def set_up_input_files(params,
       exit("Please enter a query_sequence rerun")
 
     # Add sequence and jobname if new
-  
+
     if (jobname and query_sequence) and (
          not query_sequence in query_sequences) and (
          not jobname in jobnames):
