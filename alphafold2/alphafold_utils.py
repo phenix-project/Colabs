@@ -568,11 +568,13 @@ def get_cif_file_list(
   else:
     cif_files = []
   cif_files_to_include = []
+  print("CIF files available:",cif_files)
   for cif_file in cif_files:
     text = os.path.split(str(cif_file))[-1]
     if text in manual_files_as_text:
       cif_files_to_include.append(cif_file)
   cif_files = cif_files_to_include
+  print("CIF files to include: ",cif_files)
 
   if include_templates_from_pdb and other_cif_dir is not None:
     other_cif_files = []
