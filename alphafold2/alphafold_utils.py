@@ -546,10 +546,6 @@ def get_cif_file_list(
     cif_dir = None,
     other_cif_dir = None):
 
-  if cif_dir is not None:
-    cif_files = list(cif_dir.glob("*"))
-  else:
-    cif_files = []
   # Only include the cif_files in manual_templates_uploaded
   manual_files_as_text = []
   if not manual_templates_uploaded:
@@ -558,7 +554,8 @@ def get_cif_file_list(
   for f in manual_templates_uploaded:
     fn = os.path.split(str(f))[-1]
     manual_files_as_text.append(fn)
-    if not os.path.isfile(os.path.join(cif_dir,fn)) and os.path.isfile(f):
+    if cif_dir is not None and (
+         not os.path.isfile(os.path.join(cif_dir,fn)) and os.path.isfile(f)):
       if not os.path.isdir(cif_dir):
         cif_dir = Path(cif_dir)
         cif_dir.mkdir(parents=True)
@@ -566,6 +563,10 @@ def get_cif_file_list(
       shutil.copyfile(f,os.path.join(cif_dir,fn))
       print("Copied %s to %s" %(f,os.path.join(cif_dir,fn)))
   print("Uploaded template file names as text:", manual_files_as_text)
+  if cif_dir is not None:
+    cif_files = list(cif_dir.glob("*"))
+  else:
+    cif_files = []
   cif_files_to_include = []
   for cif_file in cif_files:
     text = os.path.split(str(cif_file))[-1]
