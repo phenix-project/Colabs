@@ -554,6 +554,7 @@ def get_cif_file_list(
   manual_files_as_text = []
   if not manual_templates_uploaded:
     manual_templates_uploaded = []
+  print("Manual templates:", manual_templates_uploaded)
   for f in manual_templates_uploaded:
     fn = os.path.split(str(f))[-1]
     manual_files_as_text.append(fn)
@@ -564,6 +565,7 @@ def get_cif_file_list(
       import shutil
       shutil.copyfile(f,os.path.join(cif_dir,fn))
       print("Copied %s to %s" %(f,os.path.join(cif_dir,fn)))
+  print("Uploaded template file names as text:", manual_files_as_text)
   cif_files_to_include = []
   for cif_file in cif_files:
     text = os.path.split(str(cif_file))[-1]
