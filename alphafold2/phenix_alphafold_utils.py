@@ -352,12 +352,11 @@ def select_matching_template_files(uploaded_template_files,
 
   matching_files = []
   jobname_four_char = make_four_char_name(jobname).replace(".cif","")
-  print("ZZ jobname_four_char",jobname_four_char)
-
   for file_name in uploaded_template_files:
-    if file_name.parts[-1].startswith(jobname.split("_")[0]) and \
+    if file_name.parts[-1].startswith(jobname.split("_")[0][:4]) and \
        (file_name.parts[-1].find(jobname) > -1 or
-       file_name.parts[-1].find(jobname_four_char)):  # has entire jobname present
+       file_name.parts[-1].find(jobname_four_char)):
+      # has entire jobname present
       matching_files.append(file_name)
   return matching_files
 
