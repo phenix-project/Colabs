@@ -355,7 +355,7 @@ def select_matching_template_files(uploaded_template_files,
   for file_name in uploaded_template_files:
     if file_name.parts[-1].startswith(jobname.split("_")[0][:4]) and \
        (file_name.parts[-1].find(jobname) > -1 or
-       file_name.parts[-1].find(jobname_four_char)):
+       file_name.parts[-1].find(jobname_four_char) > -1):
       # has entire jobname present
       matching_files.append(file_name)
   return matching_files
