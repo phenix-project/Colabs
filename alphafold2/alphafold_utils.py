@@ -477,7 +477,7 @@ def get_msa(params,
       template_paths = get_templates_with_structure_search(params)
     print("Templates are in %s" %(template_paths), file = log)
 
-  elif params.use_msa and not a3m_lines:
+  if params.use_msa and not a3m_lines:
     import time
     t0 = time.time()
     print("Getting MSA for %s from mmseqs2 server" %(params.jobname),
@@ -497,7 +497,8 @@ def get_msa(params,
   a3m_file = f"{params.jobname}.a3m"
 
   with open(a3m_file, "w") as text_file:
-      text_file.write(a3m_lines)
+    text_file.write(a3m_lines)
+  print("Wrote MSA to %s" %(os.path.join(os.getcwd(),a3m_file)), file = log)
 
   # parse MSA; allow both versions of return from parse_a3m
   msa = pipeline.parsers.parse_a3m(a3m_lines)

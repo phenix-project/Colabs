@@ -34,11 +34,11 @@ from alphafold_utils import (mk_mock_template,
    get_cif_file_list,
    get_template_hit_list)
 
-def run_jobs(params):
+def run_jobs(params, log = sys.stdout):
 
   # RUN THE JOBS HERE
   os.chdir(params.content_dir)
-  print("Overall working directory: %s" %(os.getcwd()))
+  print("Overall working directory: %s" %(os.getcwd()), file = log)
 
   result_list = []
   for query_sequence, jobname, resolution in zip(
@@ -47,7 +47,7 @@ def run_jobs(params):
     print("\n","****************************************","\n",
          "RUNNING JOB %s with sequence %s at resolution of %s\n" %(
       jobname, query_sequence, resolution),
-      "****************************************","\n")
+      "****************************************","\n", file = log)
     # GET TEMPLATES AND SET UP FILES
     from copy import deepcopy
     working_params = deepcopy(params)
@@ -62,49 +62,54 @@ def run_jobs(params):
       os.mkdir(working_params.working_directory)
     os.chdir(working_params.working_directory)
     print("Working directory for job %s: %s" %(
-       jobname, os.getcwd()))
+       jobname, os.getcwd()), file = log)
 
     # User input of manual templates
     working_params.manual_templates_uploaded = \
         working_params.cif_filename_dict.get(working_params.jobname,[])
     if working_params.manual_templates_uploaded:
       print("Using uploaded templates %s for this run" %(
-          working_params.manual_templates_uploaded))
+          working_params.manual_templates_uploaded), file = log)
     working_params.maps_uploaded = working_params.map_filename_dict.get(
       working_params.jobname,[])
     if working_params.maps_uploaded:
       print("Using uploaded maps %s for this run" %(
-          working_params.maps_uploaded))
+          working_params.maps_uploaded), file = log)
       assert len(working_params.maps_uploaded) == 1
 
     working_params.msas_uploaded = working_params.msa_filename_dict.get(
       working_params.jobname,[]) if hasattr(working_params,'msa_filename_dict') else []
     if working_params.msas_uploaded:
       print("Using uploaded MSA %s for this run" %(
-          working_params.msas_uploaded))
+          working_params.msas_uploaded), file = log)
       assert len(working_params.msas_uploaded) == 1
 
     if working_params.debug:
-      result = run_job(params = working_params)
+      result = run_job(params = working_params, log = log)
     else: # usual
       try:
-        result = run_job(params = working_params)
+        result = run_job(params = working_params, log = log)
         if result and result.filename:
           filename = result.filename
           print(
            "FINISHED JOB (%s) %s with sequence %s and map-model CC of %.2f\n" %(
            filename, working_params.jobname, working_params.query_sequence,
            result.cc if result.cc is not None else 0.0),
-          "****************************************","\n")
+          "****************************************","\n", file = log)
+        elif result and result.msa_file_name:
+          print("FINISHED JOB (%s) %s with sequence %s (MSA obtained only)\n" %(
+           result.msa_file_name, working_params.jobname,
+            working_params.query_sequence),
+          "****************************************","\n", file = log)
         else:
           print("NO RESULT FOR JOB %s with sequence %s\n" %(
-        working_params.jobname, working_params.query_sequence),
-        "****************************************","\n")
+        working_params.jobname, working_params.query_sequence,),
+        "****************************************","\n", file = log)
 
       except Exception as e:
         print("FAILED: JOB %s with sequence %s\n\n%s\n" %(
         working_params.jobname, working_params.query_sequence, str(e)),
-        "****************************************","\n")
+        "****************************************","\n", file = log)
         result = None
     if result:
       result_list.append(result)
@@ -502,7 +507,8 @@ def get_map_to_model(map_file_name,
   return output_file_name
 
 def run_job(params = None,
-   max_alphafold_attempts = 3):
+   max_alphafold_attempts = 3,
+   log = sys.stdout):
 
   from Bio.SeqRecord import SeqRecord
   from Bio.Seq import Seq
@@ -530,10 +536,23 @@ def run_job(params = None,
     exit("You cannot specify both upload_msa_file and use_msa=False")
 
   params.msa, params.deletion_matrix, params.template_paths, \
-    params.msa_is_msa_object = get_msa(params)
+    params.msa_is_msa_object = get_msa(params, log = log)
 
+  if hasattr(params,'get_msa_only'):
+    msa_file_name = os.path.join(os.getcwd(),"%s.a3m" %(params.jobname))
+    if os.path.isfile(msa_file_name):
+      print("MSA found in %s" %(msa_file_name), file = log)
+    else:
+      print("No MSA found in %s" %(msa_file_name), file = log)
+      msa_file_name = None
+  if params.get_msa_only:
+    return group_args(
+      group_args_type = 'msa_only',
+      msa_file_name = msa_file_name,
+      filename = None)
+      
   #Process templates
-  print("PROCESSING TEMPLATES")
+  print("PROCESSING TEMPLATES", file = log)
 
   jobname = params.jobname
 
@@ -557,11 +576,11 @@ def run_job(params = None,
 
   if params.uploaded_templates_are_map_to_model and \
       params.manual_templates_uploaded: # mtm
-    print("Uploaded tempates are map to model")
+    print("Uploaded tempates are map to model", file = log)
     params.mtm_file_name = params.manual_templates_uploaded[0]
     params.manual_templates_uploaded = []
   else:
-    print("Uploaded templates are actual templates")
+    print("Uploaded templates are actual templates", file = log)
     params.mtm_file_name = "None"
 
   pdb_cif_file_list = get_cif_file_list(
@@ -569,13 +588,13 @@ def run_job(params = None,
     manual_templates_uploaded = None,
     cif_dir = cif_dir,
     other_cif_dir = other_cif_dir)
-  print("CIF files from PDB to include:",pdb_cif_file_list)
+  print("CIF files from PDB to include:",pdb_cif_file_list, file = log)
 
   manual_cif_file_list = get_cif_file_list(
     include_templates_from_pdb = False,
     manual_templates_uploaded = params.manual_templates_uploaded,
     cif_dir = cif_dir)
-  print("Uploaded CIF files to include:",manual_cif_file_list)
+  print("Uploaded CIF files to include:",manual_cif_file_list, file = log)
 
   query_seq = SeqRecord(Seq(params.query_sequence),id="query",
     name="",description="")
@@ -612,18 +631,18 @@ def run_job(params = None,
 
     # Decide if it is time to quit
     if change_is_small(params, rmsd_from_previous_cycle_list):
-      print("Ending cycles as changes are small...")
+      print("Ending cycles as changes are small...", file = log)
       break
 
 
     params.cycle = cycle
-    print("\nStarting cycle %s" %(cycle))
+    print("\nStarting cycle %s" %(cycle), file = log)
     if params.cycle == 2 and params.skip_all_msa_after_first_cycle:
-      print("Getting dummy msa for cycles after the first")
+      print("Getting dummy msa for cycles after the first", file = log)
       #Get dummy msa
       params.use_msa = False
       params.msa, params.deletion_matrix, params.template_paths, \
-        params.msa_is_msa_object = get_msa(params)
+        params.msa_is_msa_object = get_msa(params, log = log)
 
     working_cif_file_list = list(manual_cif_file_list)
     if params.cycle == 1:
@@ -631,7 +650,7 @@ def run_job(params = None,
        list(pdb_cif_file_list)[:params.maximum_templates_from_pdb]
 
     print("Templates used in this cycle: %s" %(
-        " ".join([w.as_posix() for w in working_cif_file_list])))
+        " ".join([w.as_posix() for w in working_cif_file_list])), file = log)
 
     params.template_hit_list = get_template_hit_list(
       cif_files = working_cif_file_list,
@@ -657,7 +676,7 @@ def run_job(params = None,
     if params.cycle == 1 and starting_alphafold_model and \
         os.path.isfile( starting_alphafold_model):
       print("Using %s as starting Alphafold model" %(
-        starting_alphafold_model))
+        starting_alphafold_model), file = log)
       check_and_copy(starting_alphafold_model,
         expected_cycle_model_file_name)
       result = group_args(group_args_type = 'af model read in directly',
@@ -666,7 +685,7 @@ def run_job(params = None,
     elif params.carry_on and params.output_directory and os.path.isfile(
          expected_cycle_model_file_name_in_output_dir):
       print("Reading in AlphaFold model from %s" %(
-        expected_cycle_model_file_name_in_output_dir))
+        expected_cycle_model_file_name_in_output_dir), file = log)
       result = group_args(group_args_type = 'af model read in directly',
         cycle_model_file_name = expected_cycle_model_file_name)
 
@@ -694,10 +713,12 @@ def run_job(params = None,
           except Exception as e:
             result = None
             print("AlphaFold modeling failed...trying again (#%s)" %(
-              attempt))
+              attempt), file = log)
             # get the hit list again
             params.template_hit_list = deepcopy(template_hit_list)
+          print("Done with AF cycle..", file = log)
           if result:
+            print("Done with successful AF cycle..", file = log)
             break
 
       check_and_copy(get_pae_file_name(params),
@@ -715,17 +736,18 @@ def run_job(params = None,
 
     if (not result) or (not result.cycle_model_file_name) or (
          not os.path.isfile(result.cycle_model_file_name)):
-      print("Modeling failed at cycle %s" %(cycle))
+      print("Modeling failed at cycle %s" %(cycle), file = log)
       print("You might try checking the 'carry_on' box and rerunning to go on")
       return None
 
 
     cycle_model_file_name = result.cycle_model_file_name
 
-    print("\nFinished with cycle %s of AlphaFold model generation" %(cycle))
+    print("\nFinished with cycle %s of AlphaFold model generation" %(cycle),
+        file = log)
     cycle_model_file_name = Path(cycle_model_file_name)
     print("Current AlphaFold model is in %s" %(
-        cycle_model_file_name.as_posix()))
+        cycle_model_file_name.as_posix()), file = log)
 
     if not map_file_name: # we are done (no map).  Just copy AF model
       break
@@ -737,7 +759,7 @@ def run_job(params = None,
       if rmsd_from_previous is not None:
         rmsd_from_previous_cycle_list.append(rmsd_from_previous)
         print("RMSD of predicted model from last cycle: %.2f A" %(
-          rmsd_from_previous))
+          rmsd_from_previous), file = log)
     previous_cycle_model_file_name = cycle_model_file_name
 
     if params.output_directory is not None:
@@ -746,10 +768,10 @@ def run_job(params = None,
       check_and_copy(cycle_model_file_name,
          cycle_model_file_name_in_output_dir)
       print("Copied AlphaFold model to %s" %(
-          cycle_model_file_name_in_output_dir))
+          cycle_model_file_name_in_output_dir), file = log)
 
     print("\nGetting a new rebuilt model at a resolution of %.2f A" %(
-        params.resolution))
+        params.resolution), file = log)
     # Now get a new rebuilt model
     params.cycle_model_file_name = cycle_model_file_name
     params.previous_final_model_name = previous_final_model_name
@@ -764,7 +786,7 @@ def run_job(params = None,
     if params.carry_on and params.output_directory and \
           os.path.isfile(final_model_file_name_in_output_dir):
       print("Reading rebuilt model from %s" %(
-         final_model_file_name_in_output_dir))
+         final_model_file_name_in_output_dir), file = log)
       final_model_file_name = os.path.split(
         file_name_info.rebuilt_model_name)[-1]
       check_and_copy(final_model_file_name_in_output_dir,
@@ -779,17 +801,17 @@ def run_job(params = None,
       rebuild_result = rebuild_model(params)
 
     if not rebuild_result or not rebuild_result.final_model_file_name:
-      print("No rebuilt model obtained")
+      print("No rebuilt model obtained", file = log)
       final_model_file_name = None
       cc = None
     else:
       print("Rebuilt model with map-model cc of %s obtained" %(
-         rebuild_result.cc if rebuild_result.cc is not None else 0))
+         rebuild_result.cc if rebuild_result.cc is not None else 0), file = log)
       final_model_file_name = rebuild_result.final_model_file_name
       cc = rebuild_result.cc
 
     if not final_model_file_name:
-      print("\nEnding cycles as no rebuilt model obtained")
+      print("\nEnding cycles as no rebuilt model obtained", file = log)
       break
 
     final_model_file_name = Path(final_model_file_name)
@@ -805,10 +827,10 @@ def run_job(params = None,
         check_and_copy(final_model_file_name,
           final_model_file_name_in_output_dir)
         print("Copied rebuilt model to %s" %(
-          final_model_file_name_in_output_dir))
+          final_model_file_name_in_output_dir), file = log)
       else:
         print("Rebuilt model is %s" %(
-          final_model_file_name_in_output_dir))
+          final_model_file_name_in_output_dir), file = log)
 
     # Superpose AF model on rebuilt model and write rebuilt model to std name
 
@@ -819,10 +841,10 @@ def run_job(params = None,
         params.working_directory, "%s_REBUILT_cycle_%s.pdb" %(
         jobname, params.cycle))
       check_and_copy(final_model_file_name, rebuilt_model_name)
-      print("Rebuilt model is in %s" %(rebuilt_model_name))
+      print("Rebuilt model is in %s" %(rebuilt_model_name), file = log)
 
       print("Superposing AF model %s on rebuilt model (%s)" %(
-         expected_cycle_model_file_name,final_model_file_name))
+         expected_cycle_model_file_name,final_model_file_name), file = log)
       superposed_af_model_name = os.path.join(
         params.working_directory, get_af_file_name(params))
 
@@ -832,7 +854,7 @@ def run_job(params = None,
          superposed_af_model_name))
       if os.path.isfile(superposed_af_model_name):
         print("Current superposed AF model is in %s" %(
-          superposed_af_model_name))
+          superposed_af_model_name), file = log)
       if params.output_directory is not None:
         superposed_af_model_name_in_output_dir = Path(
           os.path.join(params.output_directory,superposed_af_model_name))
@@ -874,18 +896,18 @@ def run_job(params = None,
 
     filename = zip_file_name
     if filename and os.path.isfile(filename):
-      print("About to download %s" %(filename))
+      print("About to download %s" %(filename), file = log)
       try:
-        print("Downloading zip file %s" %(filename))
+        print("Downloading zip file %s" %(filename), file = log)
         from google.colab import files
         files.download(filename)
         print(
           "Start of download successful (NOTE: if the download symbol does "+
           "not go away it did not work. Download it manually using the folder "+
-          "icon to the left)")
+          "icon to the left)", file = log)
         check_and_copy(filename, os.path.join(params.content_dir,filename))
       except Exception as e:
-        print("Unable to download zip file %s" %(filename))
+        print("Unable to download zip file %s" %(filename), file = log)
 
   else:
     filename = None
@@ -894,23 +916,31 @@ def run_job(params = None,
 
   if filename and os.path.isfile(filename):
     print("\nZIP file with results for %s is in %s" %(
-      jobname, filename))
+      jobname, filename), file = log)
 
   if final_model_file_name:
-    print("Returning final model")
+    print("Returning final model at %s" %(final_model_file_name), file = log)
     return group_args(
       group_args_type = 'rebuilding result',
       filename = os.path.abspath(final_model_file_name),
       cc = get_map_model_cc(map_file_name = map_file_name,
-        model_file_name = final_model_file_name,
-        resolution = params.resolution))
+          model_file_name = final_model_file_name,
+          resolution = params.resolution),
+      msa_file_name = msa_file_name,
+        )
   elif cycle_model_file_name:
     return group_args(
       group_args_type = 'alphafold result',
       filename = cycle_model_file_name,
+      msa_file_name = msa_file_name,
       cc = None,)
   else:
     print("No final model or alphafold model obtained")
+    return group_args(
+      group_args_type = 'alphafold result',
+      filename = None,
+      msa_file_name = msa_file_name,
+      cc = None,)
     return None
 
 def same_file(f1,f2):
