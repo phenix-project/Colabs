@@ -478,9 +478,16 @@ def get_msa(params,
     print("Templates are in %s" %(template_paths), file = log)
 
   elif params.use_msa and not a3m_lines:
-    print("Getting MSA from mmseqs2 server", file = log)
+    import time
+    t0 = time.time()
+    print("Getting MSA for %s from mmseqs2 server" %(params.jobname),
+        file = log)
     a3m_lines = cf.run_mmseqs2(params.query_sequence,
        params.jobname, params.use_env)
+    dt = time.time() - t0
+    print("Done getting MSA for %s from mmseqs2 server (%.2f sec)" %(
+       params.jobname, dt),
+        file = log)
 
   if (not params.use_msa) or not a3m_lines:
     a3m_lines = ">query sequence \n%s" %(params.query_sequence)
