@@ -550,6 +550,8 @@ def run_job(params = None,
         group_args_type = 'msa_only',
         msa_file_name = msa_file_name,
         filename = None)
+  else:
+    msa_file_name = None
 
   #Process templates
   print("PROCESSING TEMPLATES", file = log)
