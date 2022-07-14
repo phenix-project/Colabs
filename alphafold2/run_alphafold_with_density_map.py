@@ -545,12 +545,12 @@ def run_job(params = None,
     else:
       print("No MSA found in %s" %(msa_file_name), file = log)
       msa_file_name = None
-  if params.get_msa_only:
-    return group_args(
-      group_args_type = 'msa_only',
-      msa_file_name = msa_file_name,
-      filename = None)
-      
+    if params.get_msa_only:
+      return group_args(
+        group_args_type = 'msa_only',
+        msa_file_name = msa_file_name,
+        filename = None)
+
   #Process templates
   print("PROCESSING TEMPLATES", file = log)
 
