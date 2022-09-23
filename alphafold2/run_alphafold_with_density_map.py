@@ -321,8 +321,9 @@ def run_one_af_cycle(params):
   except Exception as e: # No matplotlib
     plt = None
 
+  pae_file = None
   for n,(model_name,value) in enumerate(outs.items()):
-    if n > 0: break # only do one
+    if model_name != 'model_1': continue
 
     # Write pae file
     pae_file = get_pae_file_name(params)
@@ -398,6 +399,7 @@ def run_one_af_cycle(params):
   return group_args(
     group_args_type = 'result for one cycle',
     cycle_model_file_name = cycle_model_file_name,
+    pae_file = pae_file,
     )
 
 def get_rebuilt_file_names(params):
@@ -552,6 +554,7 @@ def run_job(params = None,
       return group_args(
         group_args_type = 'msa_only',
         msa_file_name = msa_file_name,
+        pae_file_name = pae_file_name,
         filename = None)
   else:
     msa_file_name = None
@@ -932,12 +935,14 @@ def run_job(params = None,
           model_file_name = final_model_file_name,
           resolution = params.resolution),
       msa_file_name = msa_file_name,
+      pae_file_name = get_pae_file_name(params),
         )
   elif cycle_model_file_name:
     return group_args(
       group_args_type = 'alphafold result',
       filename = cycle_model_file_name,
       msa_file_name = msa_file_name,
+      pae_file_name =  get_pae_file_name(params),
       cc = None,)
   else:
     print("No final model or alphafold model obtained")
@@ -945,8 +950,8 @@ def run_job(params = None,
       group_args_type = 'alphafold result',
       filename = None,
       msa_file_name = msa_file_name,
+      pae_file_name = get_pae_file_name(params),
       cc = None,)
-    return None
 
 def same_file(f1,f2):
   if not f1 or not f2 or not os.path.isfile(f1) or not os.path.isfile(f2):
