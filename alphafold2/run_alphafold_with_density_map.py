@@ -327,6 +327,9 @@ def run_one_af_cycle(params):
     # Write pae file
     pae_file = get_pae_file_name(params)
     write_pae_file(value["pae"], pae_file)
+    if params.output_directory is not None:
+      check_and_copy(pae_file,
+         os.path.join(params.output_directory, pae_file))
 
   if plt and (not params.msa_is_msa_object):
     # gather MSA info # ZZZ This won't work with msa_is_msa_object
