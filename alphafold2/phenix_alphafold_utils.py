@@ -246,8 +246,10 @@ def upload_templates(params):
         manual_templates_uploaded.append(cif_filepath)
 
 
-  if params.get('upload_msa_file'):
+  if params.get('upload_msa_file') and params.get('use_msa'):
     print("MSA files uploaded: %s" %(msas_uploaded))
+  else:
+    assert not msas_uploaded
 
   if params.get('upload_maps'):
     print("Maps uploaded: %s" %(maps_uploaded))
@@ -336,7 +338,7 @@ def get_templates_from_drive(params):
   if params.get('upload_maps',None):
     print("Maps taken from Google drive: %s" %(len(maps_uploaded)))
 
-  if params.get('upload_msa_file',None):
+  if params.get('upload_msa_file',None) and len(msas_uploaded) > 0:
     print("MSA files taken from Google drive: %s" %(len(msas_uploaded)))
 
   print("Templates taken from Google drive: %s" %(manual_templates_uploaded))
