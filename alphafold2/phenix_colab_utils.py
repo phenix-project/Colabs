@@ -133,7 +133,7 @@ def install_alphafold(version = None, content_dir = None,
   # install dependencies
   print( "Installing biopython ...")
   if biopython:
-    runsh("pip -q install biopython dm-haiku==0.0.5 ml-collections py3Dmol")
+    runsh("pip install git+https://github.com/biopython/biopython.git dm-haiku==0.0.5 ml-collections py3Dmol")
   # download model
   if alphafold and (not os.path.isdir("alphafold")):
     print("Installing AlphaFold...")
