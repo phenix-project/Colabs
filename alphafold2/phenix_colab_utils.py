@@ -98,7 +98,7 @@ def install_software(
 
   os.chdir(content_dir)
 
-  if biopython:
+  if 0: # ZZ testing biopython:
     install_biopython()
 
   if phenix:
