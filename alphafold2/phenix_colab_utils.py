@@ -98,15 +98,17 @@ def install_software(
 
   os.chdir(content_dir)
 
+  if biopython:
+    install_biopython()
+
   if phenix:
     install_phenix(password = phenix_password, version = phenix_version)
 
   if bioconda:
     install_bioconda()
 
-  if alphafold or biopython or mmseq2:
+  if alphafold or mmseq2:
     install_alphafold(version = alphafold_version, content_dir = content_dir,
-      biopython = biopython,
       mmseq2 = mmseq2,
       alphafold = alphafold)
 
@@ -117,9 +119,12 @@ def install_software(
     run_fix_paths()
 
 
+def install_biopython():
+  # install biopython by itself along with dm collections py3Dmol
+  print( "Installing biopython ...")
+  runsh("pip install biopython dm-haiku==0.0.5 ml-collections py3Dmol")
 
 def install_alphafold(version = None, content_dir = None,
-    biopython = True,
     mmseq2 = True,
     alphafold = True,
     ):
@@ -130,10 +135,6 @@ def install_alphafold(version = None, content_dir = None,
     print("AF2 is already installed")
     return
 
-  # install dependencies
-  print( "Installing biopython ...")
-  if biopython:
-    runsh("pip install git+https://github.com/biopython/biopython.git dm-haiku==0.0.5 ml-collections py3Dmol")
   # download model
   if alphafold and (not os.path.isdir("alphafold")):
     print("Installing AlphaFold...")
