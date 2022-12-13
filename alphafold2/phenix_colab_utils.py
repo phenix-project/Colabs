@@ -179,7 +179,7 @@ def patch_alphafold():
 
   old_text = """param_axis=param_axis)"""
   new_text = """)
-      self.param_axis = None
+    self.param_axis = None
   """
 
   old_text_list.append(old_text)
