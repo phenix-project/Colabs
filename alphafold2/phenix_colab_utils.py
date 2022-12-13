@@ -175,7 +175,7 @@ def patch_alphafold():
 
   # paste in patches here.  hard-coding them
 
-  file_name = '/content/alphafold/model/common_model.py'
+  file_name = '/content/alphafold/model/common_modules.py'
 
   old_text = """
           use_fast_variance=use_fast_variance,
