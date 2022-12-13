@@ -124,6 +124,7 @@ def install_biopython():
 def install_alphafold(version = None, content_dir = None,
     mmseq2 = True,
     alphafold = True,
+    patch = True,
     ):
   assert content_dir is not None
   os.chdir(content_dir)
@@ -146,6 +147,8 @@ def install_alphafold(version = None, content_dir = None,
     dd = os.path.join(content_dir, "alphafold","common","protein.py")
     runsh("""sed -i "s/pdb_lines.append('END')//" %s""" %(dd))
     runsh("""sed -i "s/pdb_lines.append('ENDMDL')//" %s""" %(dd))
+    if patch:  # get update and patch it
+      patch_alphafold()
 
   # download model params (~1 min)
   if alphafold and (not os.path.isdir("params")):
@@ -163,6 +166,43 @@ def install_alphafold(version = None, content_dir = None,
     runsh("apt-get -qq -y update ")
     runsh("apt-get -qq -y install jq curl zlib1g gawk ")
     runsh("touch MMSEQ2_READY")
+
+def patch_alphafold():
+
+  file_name_list = []
+  old_text_list = []
+  new_text_list = []
+
+  # paste in patches here.  hard-coding them
+
+  file_name = '/content/alphafold/model/common_model.py'
+
+  old_text = """
+          use_fast_variance=use_fast_variance,
+          name=name,
+          param_axis=param_axis)
+  """
+  new_text = """
+          use_fast_variance=use_fast_variance,
+          name=name)
+      self.param_axis = None
+  """
+
+  old_text_list.append(old_text)
+  new_text_list.append(new_text)
+  file_name_list.append(file_name)
+
+
+  for file_name, old_text, new_text in zip(
+    file_name_list, old_text_list, new_text_list):
+
+    text = open(file_name).read()
+    text = text.replace(old_text, new_text)
+    print("Patching %s" %(file_name))
+    f = open(file_name,'w')
+    print(text, file = f)
+    f.close()
+
 
 
 def run_fix_paths():
