@@ -177,14 +177,8 @@ def patch_alphafold():
 
   file_name = '/content/alphafold/model/common_modules.py'
 
-  old_text = """
-          use_fast_variance=use_fast_variance,
-          name=name,
-          param_axis=param_axis)
-  """
-  new_text = """
-          use_fast_variance=use_fast_variance,
-          name=name)
+  old_text = """param_axis=param_axis)"""
+  new_text = """)
       self.param_axis = None
   """
 
