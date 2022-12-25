@@ -6,7 +6,10 @@
 ############################################
 # imports
 ############################################
-import jax
+try:
+  import jax
+except Exception as e:
+  pass
 import requests
 import hashlib
 import tarfile
@@ -62,7 +65,7 @@ def clear_mem(device="gpu"):
   '''remove all data from device'''
   backend = jax.lib.xla_bridge.get_backend(device)
   for buf in backend.live_buffers(): buf.delete()
-    
+
 ##########################################
 # call mmseqs2
 ##########################################
@@ -71,13 +74,13 @@ TQDM_BAR_FORMAT = '{l_bar}{bar}| {n_fmt}/{total_fmt} [elapsed: {elapsed} remaini
 
 def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
                 use_templates=False, filter=None, host_url="https://a3m.mmseqs.com"):
-  
-  def submit(seqs, mode, N=101):    
+
+  def submit(seqs, mode, N=101):
     n,query = N,""
-    for seq in seqs: 
+    for seq in seqs:
       query += f">{n}\n{seq}\n"
       n += 1
-      
+
     res = requests.post(f'{host_url}/ticket/msa', data={'q':query,'mode': mode})
     try: out = res.json()
     except ValueError: out = {"status":"UNKNOWN"}
@@ -92,20 +95,20 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
   def download(ID, path):
     res = requests.get(f'{host_url}/result/download/{ID}')
     with open(path,"wb") as out: out.write(res.content)
-  
+
   # process input x
   seqs = [x] if isinstance(x, str) else x
-  
+
   # compatibility to old option
   if filter is not None:
     use_filter = filter
-    
+
   # setup mode
   if use_filter:
     mode = "env" if use_env else "all"
   else:
     mode = "env-nofilter" if use_env else "nofilter"
-  
+
   # define path
   path = f"{prefix}_{mode}"
   if not os.path.isdir(path): os.mkdir(path)
@@ -113,17 +116,17 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
   # call mmseqs2 api
   tar_gz_file = f'{path}/out.tar.gz'
   N,REDO = 101,True
-  
+
   # deduplicate and keep track of order
   seqs_unique = sorted(list(set(seqs)))
   Ms = [N+seqs_unique.index(seq) for seq in seqs]
-  
+
   # lets do it!
   if not os.path.isfile(tar_gz_file):
     TIME_ESTIMATE = 150 * len(seqs_unique)
     if 1:
       while REDO:
-        
+
         # Resubmit job until it goes through
         out = submit(seqs_unique, mode, N)
         while out["status"] in ["UNKNOWN","RATELIMIT"]:
@@ -142,14 +145,14 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
         while out["status"] in ["UNKNOWN","RUNNING","PENDING"]:
           t = 5 + random.randint(0,5)
           time.sleep(t)
-          out = status(ID)    
+          out = status(ID)
           if out["status"] == "RUNNING":
             TIME += t
           #if TIME > 900 and out["status"] != "COMPLETE":
           #  # something failed on the server side, need to resubmit
           #  N += 1
           #  break
-        
+
         if out["status"] == "COMPLETE":
           if TIME < TIME_ESTIMATE:
             pass #
@@ -161,11 +164,11 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
   # prep list of a3m files
   a3m_files = [f"{path}/uniref.a3m"]
   if use_env: a3m_files.append(f"{path}/bfd.mgnify30.metaeuk30.smag30.a3m")
-  
+
   # extract a3m files
   if not os.path.isfile(a3m_files[0]):
     with tarfile.open(tar_gz_file) as tar_gz:
-      tar_gz.extractall(path)  
+      tar_gz.extractall(path)
 
   # templates
   if use_templates:
@@ -179,7 +182,7 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
       templates[M].append(pdb)
       if len(templates[M]) <= 20:
         print(f"{int(M)-N}\t{pdb}\t{qid}\t{e_value}")
-    
+
     template_paths = {}
     for k,TMPL in templates.items():
       TMPL_PATH = f"{prefix}_{mode}/templates_{k}"
@@ -191,7 +194,7 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
         os.system(f"touch {TMPL_PATH}/pdb70_cs219.ffdata")
       template_paths[k] = TMPL_PATH
 
-  # gather a3m lines  
+  # gather a3m lines
   a3m_lines = {}
   for a3m_file in a3m_files:
     update_M,M = True,None
@@ -205,12 +208,12 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
           update_M = False
           if M not in a3m_lines: a3m_lines[M] = []
         a3m_lines[M].append(line)
-  
+
   # return results
   a3m_lines = ["".join(a3m_lines[n]) for n in Ms]
-  
+
   if use_templates:
-    template_paths_ = [] 
+    template_paths_ = []
     for n in Ms:
       if n not in template_paths:
         template_paths_.append(None)
@@ -230,7 +233,7 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
 #########################################################################
 def get_hash(x):
   return hashlib.sha1(x.encode()).hexdigest()
-  
+
 def homooligomerize(msas, deletion_matrices, homooligomer=1):
  if homooligomer == 1:
   return msas, deletion_matrices
@@ -262,7 +265,7 @@ def homooligomerize_heterooligomer(msas, deletion_matrices, lengths, homooligome
   '''
   if max(homooligomers) == 1:
     return msas, deletion_matrices
-  
+
   elif len(homooligomers) == 1:
     return homooligomerize(msas, deletion_matrices, homooligomers[0])
 
@@ -324,7 +327,7 @@ def chain_break(idx_res, Ls, length=200):
   L_prev = 0
   for L_i in Ls[:-1]:
     idx_res[L_prev+L_i:] += length
-    L_prev += L_i      
+    L_prev += L_i
   return idx_res
 
 ##################################################
@@ -443,7 +446,7 @@ def read_pdb_renum(pdb_filename, Ls=None):
     new_chain = {}
     for L,c in zip(Ls, alphabet_list):
       new_chain.update({i:c for i in range(L_init,L_init+L)})
-      L_init += L  
+      L_init += L
 
   n,pdb_out = 1,[]
   resnum_,chain_ = 1,"A"
@@ -455,13 +458,13 @@ def read_pdb_renum(pdb_filename, Ls=None):
         resnum_,chain_ = resnum,chain
         n += 1
       if Ls is None: pdb_out.append("%s%4i%s" % (line[:22],n,line[26:]))
-      else: pdb_out.append("%s%s%4i%s" % (line[:21],new_chain[n-1],n,line[26:]))        
+      else: pdb_out.append("%s%s%4i%s" % (line[:21],new_chain[n-1],n,line[26:]))
   return "".join(pdb_out)
 
 def show_pdb(pred_output_path, show_sidechains=False, show_mainchains=False,
              color="lDDT", chains=None, Ls=None, vmin=50, vmax=90,
              color_HP=False, size=(800,480)):
-  
+
   if chains is None:
     chains = 1 if Ls is None else len(Ls)
 
@@ -492,7 +495,7 @@ def show_pdb(pred_output_path, show_sidechains=False, show_mainchains=False,
       view.addStyle({'and':[{'resn':"GLY"},{'atom':'CA'}]},
                     {'sphere':{'colorscheme':f"WhiteCarbon",'radius':0.3}})
       view.addStyle({'and':[{'resn':"PRO"},{'atom':['C','O'],'invert':True}]},
-                    {'stick':{'colorscheme':f"WhiteCarbon",'radius':0.3}})  
+                    {'stick':{'colorscheme':f"WhiteCarbon",'radius':0.3}})
   if show_mainchains:
     BB = ['C','O','N','CA']
     view.addStyle({'atom':BB},{'stick':{'colorscheme':f"WhiteCarbon",'radius':0.3}})
@@ -588,14 +591,14 @@ def plot_pseudo_3D(xyz, c=None, ax=None, chainbreak=5,
   # set colors
   if c is None: c = np.arange(len(seg))[::-1]
   else: c = (c[1:] + c[:-1])/2
-  c = rescale(c,cmin,cmax)  
+  c = rescale(c,cmin,cmax)
 
   if isinstance(cmap, str):
     if cmap == "gist_rainbow": c *= 0.75
     colors = matplotlib.cm.get_cmap(cmap)(c)
   else:
     colors = cmap(c)
-  
+
   if chainbreak is not None:
     dist = np.linalg.norm(xyz[:-1] - xyz[1:], axis=-1)
     colors[...,3] = (dist < chainbreak).astype(np.float)
@@ -616,7 +619,7 @@ def plot_pseudo_3D(xyz, c=None, ax=None, chainbreak=5,
     fig = ax.get_figure()
     if ax.get_xlim() == (0,1):
       set_lim = True
-      
+
   if set_lim:
     xy_min = xyz[:,:2].min() - line_w
     xy_max = xyz[:,:2].max() + line_w
@@ -624,14 +627,14 @@ def plot_pseudo_3D(xyz, c=None, ax=None, chainbreak=5,
     ax.set_ylim(xy_min,xy_max)
 
   ax.set_aspect('equal')
-    
+
   # determine linewidths
   width = fig.bbox_inches.width * ax.get_position().width
   linewidths = line_w * 72 * width / np.diff(ax.get_xlim())
 
   lines = mcoll.LineCollection(seg_xy[ord], colors=colors[ord], linewidths=linewidths,
                                path_effects=[matplotlib.patheffects.Stroke(capstyle="round")])
-  
+
   return ax.add_collection(lines)
 
 def add_text(text, ax):
@@ -639,7 +642,7 @@ def add_text(text, ax):
                   verticalalignment='bottom', transform=ax.transAxes)
 
 def plot_protein(protein=None, pos=None, plddt=None, Ls=None, dpi=100, best_view=True, line_w=2.0):
-  
+
   if protein is not None:
     pos = np.asarray(protein.atom_positions[:,1,:])
     plddt = np.asarray(protein.b_factors[:,0])
@@ -662,7 +665,7 @@ def plot_protein(protein=None, pos=None, plddt=None, Ls=None, dpi=100, best_view
     fig, ax1 = plt.subplots(1,1)
     fig.set_figwidth(3); fig.set_figheight(3)
     ax = [ax1]
-    
+
   fig.set_dpi(dpi)
   fig.subplots_adjust(top = 0.9, bottom = 0.1, right = 1, left = 0, hspace = 0, wspace = 0)
 
@@ -684,7 +687,7 @@ def plot_protein(protein=None, pos=None, plddt=None, Ls=None, dpi=100, best_view
     if len(Ls) > 40:   plot_pseudo_3D(pos, c=c, line_w=line_w, ax=ax1)
     else:              plot_pseudo_3D(pos, c=c, cmap=pymol_cmap, cmin=0, cmax=39, line_w=line_w, ax=ax1)
     add_text("colored by chain", ax1)
-    
+
   if plddt is not None:
     # color by pLDDT
     plot_pseudo_3D(pos, c=plddt, cmin=50, cmax=90, line_w=line_w, ax=ax2)
