@@ -192,7 +192,7 @@ def clean_jobname(jobname, query_sequence):
 
 def save_sequence(jobname, query_sequence):
   # save sequence as text file
-  filename = f"{jobname}.fasta"
+  filename = "{}.fasta".format(jobname)
   with open(filename, "w") as text_file:
     text_file.write(">1\n%s" % query_sequence)
   print("Saved sequence in %s: %s" %(filename, query_sequence))
@@ -723,4 +723,3 @@ class group_args:
   def copy(self):
     """ produce shallow copy of self by converting to dict and back"""
     return group_args(**self().copy())
-
