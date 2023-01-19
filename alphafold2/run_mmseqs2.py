@@ -15,22 +15,22 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
   def submit(seqs, mode, N=101):
     n,query = N,""
     for seq in seqs:
-      query += f">{n}\n{seq}\n"
+      query += ">{}\n{}\n".format(n, seq)
       n += 1
 
-    res = requests.post(f'{host_url}/ticket/msa', data={'q':query,'mode': mode})
+    res = requests.post('{}/ticket/msa'.format(host_url), data={'q':query,'mode': mode})
     try: out = res.json()
     except ValueError: out = {"status":"UNKNOWN"}
     return out
 
   def status(ID):
-    res = requests.get(f'{host_url}/ticket/{ID}')
+    res = requests.get('{}/ticket/{}'.format(host_url, ID))
     try: out = res.json()
     except ValueError: out = {"status":"UNKNOWN"}
     return out
 
   def download(ID, path):
-    res = requests.get(f'{host_url}/result/download/{ID}')
+    res = requests.get('{}/result/download/{}'.format(host_url, ID))
     with open(path,"wb") as out: out.write(res.content)
 
   # process input x
@@ -47,11 +47,11 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
     mode = "env-nofilter" if use_env else "nofilter"
 
   # define path
-  path = f"{prefix}_{mode}"
+  path = "{}_{}".format(prefix, mode)
   if not os.path.isdir(path): os.mkdir(path)
 
   # call mmseqs2 api
-  tar_gz_file = f'{path}/out.tar.gz'
+  tar_gz_file = '{}/out.tar.gz'.format(path)
   N,REDO = 101,True
 
   # deduplicate and keep track of order
@@ -72,10 +72,10 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
           out = submit(seqs_unique, mode, N)
 
         if out["status"] == "ERROR":
-          raise Exception(f'MMseqs2 API is giving errors. Please confirm your input is a valid protein sequence. If error persists, please try again an hour later.')
+          raise Exception('MMseqs2 API is giving errors. Please confirm your input is a valid protein sequence. If error persists, please try again an hour later.')
 
         if out["status"] == "MAINTENANCE":
-          raise Exception(f'MMseqs2 API is undergoing maintenance. Please try again in a few minutes.')
+          raise Exception('MMseqs2 API is undergoing maintenance. Please try again in a few minutes.')
 
         # wait for job to finish
         ID,TIME = out["id"],0
@@ -99,8 +99,8 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
       download(ID, tar_gz_file)
 
   # prep list of a3m files
-  a3m_files = [f"{path}/uniref.a3m"]
-  if use_env: a3m_files.append(f"{path}/bfd.mgnify30.metaeuk30.smag30.a3m")
+  a3m_files = ["{}/uniref.a3m".format(path)]
+  if use_env: a3m_files.append("{}/bfd.mgnify30.metaeuk30.smag30.a3m".format(path))
 
   # extract a3m files
   if not os.path.isfile(a3m_files[0]):
@@ -111,24 +111,24 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
   if use_templates:
     templates = {}
     print("seq\tpdb\tcid\tevalue")
-    for line in open(f"{path}/pdb70.m8","r"):
+    for line in open("{}/pdb70.m8".format(path),"r"):
       p = line.rstrip().split()
       M,pdb,qid,e_value = p[0],p[1],p[2],p[10]
       M = int(M)
       if M not in templates: templates[M] = []
       templates[M].append(pdb)
       if len(templates[M]) <= 20:
-        print(f"{int(M)-N}\t{pdb}\t{qid}\t{e_value}")
+        print("{}\t{}\t{}\t{}".format(int(M)-N, pdb, qid, e_value))
 
     template_paths = {}
     for k,TMPL in templates.items():
-      TMPL_PATH = f"{prefix}_{mode}/templates_{k}"
+      TMPL_PATH = "{}_{}/templates_{}".format(prefix, mode, k)
       if not os.path.isdir(TMPL_PATH):
         os.mkdir(TMPL_PATH)
         TMPL_LINE = ",".join(TMPL[:20])
-        os.system(f"curl -s https://a3m-templates.mmseqs.com/template/{TMPL_LINE} | tar xzf - -C {TMPL_PATH}/")
-        os.system(f"cp {TMPL_PATH}/pdb70_a3m.ffindex {TMPL_PATH}/pdb70_cs219.ffindex")
-        os.system(f"touch {TMPL_PATH}/pdb70_cs219.ffdata")
+        os.system("curl -s https://a3m-templates.mmseqs.com/template/{} | tar xzf - -C {}/".format(TMPL_LINE, TMPL_PATH))
+        os.system("cp {}/pdb70_a3m.ffindex {}/pdb70_cs219.ffindex".format(TMPL_PATH, TMPL_PATH))
+        os.system("touch {}/pdb70_cs219.ffdata".format(TMPL_PATH))
       template_paths[k] = TMPL_PATH
 
   # gather a3m lines
@@ -154,7 +154,7 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
     for n in Ms:
       if n not in template_paths:
         template_paths_.append(None)
-        print(f"{n-N}\tno_templates_found")
+        print("{}\tno_templates_found",format(n-N))
       else:
         template_paths_.append(template_paths[n])
     template_paths = template_paths_
@@ -163,4 +163,3 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
     return (a3m_lines[0], template_paths[0]) if use_templates else a3m_lines[0]
   else:
     return (a3m_lines, template_paths) if use_templates else a3m_lines
-
