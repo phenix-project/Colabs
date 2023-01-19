@@ -1,0 +1,17 @@
+# Compiled Python files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Temporary files
+.cache
+.pytest_cache
+
+# Text editor files
+*~
+*.swp
+.vscode
+
+# macOS 
+.DS_Store
+
