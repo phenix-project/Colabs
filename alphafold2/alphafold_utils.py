@@ -49,11 +49,11 @@ def mk_mock_template(query_sequence):
                                                                     templates.residue_constants.HHBLITS_AA_TO_ID)
   template_features = {'template_all_atom_positions': templates_all_atom_positions[None],
                        'template_all_atom_masks': templates_all_atom_masks[None],
-                       'template_sequence': [f'none'.encode()],
+                       'template_sequence': ['none'.encode()],
                        'template_aatype': np.array(templates_aatype)[None],
                        'template_confidence_scores': output_confidence_scores[None],
-                       'template_domain_names': [f'none'.encode()],
-                       'template_release_date': [f'none'.encode()]}
+                       'template_domain_names': ['none'.encode()],
+                       'template_release_date': ['none'.encode()]}
   return template_features
 
 def mk_template(a3m_lines, template_paths):
@@ -183,7 +183,7 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
         if (best_value is None) or mmm.max > best_value:
           best_value = mmm.max
           nn = list(lddt_rank)[0]
-          unrelaxed_pdb_path = f'{prefix}_current_best_{nn+1}.pdb'
+          unrelaxed_pdb_path = '{}_current_best_{}.pdb'.format(prefix, nn+1)
           with open(unrelaxed_pdb_path, 'w') as f:
             f.write(unrelaxed_pdb_lines[nn])
           print("New maximum plDDT (try %s): %.2f, saved as %s in %s" %(
@@ -232,7 +232,7 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
   out['unrelaxed_file_name_list'] = unrelaxed_file_name_list
   for n,r in enumerate(lddt_rank):
 
-    unrelaxed_pdb_path = f'{prefix}_unrelaxed_model_{n+1}.pdb'
+    unrelaxed_pdb_path = '{}_unrelaxed_model_{}.pdb'.format(prefix, n+1)
     unrelaxed_file_name_list.append(os.path.abspath(unrelaxed_pdb_path))
 
     with open(unrelaxed_pdb_path, 'w') as f: f.write(unrelaxed_pdb_lines[r])
@@ -240,7 +240,7 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
     print(f"model_{n+1} {r} {np.mean(plddts[r])} written to {unrelaxed_pdb_path}", file = log)
 
     if do_relax:
-      relaxed_pdb_path = f'{prefix}_relaxed_model_{n+1}.pdb'
+      relaxed_pdb_path = '{}_relaxed_model_{}.pdb'.format(prefix, n+1)
       with open(relaxed_pdb_path, 'w') as f: f.write(relaxed_pdb_lines[r])
       set_bfactor(relaxed_pdb_path, plddts[r], idx_res, chains)
 
