@@ -78,22 +78,22 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
   def submit(seqs, mode, N=101):
     n,query = N,""
     for seq in seqs:
-      query += f">{n}\n{seq}\n"
+      query += ">{}\n{}\n".format(n, seq)
       n += 1
 
-    res = requests.post(f'{host_url}/ticket/msa', data={'q':query,'mode': mode})
+    res = requests.post('{}/ticket/msa'.format(host_url), data={'q':query,'mode': mode})
     try: out = res.json()
     except ValueError: out = {"status":"UNKNOWN"}
     return out
 
   def status(ID):
-    res = requests.get(f'{host_url}/ticket/{ID}')
+    res = requests.get('{}/ticket/{}'.format(host_url, ID))
     try: out = res.json()
     except ValueError: out = {"status":"UNKNOWN"}
     return out
 
   def download(ID, path):
-    res = requests.get(f'{host_url}/result/download/{ID}')
+    res = requests.get('{}/result/download/{}'.format(host_url, ID))
     with open(path,"wb") as out: out.write(res.content)
 
   # process input x
@@ -110,11 +110,11 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
     mode = "env-nofilter" if use_env else "nofilter"
 
   # define path
-  path = f"{prefix}_{mode}"
+  path = "{}_{}".format(prefix, mode)
   if not os.path.isdir(path): os.mkdir(path)
 
   # call mmseqs2 api
-  tar_gz_file = f'{path}/out.tar.gz'
+  tar_gz_file = '{}/out.tar.gz'.format(path)
   N,REDO = 101,True
 
   # deduplicate and keep track of order
@@ -135,10 +135,10 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
           out = submit(seqs_unique, mode, N)
 
         if out["status"] == "ERROR":
-          raise Exception(f'MMseqs2 API is giving errors. Please confirm your input is a valid protein sequence. If error persists, please try again an hour later.')
+          raise Exception('MMseqs2 API is giving errors. Please confirm your input is a valid protein sequence. If error persists, please try again an hour later.')
 
         if out["status"] == "MAINTENANCE":
-          raise Exception(f'MMseqs2 API is undergoing maintenance. Please try again in a few minutes.')
+          raise Exception('MMseqs2 API is undergoing maintenance. Please try again in a few minutes.')
 
         # wait for job to finish
         ID,TIME = out["id"],0
@@ -162,8 +162,8 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
       download(ID, tar_gz_file)
 
   # prep list of a3m files
-  a3m_files = [f"{path}/uniref.a3m"]
-  if use_env: a3m_files.append(f"{path}/bfd.mgnify30.metaeuk30.smag30.a3m")
+  a3m_files = ["{}/uniref.a3m".format(path)]
+  if use_env: a3m_files.append("{}/bfd.mgnify30.metaeuk30.smag30.a3m".format(path))
 
   # extract a3m files
   if not os.path.isfile(a3m_files[0]):
@@ -174,24 +174,24 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
   if use_templates:
     templates = {}
     print("seq\tpdb\tcid\tevalue")
-    for line in open(f"{path}/pdb70.m8","r"):
+    for line in open("{}/pdb70.m8".format(path),"r"):
       p = line.rstrip().split()
       M,pdb,qid,e_value = p[0],p[1],p[2],p[10]
       M = int(M)
       if M not in templates: templates[M] = []
       templates[M].append(pdb)
       if len(templates[M]) <= 20:
-        print(f"{int(M)-N}\t{pdb}\t{qid}\t{e_value}")
+        print("{}\t{}\t{}\t{}".format(int(M)-N, pdb, qid, e_value))
 
     template_paths = {}
     for k,TMPL in templates.items():
-      TMPL_PATH = f"{prefix}_{mode}/templates_{k}"
+      TMPL_PATH = "{}_{}/templates_{}".format(prefix, mode, k)
       if not os.path.isdir(TMPL_PATH):
         os.mkdir(TMPL_PATH)
         TMPL_LINE = ",".join(TMPL[:20])
-        os.system(f"curl -s https://a3m-templates.mmseqs.com/template/{TMPL_LINE} | tar xzf - -C {TMPL_PATH}/")
-        os.system(f"cp {TMPL_PATH}/pdb70_a3m.ffindex {TMPL_PATH}/pdb70_cs219.ffindex")
-        os.system(f"touch {TMPL_PATH}/pdb70_cs219.ffdata")
+        os.system("curl -s https://a3m-templates.mmseqs.com/template/{} | tar xzf - -C {}/".format(TMPL_LINE, TMPL_PATH))
+        os.system("cp {}/pdb70_a3m.ffindex {}/pdb70_cs219.ffindex".format(TMPL_PATH, TMPL_PATH))
+        os.system("touch {}/pdb70_cs219.ffdata".format(TMPL_PATH))
       template_paths[k] = TMPL_PATH
 
   # gather a3m lines
@@ -217,7 +217,7 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
     for n in Ms:
       if n not in template_paths:
         template_paths_.append(None)
-        print(f"{n-N}\tno_templates_found")
+        print("{}\tno_templates_found".format(n-N))
       else:
         template_paths_.append(template_paths[n])
     template_paths = template_paths_
@@ -491,14 +491,14 @@ def show_pdb(pred_output_path, show_sidechains=False, show_mainchains=False,
                     {'stick':{'colorscheme':"yellowCarbon",'radius':0.3}})
     else:
       view.addStyle({'and':[{'resn':["GLY","PRO"],'invert':True},{'atom':BB,'invert':True}]},
-                    {'stick':{'colorscheme':f"WhiteCarbon",'radius':0.3}})
+                    {'stick':{'colorscheme':"WhiteCarbon",'radius':0.3}})
       view.addStyle({'and':[{'resn':"GLY"},{'atom':'CA'}]},
-                    {'sphere':{'colorscheme':f"WhiteCarbon",'radius':0.3}})
+                    {'sphere':{'colorscheme':"WhiteCarbon",'radius':0.3}})
       view.addStyle({'and':[{'resn':"PRO"},{'atom':['C','O'],'invert':True}]},
-                    {'stick':{'colorscheme':f"WhiteCarbon",'radius':0.3}})
+                    {'stick':{'colorscheme':"WhiteCarbon",'radius':0.3}})
   if show_mainchains:
     BB = ['C','O','N','CA']
-    view.addStyle({'atom':BB},{'stick':{'colorscheme':f"WhiteCarbon",'radius':0.3}})
+    view.addStyle({'atom':BB},{'stick':{'colorscheme':"WhiteCarbon",'radius':0.3}})
   view.zoomTo()
   return view
 
@@ -506,7 +506,7 @@ def plot_plddts(plddts, Ls=None, dpi=100, fig=True):
   if fig: plt.figure(figsize=(8,5),dpi=100)
   plt.title("Predicted lDDT per position")
   for n,plddt in enumerate(plddts):
-    plt.plot(plddt,label=f"rank_{n+1}")
+    plt.plot(plddt,label="rank_{}".format(n+1))
   if Ls is not None:
     L_prev = 0
     for L_i in Ls[:-1]:
@@ -524,7 +524,7 @@ def plot_paes(paes, Ls=None, dpi=100, fig=True):
   if fig: plt.figure(figsize=(3*num_models,2), dpi=dpi)
   for n,pae in enumerate(paes):
     plt.subplot(1,num_models,n+1)
-    plt.title(f"rank_{n+1}")
+    plt.title("rank_{}".format(n+1))
     Ln = pae.shape[0]
     plt.imshow(pae,cmap="bwr",vmin=0,vmax=30,extent=(0, Ln, Ln, 0))
     if Ls is not None and len(Ls) > 1: plot_ticks(Ls)
@@ -536,7 +536,7 @@ def plot_adjs(adjs, Ls=None, dpi=100, fig=True):
   if fig: plt.figure(figsize=(3*num_models,2), dpi=dpi)
   for n,adj in enumerate(adjs):
     plt.subplot(1,num_models,n+1)
-    plt.title(f"rank_{n+1}")
+    plt.title("rank_{}".format(n+1))
     Ln = adj.shape[0]
     plt.imshow(adj,cmap="binary",vmin=0,vmax=1,extent=(0, Ln, Ln, 0))
     if Ls is not None and len(Ls) > 1: plot_ticks(Ls)
@@ -548,7 +548,7 @@ def plot_dists(dists, Ls=None, dpi=100, fig=True):
   if fig: plt.figure(figsize=(3*num_models,2), dpi=dpi)
   for n,dist in enumerate(dists):
     plt.subplot(1,num_models,n+1)
-    plt.title(f"rank_{n+1}")
+    plt.title("rank_{}".format(n+1))
     Ln = dist.shape[0]
     plt.imshow(dist,extent=(0, Ln, Ln, 0))
     if Ls is not None and len(Ls) > 1: plot_ticks(Ls)
@@ -565,9 +565,9 @@ def kabsch(a, b, weights=None, return_v=False):
   else: weights = np.asarray(weights)
   B = np.einsum('ji,jk->ik', weights[:, None] * a, b)
   u, s, vh = np.linalg.svd(B)
-  if np.linalg.det(u @ vh) < 0: u[:, -1] = -u[:, -1]
+  if np.linalg.det(np.dot(u, vh)) < 0: u[:, -1] = -u[:, -1]
   if return_v: return u
-  else: return u @ vh
+  else: return np.dot(u, vh)
 
 def plot_pseudo_3D(xyz, c=None, ax=None, chainbreak=5,
                    cmap="gist_rainbow", line_w=2.0,
@@ -652,10 +652,10 @@ def plot_protein(protein=None, pos=None, plddt=None, Ls=None, dpi=100, best_view
     if plddt is not None:
       weights = plddt/100
       pos = pos - (pos * weights[:,None]).sum(0,keepdims=True) / weights.sum()
-      pos = pos @ kabsch(pos, pos, weights, return_v=True)
+      pos = np.dot(pos, kabsch(pos, pos, weights, return_v=True))
     else:
       pos = pos - pos.mean(0,keepdims=True)
-      pos = pos @ kabsch(pos, pos, return_v=True)
+      pos = np.dot(pos, kabsch(pos, pos, return_v=True))
 
   if plddt is not None:
     fig, (ax1, ax2) = plt.subplots(1,2)
