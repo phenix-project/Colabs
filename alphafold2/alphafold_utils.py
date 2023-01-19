@@ -68,7 +68,7 @@ def mk_template(a3m_lines, template_paths):
 
   from alphafold.data.tools import hhsearch
 
-  hhsearch_pdb70_runner = hhsearch.HHSearch(binary_path="hhsearch", databases=[f"{template_paths}/pdb70"])
+  hhsearch_pdb70_runner = hhsearch.HHSearch(binary_path="hhsearch", databases=["{}/pdb70".format(template_paths)])
 
   hhsearch_result = hhsearch_pdb70_runner.query(a3m_lines)
   hhsearch_hits = pipeline.parsers.parse_hhr(hhsearch_result)
@@ -86,7 +86,7 @@ def set_bfactor(pdb_filename, bfac, idx_res, chains):
     if line[0:6] == "ATOM  ":
       seq_id = int(line[22:26].strip()) - 1
       seq_id = np.where(idx_res == seq_id)[0][0]
-      O.write(f"{line[:21]}{chains[seq_id]}{line[22:60]}{bfac[seq_id]:6.2f}{line[66:]}")
+      O.write("{}{}{}{:6.2f}{}".format(line[:21], chains[seq_id], line[22:60], bfac[seq_id], line[66:]))
   O.close()
 
 def predict_structure(prefix, feature_dict, Ls, model_params,
@@ -130,7 +130,7 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
   from alphafold.common import protein
   for model_name, local_params in model_params.items():
     if model_name in use_model:
-      print(f"running {model_name}", file = log)
+      print("running {}".format(model_name), file = log)
       # swap params to avoid recompiling
       # note: models 1,2 have diff number of params compared to models 3,4,5
       if any(str(m) in model_name for m in [1,2]): model_runner = model_runner_1
@@ -237,14 +237,14 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
 
     with open(unrelaxed_pdb_path, 'w') as f: f.write(unrelaxed_pdb_lines[r])
     set_bfactor(unrelaxed_pdb_path, plddts[r], idx_res, chains)
-    print(f"model_{n+1} {r} {np.mean(plddts[r])} written to {unrelaxed_pdb_path}", file = log)
+    print("model_{} {} {} written to {}".format(n+1, r, np.mean(plddts[r]), unrelaxed_pdb_path), file = log)
 
     if do_relax:
       relaxed_pdb_path = '{}_relaxed_model_{}.pdb'.format(prefix, n+1)
       with open(relaxed_pdb_path, 'w') as f: f.write(relaxed_pdb_lines[r])
       set_bfactor(relaxed_pdb_path, plddts[r], idx_res, chains)
 
-    out[f"model_{n+1}"] = {"plddt":plddts[r], "pae":paes[r]}
+    out["model_{}".format(n+1)] = {"plddt":plddts[r], "pae":paes[r]}
   return out
 
 
@@ -360,7 +360,7 @@ def plot_plddt_legend():
 def plot_confidence(homooligomer,query_sequence, outs, model_num=1):
   if not plt:
     return # No plotting
-  model_name = f"model_{model_num}"
+  model_name = "model_{}".format(model_num)
   plt.figure(figsize=(10,3),dpi=100)
   """Plots the legend for plDDT."""
   #########################################
@@ -382,9 +382,9 @@ def plot_confidence(homooligomer,query_sequence, outs, model_num=1):
 
 def show_pdb(jobname, model_num=1, show_sidechains=False, show_mainchains=False, color="lDDT"):
   import py3Dmol
-  model_name = f"model_{model_num}"
+  model_name = "model_{}".format(model_num)
 
-  pdb_filename = f"{jobname}_unrelaxed_{model_name}.pdb"
+  pdb_filename = "{}_unrelaxed_{}.pdb".format(jobname, model_name)
   view = py3Dmol.view(js='https://3dmol.org/build/3Dmol.js',)
   view.addModel(open(pdb_filename,'r').read(),'pdb')
 
@@ -399,14 +399,14 @@ def show_pdb(jobname, model_num=1, show_sidechains=False, show_mainchains=False,
   if show_sidechains:
     BB = ['C','O','N']
     view.addStyle({'and':[{'resn':["GLY","PRO"],'invert':True},{'atom':BB,'invert':True}]},
-                        {'stick':{'colorscheme':f"WhiteCarbon",'radius':0.3}})
+                        {'stick':{'colorscheme':"WhiteCarbon",'radius':0.3}})
     view.addStyle({'and':[{'resn':"GLY"},{'atom':'CA'}]},
-                        {'sphere':{'colorscheme':f"WhiteCarbon",'radius':0.3}})
+                        {'sphere':{'colorscheme':"WhiteCarbon",'radius':0.3}})
     view.addStyle({'and':[{'resn':"PRO"},{'atom':['C','O'],'invert':True}]},
-                        {'stick':{'colorscheme':f"WhiteCarbon",'radius':0.3}})
+                        {'stick':{'colorscheme':"WhiteCarbon",'radius':0.3}})
   if show_mainchains:
     BB = ['C','O','N','CA']
-    view.addStyle({'atom':BB},{'stick':{'colorscheme':f"WhiteCarbon",'radius':0.3}})
+    view.addStyle({'atom':BB},{'stick':{'colorscheme':"WhiteCarbon",'radius':0.3}})
 
   view.zoomTo()
   return view
@@ -494,7 +494,7 @@ def get_msa(params,
     print("Not using any MSA information", file = log)
 
   # File for a3m
-  a3m_file = f"{params.jobname}.a3m"
+  a3m_file = "{}.a3m".format(params.jobname)
 
   with open(a3m_file, "w") as text_file:
     text_file.write(a3m_lines)
