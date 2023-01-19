@@ -249,24 +249,22 @@ def run_one_af_cycle(params):
   # gather features
   from alphafold.data import pipeline
   if params.msa_is_msa_object:
-    feature_dict = {
-      **pipeline.make_sequence_features(
+    feature_dict = {}
+    feature_dict.update(pipeline.make_sequence_features(
                   sequence=params.query_sequence*params.homooligomer,
                    description="none",
-                   num_res=len(params.query_sequence)*params.homooligomer),
-      **pipeline.make_msa_features(msas),
-      **template_features
-     }
+                   num_res=len(params.query_sequence)*params.homooligomer))
+    feature_dict.update(pipeline.make_msa_features(msas))
+    feature_dict.update(template_features)
   else: # original version
-    feature_dict = {
-      **pipeline.make_sequence_features(
+    feature_dict = {}
+    feature_dict.update(pipeline.make_sequence_features(
                   sequence=params.query_sequence*params.homooligomer,
                    description="none",
-                   num_res=len(params.query_sequence)*params.homooligomer),
-      **pipeline.make_msa_features(
-         msas=msas,deletion_matrices=deletion_matrices),
-      **template_features
-     }
+                   num_res=len(params.query_sequence)*params.homooligomer))
+    feature_dict.update(pipeline.make_msa_features(
+         msas=msas,deletion_matrices=deletion_matrices))
+    feature_dict.update(template_features)
 
 
 
@@ -898,7 +896,7 @@ def run_job(params = None,
         runsh(
         "zip -FSr %s'.result.zip'  %s*ALPHAFOLD*.pdb  %s*REBUILT*.pdb %s*PAE*.jsn  %s*PAE*.png %s*lDDT*.png" %(
            jobname,jobname,jobname,jobname,jobname,jobname))
-        zip_file_name = f"{jobname}.result.zip"
+        zip_file_name = "{}.result.zip".format(jobname)
     except Exception as e:
         zip_file_name = None
 
