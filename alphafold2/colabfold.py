@@ -77,7 +77,7 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
      host_url="https://a3m.mmseqs.com",
      templates_host_url="https://a3m-templates.mmseqs.com",
     ):
-
+  print("ZZBB", host_url, templates_host_url, use_templates)
   def submit(seqs, mode, N=101):
     n,query = N,""
     for seq in seqs:
@@ -191,12 +191,14 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
       TMPL_PATH = "{}_{}/templates_{}".format(prefix, mode, k)
       if not os.path.isdir(TMPL_PATH):
         os.mkdir(TMPL_PATH)
-        TMPL_LINE = ",".join(TMPL[:20])
-        URL_PATH = templates_host_url
-        os.system("curl -s {}/template/{} | tar xzf - -C {}/".format(URL_PATH, TMPL_LINE, TMPL_PATH))
-        os.system("cp {}/pdb70_a3m.ffindex {}/pdb70_cs219.ffindex".format(TMPL_PATH, TMPL_PATH))
-        os.system("touch {}/pdb70_cs219.ffdata".format(TMPL_PATH))
+      TMPL_LINE = ",".join(TMPL[:20])
+      URL_PATH = templates_host_url
+      print("curl -s {}/template/{} | tar xzf - -C {}/".format(URL_PATH, TMPL_LINE, TMPL_PATH))
+      os.system("curl -s {}/template/{} | tar xzf - -C {}/".format(URL_PATH, TMPL_LINE, TMPL_PATH))
+      os.system("cp {}/pdb70_a3m.ffindex {}/pdb70_cs219.ffindex".format(TMPL_PATH, TMPL_PATH))
+      os.system("touch {}/pdb70_cs219.ffdata".format(TMPL_PATH))
       template_paths[k] = TMPL_PATH
+      print("Adding template",k,template_paths[k])
 
   # gather a3m lines
   a3m_lines = {}
