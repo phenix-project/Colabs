@@ -468,7 +468,10 @@ def get_msa(params,
         params.template_search_method == 'mmseqs2':
       print("Getting templates from PDB using mmseqs2 server...", file = log)
       new_a3m_lines, template_paths = cf.run_mmseqs2(params.query_sequence,
-        params.jobname, params.use_env, use_templates=True)
+        params.jobname, params.use_env, use_templates=True,
+        host_url = params.host_url,
+        templates_host_url = params.templates_host_url)
+
       if not a3m_lines:
         a3m_lines = new_a3m_lines
         print("Using MSA from mmseqs2", file = log)

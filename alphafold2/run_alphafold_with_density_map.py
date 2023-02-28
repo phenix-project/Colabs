@@ -531,6 +531,8 @@ def run_job(params = None,
   params.use_env = True
   params.use_custom_msa = False
   params.use_templates = True
+  params.host_url="https://a3m.mmseqs.com"
+  params.templates_host_url="https://a3m-templates.mmseqs.com"
 
 
 
