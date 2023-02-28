@@ -10,7 +10,9 @@ import random
 import tarfile
 
 def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
-                use_templates=False, filter=None, host_url="https://a3m.mmseqs.com"):
+                use_templates=False, filter=None,
+               host_url="https://a3m.mmseqs.com",
+               templates_host_url="https://a3m-templates.mmseqs.com"):
 
   def submit(seqs, mode, N=101):
     n,query = N,""
@@ -126,7 +128,9 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
       if not os.path.isdir(TMPL_PATH):
         os.mkdir(TMPL_PATH)
         TMPL_LINE = ",".join(TMPL[:20])
-        os.system("curl -s https://a3m-templates.mmseqs.com/template/{} | tar xzf - -C {}/".format(TMPL_LINE, TMPL_PATH))
+        TMPL_URL = templates_host_url
+        os.system("curl -s {}/template/{} | tar xzf - -C {}/".format(TEMPL_URL,
+       TMPL_LINE, TMPL_PATH))
         os.system("cp {}/pdb70_a3m.ffindex {}/pdb70_cs219.ffindex".format(TMPL_PATH, TMPL_PATH))
         os.system("touch {}/pdb70_cs219.ffdata".format(TMPL_PATH))
       template_paths[k] = TMPL_PATH

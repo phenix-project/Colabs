@@ -486,7 +486,9 @@ def get_msa(params,
     print("Getting MSA for %s from mmseqs2 server" %(params.jobname),
         file = log)
     a3m_lines = cf.run_mmseqs2(params.query_sequence,
-       params.jobname, params.use_env)
+       params.jobname, params.use_env,
+       host_url = params.host_url,
+       templates_host_url = params.templates_host_url))
     dt = time.time() - t0
     print("Done getting MSA for %s from mmseqs2 server (%.2f sec)" %(
        params.jobname, dt),
