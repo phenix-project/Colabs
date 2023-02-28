@@ -414,6 +414,8 @@ def get_jobnames_sequences_from_file(params):
   query_sequences = []
   jobnames = []
   resolutions = []
+  include_templates_from_pdb_list = []
+  include_side_in_templates_list = []
   cif_filename_dict = {}
   map_filename_dict = {}
   msa_filename_dict = {}
@@ -421,6 +423,18 @@ def get_jobnames_sequences_from_file(params):
     print(contents.decode("UTF-8"), file = s)
     text = s.getvalue()
     for line in text.splitlines():
+      # Allow a few variables
+      if line.find('include_templates_from_pdb') > -1:
+        line = line.replace("include_templates_from_pdb","")
+        include_templates_from_pdb  = True
+      else:
+        include_templates_from_pdb  = None
+      if line.find('include_side_in_templates') > -1:
+        line = line.replace("include_side_in_templates","")
+        include_side_in_templates= True
+      else:
+        include_side_in_templates= None
+
       spl = line.split()
       if len(spl) < 2:
         pass # empty line
@@ -441,6 +455,8 @@ def get_jobnames_sequences_from_file(params):
           query_sequences.append(query_sequence)
           jobnames.append(jobname)
           resolutions.append(resolution)
+          include_templates_from_pdb_list.append(include_templates_from_pdb)
+          include_side_in_templates_list.append(include_side_in_templates)
           if uploaded_template_files:
               cif_filename_dict[jobname] = \
                 select_matching_template_files(
@@ -459,6 +475,8 @@ def get_jobnames_sequences_from_file(params):
 
   params['jobnames'] = jobnames
   params['resolutions'] = resolutions
+  params['include_side_in_templates_list'] = include_side_in_templates_list
+  params['include_templates_from_pdb_list'] = include_templates_from_pdb_list
   params['msa_filename_dict'] = msa_filename_dict
   params['map_filename_dict'] = map_filename_dict
   params['cif_filename_dict'] = cif_filename_dict
@@ -528,12 +546,16 @@ def set_up_input_files(params,
     map_filename_dict = params['map_filename_dict']
     cif_filename_dict = params['cif_filename_dict']
     query_sequences = params['query_sequences']
+    include_templates_from_pdb_list = params['include_templates_from_pdb_list']
+    include_side_in_templates_list = params['include_side_in_templates_list']
   else: # usual
     jobname = params.get('jobname',None)
     query_sequence = params.get('query_sequence',None)
     resolution = params.get('resolution',None)
     upload_manual_templates = params.get('upload_manual_templates',None)
     upload_maps = params.get('upload_maps',None)
+    include_side_in_templates_list = None
+    include_templates_from_pdb_list = None
 
     jobname = clean_jobname(jobname, query_sequence)
     query_sequence = clean_query(query_sequence)
@@ -579,10 +601,19 @@ def set_up_input_files(params,
     save_sequence(jobnames[i], query_sequences[i])
 
   if params.get('upload_maps'):
-    print("\nCurrent jobs, resolutions, sequences, templates, maps and msas:")
+    if include_templates_from_pdb_list or include_side_in_templates_list:
+      print("\nCurrent jobs, resolutions, sequences, templates, "+
+       "maps and msas, include_templates include_side_in_templates:")
+    else:
+      print("\nCurrent jobs, resolutions, sequences, templates, maps and msas:")
   else:
     print("\nCurrent jobs,  sequences templates and msas:")
-  for qs,jn,res in zip(query_sequences, jobnames, resolutions):
+  if not include_templates_from_pdb_list:
+    include_templates_from_pdb_list = len(resolutions) * [None]
+  if not include_side_in_templates_list:
+    include_side_in_templates_list = len(resolutions) * [None]
+  for qs,jn,res,inclt,incls in zip(query_sequences, jobnames, resolutions,
+       include_templates_from_pdb_list, include_side_in_templates_list):
     template_list = []
     for t in cif_filename_dict.get(jn,[]):
       template_list.append(os.path.split(str(t))[-1])
@@ -592,7 +623,10 @@ def set_up_input_files(params,
     msa_list = []
     for t in msa_filename_dict.get(jn,[]):
       msa_list.append(os.path.split(str(t))[-1])
-    print(jn, res, qs, template_list, map_list, msa_list)
+    if inclt or incls:
+      print(jn, res, qs, template_list, map_list, msa_list, inclt, incls)
+    else:
+      print(jn, res, qs, template_list, map_list, msa_list)
 
     if len(qs) < 20:
       print("\n\nMinimum sequence length is 20 residues...\n\n",
@@ -626,6 +660,8 @@ def set_up_input_files(params,
   params['msa_filename_dict'] = msa_filename_dict
   params['cif_filename_dict'] = cif_filename_dict
   params['query_sequences'] = query_sequences
+  params['include_side_in_templates_list'] = include_side_in_templates_list
+  params['include_templates_from_pdb_list'] = include_templates_from_pdb_list
 
   if params_is_dict and not convert_to_params:
     return params  # return dict version (does not require phenix)

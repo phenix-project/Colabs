@@ -41,12 +41,21 @@ def run_jobs(params, log = sys.stdout):
   print("Overall working directory: %s" %(os.getcwd()), file = log)
 
   result_list = []
-  for query_sequence, jobname, resolution in zip(
-    params.query_sequences, params.jobnames, params.resolutions):
+  for query_sequence, jobname, resolution, include_templates_from_pdb,\
+         include_side_in_templates in zip(
+    params.query_sequences, params.jobnames, params.resolutions,
+       params.include_templates_from_pdb_list if \
+         getattr(params,'include_templates_from_pdb_list',None) else \
+         len(params.jobnames) *[None],
+       params.include_side_in_templates_list if \
+         getattr(params,'include_side_in_templates_list',None) else \
+         len(params.jobnames) *[None],):
+
     os.chdir(params.content_dir)
     print("\n","****************************************","\n",
          "RUNNING JOB %s with sequence %s at resolution of %s\n" %(
-      jobname, query_sequence, resolution),
+      jobname, query_sequence, resolution,
+        include_templates_from_pdb, include_side_in_templates),
       "****************************************","\n", file = log)
     # GET TEMPLATES AND SET UP FILES
     from copy import deepcopy
@@ -54,6 +63,10 @@ def run_jobs(params, log = sys.stdout):
     working_params.query_sequence = query_sequence
     working_params.jobname = jobname
     working_params.resolution =resolution
+    if include_side_in_templates is not None:
+      working_params.include_side_in_templates = include_side_in_templates
+    if include_templates_from_pdb is not None:
+      working_params.include_templates_from_pdb = include_templates_from_pdb
 
     # We are going to work in a subdirectory
     working_params.working_directory= os.path.join(params.content_dir,
