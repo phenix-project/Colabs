@@ -53,7 +53,7 @@ def run_jobs(params, log = sys.stdout):
 
     os.chdir(params.content_dir)
     print("\n","****************************************","\n",
-         "RUNNING JOB %s with sequence %s at resolution of %s\n" %(
+         "RUNNING JOB %s with sequence %s at resolution of %s include_templates_from_pdb=%s include_side_in_templates=%s\n" %(
       jobname, query_sequence, resolution,
         include_templates_from_pdb, include_side_in_templates),
       "****************************************","\n", file = log)
