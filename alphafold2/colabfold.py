@@ -75,9 +75,8 @@ TQDM_BAR_FORMAT = '{l_bar}{bar}| {n_fmt}/{total_fmt} [elapsed: {elapsed} remaini
 def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
                 use_templates=False, filter=None,
      host_url="https://a3m.mmseqs.com",
-     templates_host_url="https://a3m-templates.mmseqs.com",
+     templates_host_url="https://api.colabfold.com",
     ):
-  print("ZZBB", host_url, templates_host_url, use_templates)
   def submit(seqs, mode, N=101):
     n,query = N,""
     for seq in seqs:

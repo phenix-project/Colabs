@@ -12,7 +12,7 @@ import tarfile
 def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
                 use_templates=False, filter=None,
                host_url="https://a3m.mmseqs.com",
-               templates_host_url="https://a3m-templates.mmseqs.com"):
+               templates_host_url="https://api.colabfold.com"):
 
   def submit(seqs, mode, N=101):
     n,query = N,""
