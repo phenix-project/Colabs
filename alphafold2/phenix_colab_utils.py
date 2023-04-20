@@ -187,6 +187,23 @@ def patch_alphafold():
   file_name_list.append(file_name)
 
 
+  old_text="""jax.Array"""
+  new_text="""jax.ShapedArray"""
+  file_name = '/content/alphafold/model/utils.py'
+  old_text_list.append(old_text)
+  new_text_list.append(new_text)
+  file_name_list.append(file_name)
+
+  old_text="""jax.Array"""
+  new_text="""jax.ShapedArray"""
+  file_name = '/content/alphafold/model/model.py'
+  old_text_list.append(old_text)
+  new_text_list.append(new_text)
+  file_name_list.append(file_name)
+
+
+
+
   for file_name, old_text, new_text in zip(
     file_name_list, old_text_list, new_text_list):
 
