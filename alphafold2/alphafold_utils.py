@@ -475,7 +475,6 @@ def get_msa(params, pdb70_text = None,
           params.query_sequence,
         params.jobname, params.use_env, use_templates=True,
         host_url = params.host_url,
-        templates_host_url = params.templates_host_url,
         pdb70_text = pdb70_text)
 
       if not a3m_lines:
@@ -494,8 +493,7 @@ def get_msa(params, pdb70_text = None,
     a3m_lines,dummy_text = run_mmseqs2(params.query_sequence,
        params.jobname, params.use_env,
        use_templates = False,
-       host_url = params.host_url,
-       templates_host_url = params.templates_host_url)
+       host_url = params.host_url)
     dt = time.time() - t0
     print("Done getting MSA for %s from mmseqs2 server (%.2f sec)" %(
        params.jobname, dt),

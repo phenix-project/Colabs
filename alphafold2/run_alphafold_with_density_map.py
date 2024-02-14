@@ -548,7 +548,6 @@ def run_job(params = None,
   params.use_custom_msa = False
   params.use_templates = True
   params.host_url="https://a3m.mmseqs.com"
-  params.templates_host_url="https://api.colabfold.com"
 
   #Get the MSA
   if params.upload_msa_file and (not params.use_msa):
