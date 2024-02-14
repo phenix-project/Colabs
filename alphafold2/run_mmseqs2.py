@@ -1,38 +1,107 @@
 # This run_mmseqs2.py is copied from:
-#    https://raw.githubusercontent.com/sokrypton/ColabFold/96fe2446f454eba38ea34ca45d97dc3f393e24ed/beta/colabfold.py
-# and edited to just contain the code for run_mmseqs2
+# https://github.com/sokrypton/ColabFold/blob/main/colabfold/colabfold.py
+# and edited to just contain the code for run_mmseqs2 and to allow
+# skipping MSA and saving the PDB file names
 # imports
 ############################################
 import requests
 import time
-import os
+import os, sys
 import random
 import tarfile
 
 def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
-                use_templates=False, filter=None,
-               host_url="https://a3m.mmseqs.com",
-               templates_host_url="https://api.colabfold.com"):
+                use_templates=False,
+                skip_msa=False,
+                pdb70_text="",
+                filter=None, use_pairing=False,
+                pairing_strategy="greedy",
+                host_url="https://api.colabfold.com",
+                user_agent="phenix/user", log = sys.stdout):
+
+  submission_endpoint = "ticket/pair" if use_pairing else "ticket/msa"
+
+  headers = {}
+  if user_agent != "":
+    headers['User-Agent'] = user_agent
+  else:
+    print("No user agent specified. Please set a user agent (e.g., 'toolname/version contact@email') to help us debug in case of problems. This warning will become an error in the future.", file = log)
 
   def submit(seqs, mode, N=101):
-    n,query = N,""
+    n, query = N, ""
     for seq in seqs:
-      query += ">{}\n{}\n".format(n, seq)
+      query += f">{n}\n{seq}\n"
       n += 1
 
-    res = requests.post('{}/ticket/msa'.format(host_url), data={'q':query,'mode': mode})
-    try: out = res.json()
-    except ValueError: out = {"status":"UNKNOWN"}
+    while True:
+      error_count = 0
+      try:
+        # https://requests.readthedocs.io/en/latest/user/advanced/#advanced
+        # "good practice to set connect timeouts to slightly larger than a multiple of 3"
+        res = requests.post(f'{host_url}/{submission_endpoint}', data={ 'q': query, 'mode': mode }, timeout=6.02, headers=headers)
+      except requests.exceptions.Timeout:
+        print("Timeout while submitting to MSA server. Retrying...", file = log)
+        continue
+      except Exception as e:
+        error_count += 1
+        print(f"Error while fetching result from MSA server. Retrying... ({error_count}/5)", file = log)
+        print(f"Error: {e}", file = log)
+        time.sleep(5)
+        if error_count > 5:
+          raise
+        continue
+      break
+
+    try:
+      out = res.json()
+    except ValueError:
+      print(f"Server didn't reply with json: {res.text}", file = log)
+      out = {"status":"ERROR"}
     return out
 
   def status(ID):
-    res = requests.get('{}/ticket/{}'.format(host_url, ID))
-    try: out = res.json()
-    except ValueError: out = {"status":"UNKNOWN"}
+    while True:
+      error_count = 0
+      try:
+        res = requests.get(f'{host_url}/ticket/{ID}', timeout=6.02, headers=headers)
+      except requests.exceptions.Timeout:
+        print("Timeout while fetching status from MSA server. Retrying...",
+          file = log)
+        continue
+      except Exception as e:
+        error_count += 1
+        print(f"Error while fetching result from MSA server. Retrying... ({error_count}/5)", file = log)
+        print(f"Error: {e}", file = log)
+        time.sleep(5)
+        if error_count > 5:
+          raise
+        continue
+      break
+    try:
+      out = res.json()
+    except ValueError:
+      print(f"Server didn't reply with json: {res.text}", file = log)
+      out = {"status":"ERROR"}
     return out
 
   def download(ID, path):
-    res = requests.get('{}/result/download/{}'.format(host_url, ID))
+    error_count = 0
+    while True:
+      try:
+        res = requests.get(f'{host_url}/result/download/{ID}', timeout=6.02, headers=headers)
+      except requests.exceptions.Timeout:
+        print("Timeout while fetching result from MSA server. Retrying...",
+          file = log)
+        continue
+      except Exception as e:
+        error_count += 1
+        print(f"Error while fetching result from MSA server. Retrying... ({error_count}/5)",  file = log)
+        print(f"Error: {e}", file = log)
+        time.sleep(5)
+        if error_count > 5:
+          raise
+        continue
+      break
     with open(path,"wb") as out: out.write(res.content)
 
   # process input x
@@ -48,41 +117,54 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
   else:
     mode = "env-nofilter" if use_env else "nofilter"
 
+  if use_pairing:
+    use_templates = False
+    use_env = False
+    mode = ""
+    # greedy is default, complete was the previous behavior
+    if pairing_strategy == "greedy":
+      mode = "pairgreedy"
+    elif pairing_strategy == "complete":
+      mode = "paircomplete"
+
   # define path
-  path = "{}_{}".format(prefix, mode)
+  path = f"{prefix}_{mode}"
   if not os.path.isdir(path): os.mkdir(path)
 
   # call mmseqs2 api
-  tar_gz_file = '{}/out.tar.gz'.format(path)
+  tar_gz_file = f'{path}/out.tar.gz'
   N,REDO = 101,True
 
   # deduplicate and keep track of order
-  seqs_unique = sorted(list(set(seqs)))
-  Ms = [N+seqs_unique.index(seq) for seq in seqs]
-
+  seqs_unique = []
+  #TODO this might be slow for large sets
+  [seqs_unique.append(x) for x in seqs if x not in seqs_unique]
+  Ms = [N + seqs_unique.index(seq) for seq in seqs]
   # lets do it!
   if not os.path.isfile(tar_gz_file):
     TIME_ESTIMATE = 150 * len(seqs_unique)
-    if 1:
-      while REDO:
+    while REDO:
 
         # Resubmit job until it goes through
         out = submit(seqs_unique, mode, N)
-        while out["status"] in ["UNKNOWN","RATELIMIT"]:
+        while out["status"] in ["UNKNOWN", "RATELIMIT"]:
+          sleep_time = 5 + random.randint(0, 5)
+          print(f"Sleeping for {sleep_time}s. Reason: {out['status']}", file = log)
           # resubmit
-          time.sleep(5 + random.randint(0,5))
+          time.sleep(sleep_time)
           out = submit(seqs_unique, mode, N)
 
         if out["status"] == "ERROR":
-          raise Exception('MMseqs2 API is giving errors. Please confirm your input is a valid protein sequence. If error persists, please try again an hour later.')
+          raise Exception(f'MMseqs2 API is giving errors. Please confirm your input is a valid protein sequence. If error persists, please try again an hour later.')
 
         if out["status"] == "MAINTENANCE":
-          raise Exception('MMseqs2 API is undergoing maintenance. Please try again in a few minutes.')
+          raise Exception(f'MMseqs2 API is undergoing maintenance. Please try again in a few minutes.')
 
         # wait for job to finish
         ID,TIME = out["id"],0
         while out["status"] in ["UNKNOWN","RUNNING","PENDING"]:
           t = 5 + random.randint(0,5)
+          print(f"Sleeping for {t}s. Reason: {out['status']}", file = log)
           time.sleep(t)
           out = status(ID)
           if out["status"] == "RUNNING":
@@ -93,46 +175,74 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
           #  break
 
         if out["status"] == "COMPLETE":
-          if TIME < TIME_ESTIMATE:
-            pass #
           REDO = False
 
-      # Download results
-      download(ID, tar_gz_file)
+        if out["status"] == "ERROR":
+          REDO = False
+          raise Exception(f'MMseqs2 API is giving errors. Please confirm your input is a valid protein sequence. If error persists, please try again an hour later.')
+
+    # Download results
+    download(ID, tar_gz_file)
 
   # prep list of a3m files
-  a3m_files = ["{}/uniref.a3m".format(path)]
-  if use_env: a3m_files.append("{}/bfd.mgnify30.metaeuk30.smag30.a3m".format(path))
+  if use_pairing:
+    a3m_files = [f"{path}/pair.a3m"]
+  else:
+    a3m_files = [f"{path}/uniref.a3m"]
+    if use_env: a3m_files.append(f"{path}/bfd.mgnify30.metaeuk30.smag30.a3m")
 
   # extract a3m files
-  if not os.path.isfile(a3m_files[0]):
+  if any(not os.path.isfile(a3m_file) for a3m_file in a3m_files):
     with tarfile.open(tar_gz_file) as tar_gz:
       tar_gz.extractall(path)
 
   # templates
+  fn = f"{path}/pdb70.m8"
+  if fn and os.path.isfile(fn) and (not pdb70_text):
+    pdb70_text = open(fn).read()
+
   if use_templates:
     templates = {}
-    print("seq\tpdb\tcid\tevalue")
-    for line in open("{}/pdb70.m8".format(path),"r"):
+    for line in pdb70_text.splitlines():
       p = line.rstrip().split()
       M,pdb,qid,e_value = p[0],p[1],p[2],p[10]
       M = int(M)
       if M not in templates: templates[M] = []
       templates[M].append(pdb)
-      if len(templates[M]) <= 20:
-        print("{}\t{}\t{}\t{}".format(int(M)-N, pdb, qid, e_value))
+      #if len(templates[M]) <= 20:
+      #  print(f"{int(M)-N}\t{pdb}\t{qid}\t{e_value}", file = log)
 
     template_paths = {}
     for k,TMPL in templates.items():
-      TMPL_PATH = "{}_{}/templates_{}".format(prefix, mode, k)
+      TMPL_PATH = f"{prefix}_{mode}/templates_{k}"
       if not os.path.isdir(TMPL_PATH):
         os.mkdir(TMPL_PATH)
         TMPL_LINE = ",".join(TMPL[:20])
-        TMPL_URL = templates_host_url
-        os.system("curl -s {}/template/{} | tar xzf - -C {}/".format(TEMPL_URL,
-       TMPL_LINE, TMPL_PATH))
-        os.system("cp {}/pdb70_a3m.ffindex {}/pdb70_cs219.ffindex".format(TMPL_PATH, TMPL_PATH))
-        os.system("touch {}/pdb70_cs219.ffdata".format(TMPL_PATH))
+        response = None
+        while True:
+          error_count = 0
+          try:
+            # https://requests.readthedocs.io/en/latest/user/advanced/#advanced
+            # "good practice to set connect timeouts to slightly larger than a multiple of 3"
+            response = requests.get(f"{host_url}/template/{TMPL_LINE}", stream=True, timeout=6.02, headers=headers)
+          except requests.exceptions.Timeout:
+            print("Timeout while submitting to template server. Retrying...",
+              file = log)
+            continue
+          except Exception as e:
+            error_count += 1
+            print(f"Error while fetching result from template server. Retrying... ({error_count}/5)", file = log)
+            print(f"Error: {e}", file = log)
+            time.sleep(5)
+            if error_count > 5:
+              raise
+            continue
+          break
+        with tarfile.open(fileobj=response.raw, mode="r|gz") as tar:
+          tar.extractall(path=TMPL_PATH)
+        os.symlink("pdb70_a3m.ffindex", f"{TMPL_PATH}/pdb70_cs219.ffindex")
+        with open(f"{TMPL_PATH}/pdb70_cs219.ffdata", "w") as f:
+          f.write("")
       template_paths[k] = TMPL_PATH
 
   # gather a3m lines
@@ -151,6 +261,7 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
         a3m_lines[M].append(line)
 
   # return results
+
   a3m_lines = ["".join(a3m_lines[n]) for n in Ms]
 
   if use_templates:
@@ -158,12 +269,15 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
     for n in Ms:
       if n not in template_paths:
         template_paths_.append(None)
-        print("{}\tno_templates_found",format(n-N))
+        #print(f"{n-N}\tno_templates_found", file = log)
       else:
         template_paths_.append(template_paths[n])
     template_paths = template_paths_
 
   if isinstance(x, str):
-    return (a3m_lines[0], template_paths[0]) if use_templates else a3m_lines[0]
+    return (a3m_lines[0], template_paths[0], pdb70_text) if use_templates else (
+    a3m_lines[0], pdb70_text)
   else:
-    return (a3m_lines, template_paths) if use_templates else a3m_lines
+    return (a3m_lines, template_paths, pdb70_text) if use_templates else (
+      a3m_lines, pdb70_text)
+

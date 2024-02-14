@@ -34,7 +34,7 @@ from alphafold_utils import (mk_mock_template,
    get_cif_file_list,
    get_template_hit_list)
 
-def run_jobs(params, log = sys.stdout):
+def run_jobs(params, pdb70_text = None, log = sys.stdout):
 
   # RUN THE JOBS HERE
   os.chdir(params.content_dir)
@@ -98,10 +98,12 @@ def run_jobs(params, log = sys.stdout):
       assert len(working_params.msas_uploaded) == 1
 
     if working_params.debug:
-      result = run_job(params = working_params, log = log)
+      result = run_job(params = working_params, pdb70_text = pdb70_text,
+         log = log)
     else: # usual
       try:
-        result = run_job(params = working_params, log = log)
+        result = run_job(params = working_params, pdb70_text = pdb70_text,
+           log = log)
         if result and result.filename:
           filename = result.filename
           print(
@@ -524,6 +526,7 @@ def get_map_to_model(map_file_name,
 
 def run_job(params = None,
    max_alphafold_attempts = 3,
+   pdb70_text = None,
    log = sys.stdout):
 
   from Bio.SeqRecord import SeqRecord
@@ -552,7 +555,8 @@ def run_job(params = None,
     exit("You cannot specify both upload_msa_file and use_msa=False")
 
   params.msa, params.deletion_matrix, params.template_paths, \
-    params.msa_is_msa_object = get_msa(params, log = log)
+    params.msa_is_msa_object = get_msa(params,
+     pdb70_text = pdb70_text, log = log)
 
   if hasattr(params,'get_msa_only'):
     msa_file_name = os.path.join(os.getcwd(),"%s.a3m" %(params.jobname))

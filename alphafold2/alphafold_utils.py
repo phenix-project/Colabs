@@ -440,7 +440,7 @@ def write_pae_file(pae_matrix, file_name,
   print("Wrote pae file to %s" %(file_name), file = log)
 
 
-def get_msa(params,
+def get_msa(params, pdb70_text = None,
     log = sys.stdout):
   import colabfold as cf
   from alphafold.data import pipeline
@@ -462,15 +462,21 @@ def get_msa(params,
   else:
     a3m_lines = None
 
+  from run_mmseqs2 import run_mmseqs2
 
   if params.include_templates_from_pdb:
     if not hasattr(params, 'template_search_method') or \
         params.template_search_method == 'mmseqs2':
-      print("Getting templates from PDB using mmseqs2 server...", file = log)
-      new_a3m_lines, template_paths = cf.run_mmseqs2(params.query_sequence,
+      if pdb70_text:
+        print("Getting templates from PDB using supplied file list", file = log)
+      else: # usual
+        print("Getting templates from PDB using mmseqs2 server...", file = log)
+      new_a3m_lines, template_paths, dummy_text = run_mmseqs2(
+          params.query_sequence,
         params.jobname, params.use_env, use_templates=True,
         host_url = params.host_url,
-        templates_host_url = params.templates_host_url)
+        templates_host_url = params.templates_host_url,
+        pdb70_text = pdb70_text)
 
       if not a3m_lines:
         a3m_lines = new_a3m_lines
@@ -485,8 +491,9 @@ def get_msa(params,
     t0 = time.time()
     print("Getting MSA for %s from mmseqs2 server" %(params.jobname),
         file = log)
-    a3m_lines = cf.run_mmseqs2(params.query_sequence,
+    a3m_lines,dummy_text = run_mmseqs2(params.query_sequence,
        params.jobname, params.use_env,
+       use_templates = False,
        host_url = params.host_url,
        templates_host_url = params.templates_host_url)
     dt = time.time() - t0
