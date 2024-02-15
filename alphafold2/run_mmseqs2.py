@@ -17,7 +17,7 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
                 filter=None, use_pairing=False,
                 pairing_strategy="greedy",
                 host_url="https://api.colabfold.com",
-                user_agent="phenix/user", log = sys.stdout):
+                user_agent="phenix/server", log = sys.stdout):
 
   submission_endpoint = "ticket/pair" if use_pairing else "ticket/msa"
 
