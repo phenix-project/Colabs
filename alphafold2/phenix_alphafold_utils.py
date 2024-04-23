@@ -495,10 +495,10 @@ def get_cif_dir(content_dir, jobname,
 
 def set_up_input_files(params,
     require_map = None,
-    convert_to_params = True):
+    convert_to_params = True,
+    log = sys.stdout):
 
   from pathlib import Path
-  import os, sys
 
   if type(params) == type ({}):
     params_is_dict = True
@@ -624,9 +624,10 @@ def set_up_input_files(params,
     for t in msa_filename_dict.get(jn,[]):
       msa_list.append(os.path.split(str(t))[-1])
     if inclt or incls:
-      print(jn, res, qs, template_list, map_list, msa_list, inclt, incls)
+      print(jn, res, qs, template_list, map_list, msa_list, inclt, incls,
+         file = log)
     else:
-      print(jn, res, qs, template_list, map_list, msa_list)
+      print(jn, res, qs, template_list, map_list, msa_list, file = log)
 
     if len(qs) < 20:
       print("\n\nMinimum sequence length is 20 residues...\n\n",
