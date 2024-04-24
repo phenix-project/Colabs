@@ -75,7 +75,7 @@ def params_as_dict(params):
     p[key] = getattr(params, key)
   return p
 
-def get_input_output_dirs(params):
+def get_input_output_dirs(params, log = sys.stdout):
   """
      Identify input directory as either a directory named with the value
      of input_directory in default directory, or as a directory with this
@@ -104,7 +104,7 @@ def get_input_output_dirs(params):
   if input_directory and os.path.isdir(input_directory):
     input_directory = Path(input_directory)
     print("Input files will be taken from %s" %(
-        input_directory))
+        input_directory), file = log)
     have_input_directory = True
   elif input_directory:
     need_google_drive = True
@@ -135,7 +135,7 @@ def get_input_output_dirs(params):
     if not os.path.isdir(input_directory):
       input_directory = os.path.join(gdrive_dir, input_directory)
     print("Input files will be taken from the folder %s" %(
-        input_directory))
+        input_directory), file = log)
     if not os.path.isdir(input_directory):
       raise Exception("Sorry, cannot find the Google drive directory %s" %(
            input_directory))
@@ -153,7 +153,7 @@ def get_input_output_dirs(params):
       full_output_dir = os.path.join(content_dir, output_dir)
     if not os.path.isdir(full_output_dir):
       os.mkdir(full_output_dir)
-    print("Output files will be copied to %s " %(output_dir))
+    print("Output files will be copied to %s " %(output_dir), file = log)
 
     full_output_dir = Path(full_output_dir)
   else:
@@ -161,19 +161,19 @@ def get_input_output_dirs(params):
 
   params['input_directory'] = os.path.abspath(input_directory)
   params['output_directory'] = os.path.abspath(full_output_dir)
-  print("Input directory: ",input_directory)
-  print("Output directory: ",full_output_dir)
+  print("Input directory: ",input_directory, file = log)
+  print("Output directory: ",full_output_dir, file = log)
   return params
 
 def add_hash(x,y):
   return x+"_"+hashlib.sha1(y.encode()).hexdigest()[:5]
 
-def clear_directories(all_dirs):
+def clear_directories(all_dirs, log = sys.stdout):
 
   for d in all_dirs:
     if d and d not in [".", Path("."),"/content",Path("/content")] \
          and d.exists():
-      print("Clearing %s" %(d))
+      print("Clearing %s" %(d), file = log)
       shutil.rmtree(d)
     d.mkdir(parents=True)
 
@@ -190,12 +190,12 @@ def clean_jobname(jobname, query_sequence):
     jobname = add_hash(jobname, query_sequence)
   return jobname
 
-def save_sequence(jobname, query_sequence):
+def save_sequence(jobname, query_sequence, log = sys.stdout):
   # save sequence as text file
   filename = "{}.fasta".format(jobname)
   with open(filename, "w") as text_file:
     text_file.write(">1\n%s" % query_sequence)
-  print("Saved sequence in %s: %s" %(filename, query_sequence))
+  print("Saved sequence in %s: %s" %(filename, query_sequence), file = log)
 
 def upload_templates(params):
   manual_templates_uploaded = []
@@ -525,7 +525,7 @@ def set_up_input_files(params,
   parent_dir = get_parent_dir(content_dir)
 
   # get input and output directories
-  params = get_input_output_dirs(params)
+  params = get_input_output_dirs(params, log = log)
   # Initialize
   query_sequences = []
   jobnames = []
@@ -576,7 +576,7 @@ def set_up_input_files(params,
         jobnames.append(jobname)
         resolutions.append(resolution)
         params['cif_dir'] = get_cif_dir(params['content_dir'], jobname)
-        clear_directories([params['cif_dir']])
+        clear_directories([params['cif_dir']], log = log)
 
         if upload_manual_templates or upload_maps \
            or params.get('upload_msa_file',None):
@@ -598,7 +598,7 @@ def set_up_input_files(params,
   # Save sequence
   for i in range(len(query_sequences)):
     # save the sequence as a file with name jobname.fasta
-    save_sequence(jobnames[i], query_sequences[i])
+    save_sequence(jobnames[i], query_sequences[i], log = log)
 
   if params.get('upload_maps'):
     if include_templates_from_pdb_list or include_side_in_templates_list:
