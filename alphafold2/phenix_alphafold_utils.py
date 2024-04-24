@@ -603,11 +603,13 @@ def set_up_input_files(params,
   if params.get('upload_maps'):
     if include_templates_from_pdb_list or include_side_in_templates_list:
       print("\nCurrent jobs, resolutions, sequences, templates, "+
-       "maps and msas, include_templates include_side_in_templates:")
+       "maps and msas, include_templates include_side_in_templates:",
+        file = log)
     else:
-      print("\nCurrent jobs, resolutions, sequences, templates, maps and msas:")
+      print("\nCurrent jobs, resolutions, sequences, templates, maps and msas:",
+       file = log)
   else:
-    print("\nCurrent jobs,  sequences templates and msas:")
+    print("\nCurrent jobs,  sequences templates and msas:", file = log)
   if not include_templates_from_pdb_list:
     include_templates_from_pdb_list = len(resolutions) * [None]
   if not include_side_in_templates_list:
