@@ -528,6 +528,7 @@ def get_templates_with_structure_search(params):
   m = generate_model()
   build = m.as_map_model_manager().model_building()
   nproc = params.nproc if hasattr(params, 'nproc') else 4
+  nproc = max(1, min(4, nproc))
   build.set_defaults(nproc = nproc)
   model_info = build.structure_search(
     number_of_models_per_input_model = params.maximum_templates_from_pdb,
