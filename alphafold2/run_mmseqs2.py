@@ -17,7 +17,8 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
                 filter=None, use_pairing=False,
                 pairing_strategy="greedy",
                 host_url="https://api.colabfold.com",
-                user_agent="phenix/server", log = sys.stdout):
+                user_agent="phenix/server",
+                log = sys.stdout):
 
   submission_endpoint = "ticket/pair" if use_pairing else "ticket/msa"
 
@@ -33,13 +34,20 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
       query += f">{n}\n{seq}\n"
       n += 1
 
+    total_tries = 0
     while True:
       error_count = 0
+      total_tries += 1
       try:
         # https://requests.readthedocs.io/en/latest/user/advanced/#advanced
         # "good practice to set connect timeouts to slightly larger than a multiple of 3"
         res = requests.post(f'{host_url}/{submission_endpoint}', data={ 'q': query, 'mode': mode }, timeout=6.02, headers=headers)
       except requests.exceptions.Timeout:
+        if total_tries > N: # give up
+          print("Unable to connect to MSA server...", file = log)
+          out = {"status":"ERROR"}
+          return out
+
         print("Timeout while submitting to MSA server. Retrying...", file = log)
         continue
       except Exception as e:

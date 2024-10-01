@@ -467,15 +467,11 @@ def get_msa(params, pdb70_text = None,
   if params.include_templates_from_pdb:
     if not hasattr(params, 'template_search_method') or \
         params.template_search_method == 'mmseqs2':
-      if pdb70_text:
-        print("Getting templates from PDB using supplied file list", file = log)
-      else: # usual
-        print("Getting templates from PDB using mmseqs2 server...", file = log)
-      new_a3m_lines, template_paths, dummy_text = run_mmseqs2(
-          params.query_sequence,
-        params.jobname, params.use_env, use_templates=True,
-        host_url = params.host_url,
-        pdb70_text = pdb70_text)
+      print("Getting templates from PDB using mmseqs2 server...", file = log)
+      new_a3m_lines, template_paths, dummy_lines= run_mmseqs2(
+            params.query_sequence,
+          params.jobname, params.use_env, use_templates=True,
+          host_url = params.host_url)
 
       if not a3m_lines:
         a3m_lines = new_a3m_lines
@@ -490,7 +486,7 @@ def get_msa(params, pdb70_text = None,
     t0 = time.time()
     print("Getting MSA for %s from mmseqs2 server" %(params.jobname),
         file = log)
-    a3m_lines,dummy_text = run_mmseqs2(params.query_sequence,
+    a3m_lines, dummy_lines= run_mmseqs2(params.query_sequence,
        params.jobname, params.use_env,
        use_templates = False,
        host_url = params.host_url)

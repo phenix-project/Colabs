@@ -1,35 +1,28 @@
 # fmt: off
-# This colabfold.py is copied from:
-#    https://raw.githubusercontent.com/sokrypton/ColabFold/96fe2446f454eba38ea34ca45d97dc3f393e24ed/beta/colabfold.py
-# and edited to remove the requirement for matplotlib and tqdm
+# @formatter:off
 
 ############################################
 # imports
 ############################################
-try:
-  import jax
-except Exception as e:
-  pass
+import jax
 import requests
 import hashlib
 import tarfile
 import time
-import pickle
 import os
-import re
+from typing import Tuple, List
 
 import random
-import tqdm.notebook
+from tqdm import tqdm
 
 import numpy as np
-try:
-  import matplotlib.pyplot as plt
-  import matplotlib
-  import matplotlib.patheffects
-  from matplotlib import collections as mcoll
-  pymol_cmap = matplotlib.colors.ListedColormap(pymol_color_list)
-except:
-  pass
+import matplotlib.pyplot as plt
+import matplotlib
+import matplotlib.patheffects
+from matplotlib import collections as mcoll
+
+import logging
+logger = logging.getLogger(__name__)
 
 try:
   import py3Dmol
@@ -44,6 +37,7 @@ pymol_color_list = ["#33ff33","#00ffff","#ff33cc","#ffff00","#ff9999","#e5e5e5",
                     "#00ff7f","#337fcc","#d8337f","#bfff3f","#ff7fff","#d8d8ff","#3fffbf","#b78c4c",
                     "#339933","#66b2b2","#ba8c84","#84bf00","#b24c66","#7f7f7f","#3f3fa5","#a5512b"]
 
+pymol_cmap = matplotlib.colors.ListedColormap(pymol_color_list)
 alphabet_list = list(ascii_uppercase+ascii_lowercase)
 
 aatypes = set('ACDEFGHIKLMNPQRSTVWY')
@@ -65,7 +59,7 @@ def clear_mem(device="gpu"):
   '''remove all data from device'''
   backend = jax.lib.xla_bridge.get_backend(device)
   for buf in backend.live_buffers(): buf.delete()
-
+    
 ##########################################
 # call mmseqs2
 ##########################################
@@ -73,29 +67,90 @@ def clear_mem(device="gpu"):
 TQDM_BAR_FORMAT = '{l_bar}{bar}| {n_fmt}/{total_fmt} [elapsed: {elapsed} remaining: {remaining}]'
 
 def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
-                use_templates=False, filter=None,
-     host_url="https://a3m.mmseqs.com",
-     templates_host_url="https://api.colabfold.com",
-    ):
+                use_templates=False, filter=None, use_pairing=False, pairing_strategy="greedy",
+                host_url="https://api.colabfold.com",
+                user_agent: str = "") -> Tuple[List[str], List[str]]:
+  submission_endpoint = "ticket/pair" if use_pairing else "ticket/msa"
+
+  headers = {}
+  if user_agent != "":
+    headers['User-Agent'] = user_agent
+  else:
+    logger.warning("No user agent specified. Please set a user agent (e.g., 'toolname/version contact@email') to help us debug in case of problems. This warning will become an error in the future.")
+
   def submit(seqs, mode, N=101):
-    n,query = N,""
+    n, query = N, ""
     for seq in seqs:
-      query += ">{}\n{}\n".format(n, seq)
+      query += f">{n}\n{seq}\n"
       n += 1
 
-    res = requests.post('{}/ticket/msa'.format(host_url), data={'q':query,'mode': mode})
-    try: out = res.json()
-    except ValueError: out = {"status":"UNKNOWN"}
+    while True:
+      error_count = 0
+      try:
+        # https://requests.readthedocs.io/en/latest/user/advanced/#advanced
+        # "good practice to set connect timeouts to slightly larger than a multiple of 3"
+        res = requests.post(f'{host_url}/{submission_endpoint}', data={ 'q': query, 'mode': mode }, timeout=6.02, headers=headers)
+      except requests.exceptions.Timeout:
+        logger.warning("Timeout while submitting to MSA server. Retrying...")
+        continue
+      except Exception as e:
+        error_count += 1
+        logger.warning(f"Error while fetching result from MSA server. Retrying... ({error_count}/5)")
+        logger.warning(f"Error: {e}")
+        time.sleep(5)
+        if error_count > 5:
+          raise
+        continue
+      break
+
+    try:
+      out = res.json()
+    except ValueError:
+      logger.error(f"Server didn't reply with json: {res.text}")
+      out = {"status":"ERROR"}
     return out
 
   def status(ID):
-    res = requests.get('{}/ticket/{}'.format(host_url, ID))
-    try: out = res.json()
-    except ValueError: out = {"status":"UNKNOWN"}
+    while True:
+      error_count = 0
+      try:
+        res = requests.get(f'{host_url}/ticket/{ID}', timeout=6.02, headers=headers)
+      except requests.exceptions.Timeout:
+        logger.warning("Timeout while fetching status from MSA server. Retrying...")
+        continue
+      except Exception as e:
+        error_count += 1
+        logger.warning(f"Error while fetching result from MSA server. Retrying... ({error_count}/5)")
+        logger.warning(f"Error: {e}")
+        time.sleep(5)
+        if error_count > 5:
+          raise
+        continue
+      break
+    try:
+      out = res.json()
+    except ValueError:
+      logger.error(f"Server didn't reply with json: {res.text}")
+      out = {"status":"ERROR"}
     return out
 
   def download(ID, path):
-    res = requests.get('{}/result/download/{}'.format(host_url, ID))
+    error_count = 0
+    while True:
+      try:
+        res = requests.get(f'{host_url}/result/download/{ID}', timeout=6.02, headers=headers)
+      except requests.exceptions.Timeout:
+        logger.warning("Timeout while fetching result from MSA server. Retrying...")
+        continue
+      except Exception as e:
+        error_count += 1
+        logger.warning(f"Error while fetching result from MSA server. Retrying... ({error_count}/5)")
+        logger.warning(f"Error: {e}")
+        time.sleep(5)
+        if error_count > 5:
+          raise
+        continue
+      break
     with open(path,"wb") as out: out.write(res.content)
 
   # process input x
@@ -111,45 +166,64 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
   else:
     mode = "env-nofilter" if use_env else "nofilter"
 
+  if use_pairing:
+    use_templates = False
+    mode = ""
+    # greedy is default, complete was the previous behavior
+    if pairing_strategy == "greedy":
+      mode = "pairgreedy"
+    elif pairing_strategy == "complete":
+      mode = "paircomplete"
+    if use_env:
+      mode = mode + "-env"
+
   # define path
-  path = "{}_{}".format(prefix, mode)
+  path = f"{prefix}_{mode}"
   if not os.path.isdir(path): os.mkdir(path)
 
   # call mmseqs2 api
-  tar_gz_file = '{}/out.tar.gz'.format(path)
+  tar_gz_file = f'{path}/out.tar.gz'
   N,REDO = 101,True
 
   # deduplicate and keep track of order
-  seqs_unique = sorted(list(set(seqs)))
-  Ms = [N+seqs_unique.index(seq) for seq in seqs]
-
+  seqs_unique = []
+  #TODO this might be slow for large sets
+  [seqs_unique.append(x) for x in seqs if x not in seqs_unique]
+  Ms = [N + seqs_unique.index(seq) for seq in seqs]
   # lets do it!
   if not os.path.isfile(tar_gz_file):
     TIME_ESTIMATE = 150 * len(seqs_unique)
-    if 1:
+    with tqdm(total=TIME_ESTIMATE, bar_format=TQDM_BAR_FORMAT) as pbar:
       while REDO:
+        pbar.set_description("SUBMIT")
 
         # Resubmit job until it goes through
         out = submit(seqs_unique, mode, N)
-        while out["status"] in ["UNKNOWN","RATELIMIT"]:
+        while out["status"] in ["UNKNOWN", "RATELIMIT"]:
+          sleep_time = 5 + random.randint(0, 5)
+          logger.error(f"Sleeping for {sleep_time}s. Reason: {out['status']}")
           # resubmit
-          time.sleep(5 + random.randint(0,5))
+          time.sleep(sleep_time)
           out = submit(seqs_unique, mode, N)
 
         if out["status"] == "ERROR":
-          raise Exception('MMseqs2 API is giving errors. Please confirm your input is a valid protein sequence. If error persists, please try again an hour later.')
+          raise Exception(f'MMseqs2 API is giving errors. Please confirm your input is a valid protein sequence. If error persists, please try again an hour later.')
 
         if out["status"] == "MAINTENANCE":
-          raise Exception('MMseqs2 API is undergoing maintenance. Please try again in a few minutes.')
+          raise Exception(f'MMseqs2 API is undergoing maintenance. Please try again in a few minutes.')
 
         # wait for job to finish
         ID,TIME = out["id"],0
+        pbar.set_description(out["status"])
         while out["status"] in ["UNKNOWN","RUNNING","PENDING"]:
           t = 5 + random.randint(0,5)
+          logger.error(f"Sleeping for {t}s. Reason: {out['status']}")
           time.sleep(t)
           out = status(ID)
+          pbar.set_description(out["status"])
           if out["status"] == "RUNNING":
             TIME += t
+            pbar.update(n=t)
           #if TIME > 900 and out["status"] != "COMPLETE":
           #  # something failed on the server side, need to resubmit
           #  N += 1
@@ -157,47 +231,72 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
 
         if out["status"] == "COMPLETE":
           if TIME < TIME_ESTIMATE:
-            pass #
+            pbar.update(n=(TIME_ESTIMATE-TIME))
           REDO = False
+
+        if out["status"] == "ERROR":
+          REDO = False
+          raise Exception(f'MMseqs2 API is giving errors. Please confirm your input is a valid protein sequence. If error persists, please try again an hour later.')
 
       # Download results
       download(ID, tar_gz_file)
 
   # prep list of a3m files
-  a3m_files = ["{}/uniref.a3m".format(path)]
-  if use_env: a3m_files.append("{}/bfd.mgnify30.metaeuk30.smag30.a3m".format(path))
+  if use_pairing:
+    a3m_files = [f"{path}/pair.a3m"]
+  else:
+    a3m_files = [f"{path}/uniref.a3m"]
+    if use_env: a3m_files.append(f"{path}/bfd.mgnify30.metaeuk30.smag30.a3m")
 
   # extract a3m files
-  if not os.path.isfile(a3m_files[0]):
+  if any(not os.path.isfile(a3m_file) for a3m_file in a3m_files):
     with tarfile.open(tar_gz_file) as tar_gz:
       tar_gz.extractall(path)
 
   # templates
   if use_templates:
     templates = {}
-    print("seq\tpdb\tcid\tevalue")
-    for line in open("{}/pdb70.m8".format(path),"r"):
+    #print("seq\tpdb\tcid\tevalue")
+    for line in open(f"{path}/pdb70.m8","r"):
       p = line.rstrip().split()
       M,pdb,qid,e_value = p[0],p[1],p[2],p[10]
       M = int(M)
       if M not in templates: templates[M] = []
       templates[M].append(pdb)
-      if len(templates[M]) <= 20:
-        print("{}\t{}\t{}\t{}".format(int(M)-N, pdb, qid, e_value))
+      #if len(templates[M]) <= 20:
+      #  print(f"{int(M)-N}\t{pdb}\t{qid}\t{e_value}")
 
     template_paths = {}
     for k,TMPL in templates.items():
-      TMPL_PATH = "{}_{}/templates_{}".format(prefix, mode, k)
+      TMPL_PATH = f"{prefix}_{mode}/templates_{k}"
       if not os.path.isdir(TMPL_PATH):
         os.mkdir(TMPL_PATH)
-      TMPL_LINE = ",".join(TMPL[:20])
-      URL_PATH = templates_host_url
-      print("curl -s {}/template/{} | tar xzf - -C {}/".format(URL_PATH, TMPL_LINE, TMPL_PATH))
-      os.system("curl -s {}/template/{} | tar xzf - -C {}/".format(URL_PATH, TMPL_LINE, TMPL_PATH))
-      os.system("cp {}/pdb70_a3m.ffindex {}/pdb70_cs219.ffindex".format(TMPL_PATH, TMPL_PATH))
-      os.system("touch {}/pdb70_cs219.ffdata".format(TMPL_PATH))
+        TMPL_LINE = ",".join(TMPL[:20])
+        response = None
+        while True:
+          error_count = 0
+          try:
+            # https://requests.readthedocs.io/en/latest/user/advanced/#advanced
+            # "good practice to set connect timeouts to slightly larger than a multiple of 3"
+            response = requests.get(f"{host_url}/template/{TMPL_LINE}", stream=True, timeout=6.02, headers=headers)
+          except requests.exceptions.Timeout:
+            logger.warning("Timeout while submitting to template server. Retrying...")
+            continue
+          except Exception as e:
+            error_count += 1
+            logger.warning(f"Error while fetching result from template server. Retrying... ({error_count}/5)")
+            logger.warning(f"Error: {e}")
+            time.sleep(5)
+            if error_count > 5:
+              raise
+            continue
+          break
+        with tarfile.open(fileobj=response.raw, mode="r|gz") as tar:
+          tar.extractall(path=TMPL_PATH)
+        os.symlink("pdb70_a3m.ffindex", f"{TMPL_PATH}/pdb70_cs219.ffindex")
+        with open(f"{TMPL_PATH}/pdb70_cs219.ffdata", "w") as f:
+          f.write("")
       template_paths[k] = TMPL_PATH
-      print("Adding template",k,template_paths[k])
 
   # gather a3m lines
   a3m_lines = {}
@@ -215,6 +314,7 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
         a3m_lines[M].append(line)
 
   # return results
+
   a3m_lines = ["".join(a3m_lines[n]) for n in Ms]
 
   if use_templates:
@@ -222,15 +322,13 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
     for n in Ms:
       if n not in template_paths:
         template_paths_.append(None)
-        print("{}\tno_templates_found".format(n-N))
+        #print(f"{n-N}\tno_templates_found")
       else:
         template_paths_.append(template_paths[n])
     template_paths = template_paths_
 
-  if isinstance(x, str):
-    return (a3m_lines[0], template_paths[0]) if use_templates else a3m_lines[0]
-  else:
-    return (a3m_lines, template_paths) if use_templates else a3m_lines
+
+  return (a3m_lines, template_paths) if use_templates else a3m_lines
 
 
 #########################################################################
@@ -238,7 +336,7 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
 #########################################################################
 def get_hash(x):
   return hashlib.sha1(x.encode()).hexdigest()
-
+  
 def homooligomerize(msas, deletion_matrices, homooligomer=1):
  if homooligomer == 1:
   return msas, deletion_matrices
@@ -270,7 +368,7 @@ def homooligomerize_heterooligomer(msas, deletion_matrices, lengths, homooligome
   '''
   if max(homooligomers) == 1:
     return msas, deletion_matrices
-
+  
   elif len(homooligomers) == 1:
     return homooligomerize(msas, deletion_matrices, homooligomers[0])
 
@@ -332,7 +430,7 @@ def chain_break(idx_res, Ls, length=200):
   L_prev = 0
   for L_i in Ls[:-1]:
     idx_res[L_prev+L_i:] += length
-    L_prev += L_i
+    L_prev += L_i      
   return idx_res
 
 ##################################################
@@ -353,7 +451,8 @@ def plot_plddt_legend(dpi=100):
   plt.axis(False)
   return plt
 
-def plot_ticks(Ls):
+def plot_ticks(Ls, axes=None):
+  if axes is None: axes = plt.gca()
   Ln = sum(Ls)
   L_prev = 0
   for L_i in Ls[:-1]:
@@ -363,7 +462,8 @@ def plot_ticks(Ls):
     plt.plot([L,L],[0,Ln],color="black")
   ticks = np.cumsum([0]+Ls)
   ticks = (ticks[1:] + ticks[:-1])/2
-  plt.yticks(ticks,alphabet_list[:len(ticks)])
+  axes.set_yticks(ticks)
+  axes.set_yticklabels(alphabet_list[:len(ticks)])
 
 def plot_confidence(plddt, pae=None, Ls=None, dpi=100):
   use_ptm = False if pae is None else True
@@ -393,32 +493,33 @@ def plot_confidence(plddt, pae=None, Ls=None, dpi=100):
     plt.ylabel('Aligned residue')
   return plt
 
-def plot_msas(msas, ori_seq=None, sort_by_seqid=True, deduplicate=True, dpi=100, return_plt=True):
+def plot_msas(msa, ori_seq=None, sort_by_seqid=True, deduplicate=True, dpi=100, return_plt=True):
   '''
   plot the msas
   '''
-  if ori_seq is None: ori_seq = msas[0][0]
+  if ori_seq is None: ori_seq = msa[0]
   seqs = ori_seq.replace("/","").split(":")
   seqs_dash = ori_seq.replace(":","").split("/")
 
   Ln = np.cumsum(np.append(0,[len(seq) for seq in seqs]))
   Ln_dash = np.cumsum(np.append(0,[len(seq) for seq in seqs_dash]))
   Nn,lines = [],[]
-  for msa in msas:
-    msa_ = set(msa) if deduplicate else msa
-    if len(msa_) > 0:
-      Nn.append(len(msa_))
-      msa_ = np.asarray([list(seq) for seq in msa_])
-      gap_ = msa_ != "-"
-      qid_ = msa_ == np.array(list("".join(seqs)))
-      gapid = np.stack([gap_[:,Ln[i]:Ln[i+1]].max(-1) for i in range(len(seqs))],-1)
-      seqid = np.stack([qid_[:,Ln[i]:Ln[i+1]].mean(-1) for i in range(len(seqs))],-1).sum(-1) / (gapid.sum(-1) + 1e-8)
-      non_gaps = gap_.astype(np.float)
-      non_gaps[non_gaps == 0] = np.nan
-      if sort_by_seqid:
-        lines.append(non_gaps[seqid.argsort()]*seqid[seqid.argsort(),None])
-      else:
-        lines.append(non_gaps[::-1] * seqid[::-1,None])
+  #for msa in msas:
+  #msa_ = set(msa) if deduplicate else msa
+  msa_ = msa
+  if len(msa_) > 0:
+    Nn.append(len(msa_))
+    msa_ = np.asarray([list(seq) for seq in msa_])
+    gap_ = msa_ != "-"
+    qid_ = msa_ == np.array(list("".join(seqs)))
+    gapid = np.stack([gap_[:,Ln[i]:Ln[i+1]].max(-1) for i in range(len(seqs))],-1)
+    seqid = np.stack([qid_[:,Ln[i]:Ln[i+1]].mean(-1) for i in range(len(seqs))],-1).sum(-1) / (gapid.sum(-1) + 1e-8)
+    non_gaps = gap_.astype(float)
+    non_gaps[non_gaps == 0] = np.nan
+    if sort_by_seqid:
+      lines.append(non_gaps[seqid.argsort()]*seqid[seqid.argsort(),None])
+    else:
+      lines.append(non_gaps[::-1] * seqid[::-1,None])
 
   Nn = np.cumsum(np.append(0,Nn))
   lines = np.concatenate(lines,0)
@@ -451,7 +552,7 @@ def read_pdb_renum(pdb_filename, Ls=None):
     new_chain = {}
     for L,c in zip(Ls, alphabet_list):
       new_chain.update({i:c for i in range(L_init,L_init+L)})
-      L_init += L
+      L_init += L  
 
   n,pdb_out = 1,[]
   resnum_,chain_ = 1,"A"
@@ -463,13 +564,13 @@ def read_pdb_renum(pdb_filename, Ls=None):
         resnum_,chain_ = resnum,chain
         n += 1
       if Ls is None: pdb_out.append("%s%4i%s" % (line[:22],n,line[26:]))
-      else: pdb_out.append("%s%s%4i%s" % (line[:21],new_chain[n-1],n,line[26:]))
+      else: pdb_out.append("%s%s%4i%s" % (line[:21],new_chain[n-1],n,line[26:]))        
   return "".join(pdb_out)
 
 def show_pdb(pred_output_path, show_sidechains=False, show_mainchains=False,
              color="lDDT", chains=None, Ls=None, vmin=50, vmax=90,
              color_HP=False, size=(800,480)):
-
+  
   if chains is None:
     chains = 1 if Ls is None else len(Ls)
 
@@ -496,22 +597,22 @@ def show_pdb(pred_output_path, show_sidechains=False, show_mainchains=False,
                     {'stick':{'colorscheme':"yellowCarbon",'radius':0.3}})
     else:
       view.addStyle({'and':[{'resn':["GLY","PRO"],'invert':True},{'atom':BB,'invert':True}]},
-                    {'stick':{'colorscheme':"WhiteCarbon",'radius':0.3}})
+                    {'stick':{'colorscheme':f"WhiteCarbon",'radius':0.3}})
       view.addStyle({'and':[{'resn':"GLY"},{'atom':'CA'}]},
-                    {'sphere':{'colorscheme':"WhiteCarbon",'radius':0.3}})
+                    {'sphere':{'colorscheme':f"WhiteCarbon",'radius':0.3}})
       view.addStyle({'and':[{'resn':"PRO"},{'atom':['C','O'],'invert':True}]},
-                    {'stick':{'colorscheme':"WhiteCarbon",'radius':0.3}})
+                    {'stick':{'colorscheme':f"WhiteCarbon",'radius':0.3}})
   if show_mainchains:
     BB = ['C','O','N','CA']
-    view.addStyle({'atom':BB},{'stick':{'colorscheme':"WhiteCarbon",'radius':0.3}})
+    view.addStyle({'atom':BB},{'stick':{'colorscheme':f"WhiteCarbon",'radius':0.3}})
   view.zoomTo()
   return view
 
 def plot_plddts(plddts, Ls=None, dpi=100, fig=True):
-  if fig: plt.figure(figsize=(8,5),dpi=100)
+  if fig: plt.figure(figsize=(8,5),dpi=dpi)
   plt.title("Predicted lDDT per position")
   for n,plddt in enumerate(plddts):
-    plt.plot(plddt,label="rank_{}".format(n+1))
+    plt.plot(plddt,label=f"rank_{n+1}")
   if Ls is not None:
     L_prev = 0
     for L_i in Ls[:-1]:
@@ -528,20 +629,23 @@ def plot_paes(paes, Ls=None, dpi=100, fig=True):
   num_models = len(paes)
   if fig: plt.figure(figsize=(3*num_models,2), dpi=dpi)
   for n,pae in enumerate(paes):
-    plt.subplot(1,num_models,n+1)
-    plt.title("rank_{}".format(n+1))
-    Ln = pae.shape[0]
-    plt.imshow(pae,cmap="bwr",vmin=0,vmax=30,extent=(0, Ln, Ln, 0))
-    if Ls is not None and len(Ls) > 1: plot_ticks(Ls)
-    plt.colorbar()
+    axes = plt.subplot(1,num_models,n+1)
+    plot_pae(pae, axes, caption = f"rank_{n+1}", Ls=Ls)
   return plt
+
+def plot_pae(pae, axes, caption='PAE', caption_pad=None, Ls=None, colorkey_size=1.0):
+  axes.set_title(caption, pad=caption_pad)
+  Ln = pae.shape[0]
+  image = axes.imshow(pae,cmap="bwr",vmin=0,vmax=30,extent=(0, Ln, Ln, 0))
+  if Ls is not None and len(Ls) > 1: plot_ticks(Ls, axes=axes)
+  plt.colorbar(mappable=image, ax=axes, shrink=colorkey_size)
 
 def plot_adjs(adjs, Ls=None, dpi=100, fig=True):
   num_models = len(adjs)
   if fig: plt.figure(figsize=(3*num_models,2), dpi=dpi)
   for n,adj in enumerate(adjs):
     plt.subplot(1,num_models,n+1)
-    plt.title("rank_{}".format(n+1))
+    plt.title(f"rank_{n+1}")
     Ln = adj.shape[0]
     plt.imshow(adj,cmap="binary",vmin=0,vmax=1,extent=(0, Ln, Ln, 0))
     if Ls is not None and len(Ls) > 1: plot_ticks(Ls)
@@ -553,7 +657,7 @@ def plot_dists(dists, Ls=None, dpi=100, fig=True):
   if fig: plt.figure(figsize=(3*num_models,2), dpi=dpi)
   for n,dist in enumerate(dists):
     plt.subplot(1,num_models,n+1)
-    plt.title("rank_{}".format(n+1))
+    plt.title(f"rank_{n+1}")
     Ln = dist.shape[0]
     plt.imshow(dist,extent=(0, Ln, Ln, 0))
     if Ls is not None and len(Ls) > 1: plot_ticks(Ls)
@@ -564,15 +668,15 @@ def plot_dists(dists, Ls=None, dpi=100, fig=True):
 ##########################################################################
 
 def kabsch(a, b, weights=None, return_v=False):
-  a = np.asarray(a)
-  b = np.asarray(b)
+  a = np.asarray(a,float)
+  b = np.asarray(b,float)
   if weights is None: weights = np.ones(len(b))
-  else: weights = np.asarray(weights)
+  else: weights = np.asarray(weights,float)
   B = np.einsum('ji,jk->ik', weights[:, None] * a, b)
   u, s, vh = np.linalg.svd(B)
-  if np.linalg.det(np.dot(u, vh)) < 0: u[:, -1] = -u[:, -1]
+  if np.linalg.det(u @ vh) < 0: u[:, -1] = -u[:, -1]
   if return_v: return u
-  else: return np.dot(u, vh)
+  else: return u @ vh
 
 def plot_pseudo_3D(xyz, c=None, ax=None, chainbreak=5,
                    cmap="gist_rainbow", line_w=2.0,
@@ -596,17 +700,17 @@ def plot_pseudo_3D(xyz, c=None, ax=None, chainbreak=5,
   # set colors
   if c is None: c = np.arange(len(seg))[::-1]
   else: c = (c[1:] + c[:-1])/2
-  c = rescale(c,cmin,cmax)
+  c = rescale(c,cmin,cmax)  
 
   if isinstance(cmap, str):
     if cmap == "gist_rainbow": c *= 0.75
     colors = matplotlib.cm.get_cmap(cmap)(c)
   else:
     colors = cmap(c)
-
+  
   if chainbreak is not None:
     dist = np.linalg.norm(xyz[:-1] - xyz[1:], axis=-1)
-    colors[...,3] = (dist < chainbreak).astype(np.float)
+    colors[...,3] = (dist < chainbreak).astype(float)
 
   # add shade/tint based on z-dimension
   z = rescale(seg_z,zmin,zmax)[:,None]
@@ -624,7 +728,7 @@ def plot_pseudo_3D(xyz, c=None, ax=None, chainbreak=5,
     fig = ax.get_figure()
     if ax.get_xlim() == (0,1):
       set_lim = True
-
+      
   if set_lim:
     xy_min = xyz[:,:2].min() - line_w
     xy_max = xyz[:,:2].max() + line_w
@@ -632,35 +736,29 @@ def plot_pseudo_3D(xyz, c=None, ax=None, chainbreak=5,
     ax.set_ylim(xy_min,xy_max)
 
   ax.set_aspect('equal')
-
+    
   # determine linewidths
   width = fig.bbox_inches.width * ax.get_position().width
   linewidths = line_w * 72 * width / np.diff(ax.get_xlim())
 
   lines = mcoll.LineCollection(seg_xy[ord], colors=colors[ord], linewidths=linewidths,
                                path_effects=[matplotlib.patheffects.Stroke(capstyle="round")])
-
+  
   return ax.add_collection(lines)
 
 def add_text(text, ax):
   return plt.text(0.5, 1.01, text, horizontalalignment='center',
                   verticalalignment='bottom', transform=ax.transAxes)
 
-def plot_protein(protein=None, pos=None, plddt=None, Ls=None, dpi=100, best_view=True, line_w=2.0):
-
+def plot_protein(protein=None, pos=None, plddt=None, Ls=None,
+                 dpi=100, best_view=True, line_w=2.0):
+  
   if protein is not None:
     pos = np.asarray(protein.atom_positions[:,1,:])
     plddt = np.asarray(protein.b_factors[:,0])
 
-  # get best view
   if best_view:
-    if plddt is not None:
-      weights = plddt/100
-      pos = pos - (pos * weights[:,None]).sum(0,keepdims=True) / weights.sum()
-      pos = np.dot(pos, kabsch(pos, pos, weights, return_v=True))
-    else:
-      pos = pos - pos.mean(0,keepdims=True)
-      pos = np.dot(pos, kabsch(pos, pos, return_v=True))
+    pos = protein_best_view(pos, plddt=plddt)
 
   if plddt is not None:
     fig, (ax1, ax2) = plt.subplots(1,2)
@@ -670,32 +768,65 @@ def plot_protein(protein=None, pos=None, plddt=None, Ls=None, dpi=100, best_view
     fig, ax1 = plt.subplots(1,1)
     fig.set_figwidth(3); fig.set_figheight(3)
     ax = [ax1]
-
+    
   fig.set_dpi(dpi)
   fig.subplots_adjust(top = 0.9, bottom = 0.1, right = 1, left = 0, hspace = 0, wspace = 0)
 
-  xy_min = pos[...,:2].min() - line_w
-  xy_max = pos[...,:2].max() + line_w
-  for a in ax:
-    a.set_xlim(xy_min, xy_max)
-    a.set_ylim(xy_min, xy_max)
-    a.axis(False)
-
   if Ls is None or len(Ls) == 1:
     # color N->C
-    c = np.arange(len(pos))[::-1]
-    plot_pseudo_3D(pos,  line_w=line_w, ax=ax1)
+    plot_protein_backbone(pos=pos, coloring='N-C', best_view=False, line_w=line_w, axes=ax1)
     add_text("colored by N→C", ax1)
   else:
     # color by chain
-    c = np.concatenate([[n]*L for n,L in enumerate(Ls)])
-    if len(Ls) > 40:   plot_pseudo_3D(pos, c=c, line_w=line_w, ax=ax1)
-    else:              plot_pseudo_3D(pos, c=c, cmap=pymol_cmap, cmin=0, cmax=39, line_w=line_w, ax=ax1)
+    plot_protein_backbone(pos=pos, coloring='chain', best_view=False, Ls=Ls, line_w=line_w, axes=ax1)
     add_text("colored by chain", ax1)
-
+    
   if plddt is not None:
     # color by pLDDT
-    plot_pseudo_3D(pos, c=plddt, cmin=50, cmax=90, line_w=line_w, ax=ax2)
+    plot_protein_backbone(pos=pos, coloring='plddt', best_view=False, plddt=plddt, line_w=line_w, axes=ax2)
     add_text("colored by pLDDT", ax2)
 
   return fig
+
+def protein_best_view(pos, plddt=None):
+  if plddt is not None:
+    weights = plddt/100
+    pos = pos - (pos * weights[:,None]).sum(0,keepdims=True) / weights.sum()
+    pos = pos @ kabsch(pos, pos, weights, return_v=True)
+  else:
+    pos = pos - pos.mean(0,keepdims=True)
+    pos = pos @ kabsch(pos, pos, return_v=True)
+  return pos
+
+def plot_protein_backbone(protein=None, pos=None, plddt=None,
+                          axes=None, coloring='plddt', Ls=None,
+                          best_view=True, line_w=2.0):
+  import numpy as np
+  if protein is not None:
+    if pos is None:
+      pos = np.asarray(protein.atom_positions[:,1,:])
+    if plddt is None:
+      plddt = np.asarray(protein.b_factors[:,0])
+
+  if best_view:
+    pos = protein_best_view(pos, plddt=plddt)
+    
+  xy_min = pos[...,:2].min() - line_w
+  xy_max = pos[...,:2].max() + line_w
+  axes.set_xlim(xy_min, xy_max)
+  axes.set_ylim(xy_min, xy_max)
+  axes.axis(False)
+
+  if coloring == 'N-C':
+    # color N->C
+    plot_pseudo_3D(pos,  line_w=line_w, ax=axes)
+  elif coloring == 'plddt':
+    # color by pLDDT
+    plot_pseudo_3D(pos, c=plddt, cmin=50, cmax=90, line_w=line_w, ax=axes)
+  elif coloring == 'chain':
+    # color by chain
+    c = np.concatenate([[n]*L for n,L in enumerate(Ls)])
+    nchain = len(Ls)
+    if nchain > 40:   plot_pseudo_3D(pos, c=c, line_w=line_w, ax=axes)
+    else:             plot_pseudo_3D(pos, c=c, cmap=pymol_cmap, cmin=0, cmax=39,
+                                     line_w=line_w, ax=axes)
