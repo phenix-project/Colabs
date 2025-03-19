@@ -228,12 +228,12 @@ def predict_structure(prefix, feature_dict, Ls, model_params,
   lddt_rank = np.mean(plddts,-1).argsort()[::-1]
   out = {}
   print("Reranking models based on avg. predicted lDDT", file = log)
-  unrelaxed_file_name_list = []
-  out['unrelaxed_file_name_list'] = unrelaxed_file_name_list
+  unrelaxed_file_name_list = []                       # PDB OK
+  out['unrelaxed_file_name_list'] = unrelaxed_file_name_list # PDB OK
   for n,r in enumerate(lddt_rank):
 
     unrelaxed_pdb_path = '{}_unrelaxed_model_{}.pdb'.format(prefix, n+1)
-    unrelaxed_file_name_list.append(os.path.abspath(unrelaxed_pdb_path))
+    unrelaxed_file_name_list.append(os.path.abspath(unrelaxed_pdb_path)) # PDB OK
 
     with open(unrelaxed_pdb_path, 'w') as f: f.write(unrelaxed_pdb_lines[r])
     set_bfactor(unrelaxed_pdb_path, plddts[r], idx_res, chains)
@@ -384,9 +384,9 @@ def show_pdb(jobname, model_num=1, show_sidechains=False, show_mainchains=False,
   import py3Dmol
   model_name = "model_{}".format(model_num)
 
-  pdb_filename = "{}_unrelaxed_{}.pdb".format(jobname, model_name)
+  pdb_filename = "{}_unrelaxed_{}.pdb".format(jobname, model_name) # PDB OK
   view = py3Dmol.view(js='https://3dmol.org/build/3Dmol.js',)
-  view.addModel(open(pdb_filename,'r').read(),'pdb')
+  view.addModel(open(pdb_filename,'r').read(),'pdb')   # PDB OK
 
   if color == "lDDT":
     view.setStyle({'cartoon': {'colorscheme': {'prop':'b','gradient': 'roygb','min':50,'max':90}}})
@@ -545,13 +545,13 @@ def get_templates_with_structure_search(params):
       pdb_id = "%s_%s" %(m.info().pdb_id,m.info().chain_id) if \
           m.info() and m.info().get('pdb_id') and m.info().get('chain_id')\
           else 'model_%s' %(i)
-      file_name = os.path.join(other_cif_dir,"%s.pdb" %(pdb_id))
-      f = open(file_name, 'w')
-      print(m.model_as_pdb(), file = f)
+      file_name = os.path.join(other_cif_dir,"%s.pdb" %(pdb_id)) # PDB OK
+      f = open(file_name, 'w')                        # PDB OK
+      print(m.model_as_pdb(), file = f)          # PDB OK
       f.close()
-      cif_filename = run_pdb_to_cif(file_name,
-           content_dir = params.content_dir)
-      os.remove(file_name)
+      cif_filename = run_pdb_to_cif(file_name,        # PDB OK
+           content_dir = params.content_dir)           # PDB OK
+      os.remove(file_name)                            # PDB OK
     return other_cif_dir
 
 

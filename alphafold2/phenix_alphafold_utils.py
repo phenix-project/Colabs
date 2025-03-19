@@ -422,7 +422,7 @@ def get_jobnames_sequences_from_file(params):
   for filename,contents in uploaded_job_file.items():
     print(contents.decode("UTF-8"), file = s)
     text = s.getvalue()
-    for line in text.splitlines():
+    for line in text.splitlines():                 # PDB OK
       # Allow a few variables
       if line.find('include_templates_from_pdb') > -1:
         line = line.replace("include_templates_from_pdb","")

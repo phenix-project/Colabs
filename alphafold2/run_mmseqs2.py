@@ -211,7 +211,7 @@ def run_mmseqs2(x, prefix, use_env=True, use_filter=True,
 
   if use_templates:
     templates = {}
-    for line in pdb70_text.splitlines():
+    for line in pdb70_text.splitlines():           # PDB OK
       p = line.rstrip().split()
       M,pdb,qid,e_value = p[0],p[1],p[2],p[10]
       M = int(M)

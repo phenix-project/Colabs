@@ -310,18 +310,18 @@ def run_one_af_cycle(params):
 
   os.chdir(params.working_directory)
   from phenix_colab_utils import make_four_char_name
-  model_file_name = outs['unrelaxed_file_name_list'][0]
+  model_file_name = outs['unrelaxed_file_name_list'][0] # PDB OK
   del outs['unrelaxed_file_name_list']
 
   if os.path.isfile(model_file_name):
-    print("Model file is in %s" %(model_file_name))
-    cycle_model_file_name = "%s_unrelaxed_model_1_%s.pdb" %(
+    print("Model file is in %s" %(model_file_name))   # PDB OK
+    cycle_model_file_name = "%s_unrelaxed_model_1_%s.pdb" %( # PDB OK
         params.jobname, params.cycle)
-    check_and_copy(model_file_name, cycle_model_file_name)
-    check_and_copy(model_file_name, get_af_file_name(params))
+    check_and_copy(model_file_name, cycle_model_file_name) # PDB OK
+    check_and_copy(model_file_name, get_af_file_name(params)) # PDB OK
     if params.output_directory is not None:
-      check_and_copy(model_file_name,
-         os.path.join(params.output_directory, cycle_model_file_name))
+      check_and_copy(model_file_name,                 # PDB OK
+         os.path.join(params.output_directory, cycle_model_file_name)) # PDB OK
   else:
     print("No model file %s found for job %s" %(model_file_name,
       params.jobname))
@@ -411,13 +411,13 @@ def run_one_af_cycle(params):
 
   return group_args(
     group_args_type = 'result for one cycle',
-    cycle_model_file_name = cycle_model_file_name,
+    cycle_model_file_name = cycle_model_file_name,    # PDB OK
     pae_file = pae_file,
     )
 
-def get_rebuilt_file_names(params):
+def get_rebuilt_file_names(params):                   # PDB OK
   af_model_file = os.path.abspath(
-      params.cycle_model_file_name.as_posix())
+      params.cycle_model_file_name.as_posix())        # PDB OK
   rebuilt_model_name = af_model_file.replace(".pdb","_rebuilt.pdb")
   rebuilt_model_stem = rebuilt_model_name.replace(".pdb","")
   return group_args(group_args_type = ' rebuilt file names',
@@ -683,12 +683,12 @@ def run_job(params = None,
     os.chdir(params.working_directory) # REQUIRED
 
 
-    expected_cycle_model_file_name = "%s_unrelaxed_model_1_%s.pdb" %(
+    expected_cycle_model_file_name = "%s_unrelaxed_model_1_%s.pdb" %( # PDB OK
         jobname, params.cycle)
     if params.carry_on and params.output_directory:
-      expected_cycle_model_file_name_in_output_dir = os.path.join(
+      expected_cycle_model_file_name_in_output_dir = os.path.join( # PDB OK
         params.output_directory,
-         expected_cycle_model_file_name)
+         expected_cycle_model_file_name)              # PDB OK
 
     else:
       expected_cycle_model_file_name_in_output_dir = None
@@ -857,16 +857,16 @@ def run_job(params = None,
     # Superpose AF model on rebuilt model and write rebuilt model to std name
 
     if os.path.isfile(expected_cycle_model_file_name) and \
-        os.path.isfile(final_model_file_name):
-      # Copy final (rebuilt) model to standard name
+        os.path.isfile(final_model_file_name):        # PDB OK
+      # Copy final (rebuilt) model to standard name   # PDB OK
       rebuilt_model_name = os.path.join(
         params.working_directory, "%s_REBUILT_cycle_%s.pdb" %(
         jobname, params.cycle))
-      check_and_copy(final_model_file_name, rebuilt_model_name)
+      check_and_copy(final_model_file_name, rebuilt_model_name) # PDB OK
       print("Rebuilt model is in %s" %(rebuilt_model_name), file = log)
 
       print("Superposing AF model %s on rebuilt model (%s)" %(
-         expected_cycle_model_file_name,final_model_file_name), file = log)
+         expected_cycle_model_file_name,final_model_file_name), file = log) # PDB OK
       superposed_af_model_name = os.path.join(
         params.working_directory, get_af_file_name(params))
 
@@ -991,5 +991,5 @@ def get_pae_png_file_name(params):
   return params.jobname+"_PAE_cycle_%s.png" %(params.cycle)
 def get_plddt_png_file_name(params):
   return params.jobname+"_plDDT_cycle_%s.png" %(params.cycle)
-def get_af_file_name(params):
+def get_af_file_name(params):  # PDB OK
   return params.jobname+"_ALPHAFOLD_cycle_%s.pdb" %(params.cycle)
